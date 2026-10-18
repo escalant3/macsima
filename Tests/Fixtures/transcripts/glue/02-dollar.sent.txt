@@ -1,0 +1,7 @@
+<:lisp-quiet wxMathML.lisp, 87652 bytes>
+:lisp-quiet (setf $gnuplot_command "/opt/homebrew/bin/gnuplot")
+:lisp-quiet (when (fboundp 'wx-open-interrupt-channel) (wx-open-interrupt-channel "127.0.0.1" 60281 "PHASE0-TEST-TOKEN"))
+:lisp-quiet (ignore-errors (setf (symbol-value '*lisp-quiet-suppressed-prompt*) "<PROMPT>(%i1)</PROMPT>"))
+:lisp-quiet (setf *prompt-suffix* "</PROMPT>") (setf *prompt-prefix* "<PROMPT>") (setf $in_netmath nil) (setf $show_openplot t) 
+a:3$
+a;

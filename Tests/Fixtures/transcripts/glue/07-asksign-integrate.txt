@@ -1,0 +1,540 @@
+pid=3180
+Loading /Users/diego/.maxima/maxima-init.mac
+Maxima 5.50.0 https://maxima.sourceforge.io
+using Lisp SBCL 2.6.9
+Distributed under the GNU Public License. See the file COPYING.
+Dedicated to the memory of William Schelter.
+The function bug_report() provides bug reporting information.
+(%i1) <suppressOutput>
+<wxxml-key>PHASE0-TEST-TOKEN</wxxml-key>
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-FIX-STRING (FIRST (SECOND (FIRST MAXIMA::X))))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-FIX-STRING
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXML-FIX-STRING
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (FORMAT T "~30a~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~%"
+;             "Maxima build date:" MAXIMA::YEAR MAXIMA::MONTH MAXIMA::DAY
+;             MAXIMA::HOUR MAXIMA::MINUTE MAXIMA::SECONDS)
+; 
+; caught WARNING:
+;   undefined variable: MAXIMA::DAY
+; 
+; caught WARNING:
+;   undefined variable: MAXIMA::HOUR
+; 
+; caught WARNING:
+;   undefined variable: MAXIMA::MINUTE
+; 
+; caught WARNING:
+;   undefined variable: MAXIMA::MONTH
+; 
+; caught WARNING:
+;   undefined variable: MAXIMA::SECONDS
+; 
+; caught WARNING:
+;   undefined variable: MAXIMA::YEAR
+; 
+; compilation unit finished
+;   Undefined variables:
+;     DAY HOUR MINUTE MONTH SECONDS YEAR
+;   caught 6 WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-ARRAY-NO-DISPLAY-PROPERTIES MAXIMA::X MAXIMA::L MAXIMA::R)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-ARRAY-NO-DISPLAY-PROPERTIES
+
+;     (MAXIMA::WXXML-ARRAY-WITH-DISPLAY-PROPERTIES MAXIMA::X MAXIMA::BASE-SYMBOL
+;      MAXIMA::L MAXIMA::R MAXIMA::PRE-SUBSCRIPTS MAXIMA::PRE-SUPERSCRIPTS
+;      MAXIMA::POST-SUBSCRIPTS MAXIMA::POST-SUPERSCRIPTS)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-ARRAY-WITH-DISPLAY-PROPERTIES
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML-ARRAY-NO-DISPLAY-PROPERTIES WXXML-ARRAY-WITH-DISPLAY-PROPERTIES
+;   caught 2 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML MAXIMA::BASE-SYMBOL NIL NIL 'MAXIMA::MPAREN 'MAXIMA::MPAREN)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML
+
+;     (MAXIMA::WXXML-LIST MAXIMA::POST-SUPERSCRIPTS (LIST "<mrow>")
+;      MAXIMA::MROW-TERMINATE MAXIMA::SEPARATOR-XML)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-LIST
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML WXXML-LIST
+;   caught 2 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML MAXIMA::F
+;      (APPEND MAXIMA::L
+;              (LIST "<munder lisp=\"wxxml-array-no-display-properties\"><p>"))
+;      (LIST "</p>") 'MAXIMA::MPAREN 'MAXIMA::MPAREN)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML
+
+;     (MAXIMA::WXXML-LIST (CDR MAXIMA::X) (LIST "<mrow>") (LIST "</mrow></munder>")
+;      "<mi>,</mi>")
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-LIST
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML WXXML-LIST
+;   caught 2 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML (CAAR MAXIMA::X)
+;      (APPEND MAXIMA::L '("<fn lisp=\"wxxml-function\">")) NIL 'MAXIMA::MPAREN
+;      'MAXIMA::MPAREN)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXML
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-DISSYM-TO-STRING (CAR (GET (CAAR MAXIMA::X) 'MAXIMA::DISSYM)))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-DISSYM-TO-STRING
+
+;     (MAXIMA::WXXML-LIST (CDR MAXIMA::X) NIL MAXIMA::R "<mo>,</mo>")
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-LIST
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML-DISSYM-TO-STRING WXXML-LIST
+;   caught 2 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML (CAR MAXIMA::Y) MAXIMA::L (LIST MAXIMA::SYM) MAXIMA::LOP
+;      MAXIMA::ROP)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML
+
+;     (MAXIMA::WXXML-DISSYM-TO-STRING (GET MAXIMA::OP 'MAXIMA::DISSYM))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-DISSYM-TO-STRING
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML WXXML-DISSYM-TO-STRING
+;   caught 2 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-LBP (CAAR MAXIMA::X))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-LBP
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXML-LBP
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-RBP (CAAR MAXIMA::X))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-RBP
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXML-RBP
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-INFIX MAXIMA::X MAXIMA::L MAXIMA::R)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-INFIX
+
+;     (MAXIMA::WXXML-LBP MAXIMA::ROP)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-LBP
+
+;     (MAXIMA::WXXML-PAREN MAXIMA::X MAXIMA::L MAXIMA::R)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-PAREN
+
+;     (MAXIMA::WXXML-POSTFIX MAXIMA::X MAXIMA::L MAXIMA::R)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-POSTFIX
+
+;     (MAXIMA::WXXML-RBP MAXIMA::LOP)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-RBP
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML-INFIX WXXML-LBP WXXML-PAREN WXXML-POSTFIX WXXML-RBP
+;   caught 5 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXMLSYM (CAAR MAXIMA::X))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXMLSYM
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXMLSYM
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXMLSYM (CAAR MAXIMA::X))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXMLSYM
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXMLSYM
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXMLSYM (CAAR MAXIMA::X))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXMLSYM
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXMLSYM
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXMLSYM (CAAR MAXIMA::X))
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXMLSYM
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXMLSYM
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-MEXPT-ARRAY MAXIMA::X MAXIMA::L MAXIMA::R)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-MEXPT-ARRAY
+
+;     (MAXIMA::WXXML-MEXPT-SIMPLE MAXIMA::X MAXIMA::L MAXIMA::R)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-MEXPT-SIMPLE
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML-MEXPT-ARRAY WXXML-MEXPT-SIMPLE
+;   caught 2 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-MATRIX MAXIMA::X MAXIMA::L MAXIMA::R)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-MATRIX
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXML-MATRIX
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXML-D MAXIMA::X)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-D
+
+;     (MAXIMA::WXXML-D-ABBREV MAXIMA::X)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXML-D-ABBREV
+; 
+; compilation unit finished
+;   Undefined functions:
+;     WXXML-D WXXML-D-ABBREV
+;   caught 2 STYLE-WARNING conditions
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXMLMDO MAXIMA::X)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXMLMDO
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXMLMDO
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WXXMLMDOIN MAXIMA::X)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WXXMLMDOIN
+; 
+; compilation unit finished
+;   Undefined function:
+;     WXXMLMDOIN
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WX-PRINT-GUI-VARIABLES)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WX-PRINT-GUI-VARIABLES
+; 
+; compilation unit finished
+;   Undefined function:
+;     WX-PRINT-GUI-VARIABLES
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     #'MAXIMA::$WXDRAW
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::$WXDRAW
+; 
+; compilation unit finished
+;   Undefined function:
+;     $WXDRAW
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     #'MAXIMA::$WXDRAW
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::$WXDRAW
+; 
+; compilation unit finished
+;   Undefined function:
+;     $WXDRAW
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::$KNOWN_UNITS)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::$KNOWN_UNITS
+; 
+; compilation unit finished
+;   Undefined function:
+;     $KNOWN_UNITS
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::LINEL 1000000)
+; 
+; caught STYLE-WARNING:
+;   The variable LINEL is defined but never used.
+; 
+; compilation unit finished
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::LINEL 1000000)
+; 
+; caught STYLE-WARNING:
+;   The variable LINEL is defined but never used.
+; 
+; compilation unit finished
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::WX-INTERRUPT-CHANNEL-AVAILABLE-P)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::WX-INTERRUPT-CHANNEL-AVAILABLE-P
+; 
+; compilation unit finished
+;   Undefined function:
+;     WX-INTERRUPT-CHANNEL-AVAILABLE-P
+;   caught 1 STYLE-WARNING condition
+; in:
+;      PROGN (FORMAT T "~:@csuppressOutput~:@c~%" (CODE-CHAR 60) (CODE-CHAR 62))
+;     (MAXIMA::FORMAT-SYM-NAME MAXIMA::V :ANY-SYM T)
+; 
+; caught STYLE-WARNING:
+;   undefined function: MAXIMA::FORMAT-SYM-NAME
+; 
+; compilation unit finished
+;   Undefined function:
+;     FORMAT-SYM-NAME
+;   caught 1 STYLE-WARNING condition
+</suppressOutput>
+<wxxml-symbols><value>lmin</value><value>lmxchar</value><value>rearray</value><value>wxdirname</value><value>gf_l2n</value><value>add_function_template</value><value>wedge</value><value>linsolve</value><value>primep</value><value>pderivop</value><value>sequal</value><value>signum</value><value>Zeta</value><value>%%</value><value>bc2</value><value>wxdraw2d</value><value>variable_num_args_function</value><value>lozenge</value><value>minor</value><value>setify</value><value>noaxes</value><value>openr</value><value>permanent</value><value>relerr</value><value>zmin</value><value>host</value><value>load</value><value>demo</value><value>pslq_integer_relation</value><value>beta_incomplete</value><value>%Kappa</value><value>most_positive_float</value><value>gf_matadd</value><value>znz</value><value>atanh</value><value>coth</value><value>num_distinct_partitions</value><value>negsumdispflag</value><value>terminal</value><value>gf_reduce</value><value>polygon</value><value>translate_file</value><value>globalsolve</value><value>resolvante_klein3</value><value>run_testsuite</value><value>spherical_hankel1</value><value>file_search_demo</value><value>runtime</value><value>poistimes</value><value>perm_inverse</value><value>obase</value><value>trace_it</value><value>slommel</value><value>pointbound</value><value>domxtimes</value><value>substpart</value><value>herald_package</value><value>ematrix</value><value>horner</value><value>zn_primroot_pretest</value><value>manual_demo</value><value>break</value><value>matrix_sign</value><value>make_random_state</value><value>c</value><value>octets_to_number</value><value>octets_to_oid</value><value>font_size</value><value>untrace</value><value>⊼</value><value>sinnpiflag</value><value>tanh</value><value>gnuplot_curve_titles</value><value>pathname_directory</value><value>displace</value><value>gnuplot_out_file</value><value>gf_p2n</value><value>%k</value><value>room</value><value>file_search_maxima</value><value>arrayinfo</value><value>data_file_name</value><value>makegamma</value><value>example</value><value>setelmx</value><value>Product</value><value>sublis_apply_lambda</value><value>listp</value><value>writebyte</value><value>use_fast_arrays</value><value>fundef</value><value>aload_mac</value><value>bessel_y</value><value>dot1simp</value><value>printpois</value><value>psi</value><value>length</value><value>adjoint</value><value>powerset</value><value>cons</value><value>gnuplot_file_name</value><value>triangle</value><value>pollard_pm1_limit_step</value><value>append</value><value>erfflag</value><value>Iota</value><value>cgreaterp</value><value>maxima_frontend_version</value><value>P</value><value>font</value><value>require_ring</value><value>factor</value><value>truncate</value><value>dotproduct</value><value>buildq</value><value>determinant</value><value>Rho</value><value>und</value><value>largest_float</value><value>ninth</value><value>end</value><value>bit_or</value><value>similaritytransform</value><value>coefmatrix</value><value>arite</value><value>bessel_reduce</value><value>increasing</value><value>pollard_pm1_tests</value><value>factcomb</value><value>lucas</value><value>boxchar</value><value>gamma_incomplete_generalized</value><value>wximplicit_plot</value><value>gf_order</value><value>notequal</value><value>remvalue</value><value>askequal</value><value>remainder</value><value>color_bar</value><value>imagpart</value><value>inconsistent</value><value>discrete</value><value>binomial</value><value>lcm</value><value>display_known_bugs</value><value>plot_realpart</value><value>rmxchar</value><value>whittaker_m</value><value>dotident</value><value>factor_max_degree_print_warning</value><value>Beta</value><value>u</value><value>require_matrix</value><value>assume_pos</value><value>bfallroots</value><value>inlabels</value><value>sconcat</value><value>default</value><value>nc</value><value>fast_bfloat_conversion</value><value>browser</value><value>expint</value><value>orthopoly_recur</value><value>imaginary</value><value>uppercasep</value><value>direct</value><value>euler</value><value>trace_safety</value><value>arrayapply</value><value>distribute_over</value><value>''</value><value>unlabeled</value><value>pui2comp</value><value>tmlin</value><value>genfact</value><value>csc</value><value>domain</value><value>cardinality</value><value>regex_subst_first</value><value>forget</value><value>stirling1</value><value>legendre_p</value><value>remove_plot_option</value><value>dotscrules</value><value>gf_coeff_limit</value><value>apply</value><value>bigfloat_eps</value><value>log</value><value>gf_log</value><value>integervalued</value><value>killcontext</value><value>parenstyle</value><value>tr_warn_bad_function_calls</value><value>%enumer</value><value>take_channel</value><value>reset</value><value>apropos</value><value>factorial</value><value>hipow</value><value>maxima_objdir</value><value>not_evaluated_when</value><value>op</value><value>taylor_logexpand</value><value>integerp</value><value>optimprefix</value><value>numer</value><value>file_search_usage</value><value>ef_log</value><value>read_nested_list</value><value>tellrat</value><value>contract</value><value>Mu</value><value>gf_primitive_poly_p</value><value>transform_xy</value><value>legendre_q</value><value>tr_function_call_default</value><value>optionset</value><value>scaled_bessel_i0</value><value>mat_trace</value><value>ybounds</value><value>negative_picture</value><value>jacobi_dn</value><value>inference_result</value><value>absboxchar</value><value>gf_set_data</value><value>card_stab</value><value>logexpand</value><value>default_format_prompt</value><value>compfile</value><value>invert_by_adjoint</value><value>order</value><value>cflength</value><value>parabolic_cylinder_d</value><value>ratdisrep</value><value>ef_neg</value><value>evenfun</value><value>lu</value><value>modedeclare</value><value>sylvester_matrix</value><value>stdout</value><value>vect_cross</value><value>derivlist</value><value>scaled_bessel_i1</value><value>pi</value><value>input</value><value>nroots</value><value>gf_matmult</value><value>interpolate</value><value>listify</value><value>boxplot_description</value><value>display2d_unicode</value><value>make_rgb_picture</value><value>nfloat</value><value>nticks</value><value>{</value><value>geomview</value><value>elliptic_f</value><value>risch</value><value>timer</value><value>clessp</value><value>integration_constant_counter</value><value>float_precision</value><value>$gnuplot_4_0</value><value>setup_autoload</value><value>subsetp</value><value>contour_plot</value><value>bignum</value><value>totient</value><value>sqrt</value><value>tomato</value><value>cholesky</value><value>tenth</value><value>solveradcan</value><value>jacobi_ns</value><value>bit_rsh</value><value>gf_normal_p</value><value>text</value><value>xaxis</value><value>ratdenomdivide</value><value>playback</value><value>bashindices</value><value>zn_add_table</value><value>ratmx</value><value>loadprint</value><value>get_index_properties</value><value>no</value><value>refcheck</value><value>Z</value><value>times</value><value>mat_norm</value><value>maxapplydepth</value><value>presuperscript</value><value>const_expr</value><value>ele2polynome</value><value>scopy</value><value>poissimp</value><value>ind</value><value>parametric</value><value>nofix</value><value>wxplot_pngcairo</value><value>hypergeometric_regularized</value><value>wxplot3d</value><value>learndata</value><value>at</value><value>activecontexts</value><value>quotient</value><value>dispflag</value><value>seventh</value><value>regex_split</value><value>noeval</value><value>combineflag</value><value>%o</value><value>gf_reduction</value><value>krylov_matrix</value><value>Y</value><value>hermite</value><value>ratvars</value><value>postsubscript</value><value>azimuth</value><value>inverse_jacobi_cs</value><value>mode_check_errorp</value><value>linel</value><value>pollard_pm1_limit</value><value>submatrix</value><value>fourth</value><value>get_plot_option</value><value>'</value><value>zn_carmichael_lambda</value><value>guess_exact_value</value><value>scalarmatrixp</value><value>poistrim</value><value>load_package</value><value>defmatch</value><value>disp</value><value>inverse</value><value>%c</value><value>rreduce</value><value>acot</value><value>zn_determinant</value><value>%Chi</value><value>float_sign</value><value>gnuplot_pipes</value><value>beta_args_sum_to_integer</value><value>subst</value><value>wxscatterplot</value><value>some</value><value>Phi</value><value>subvar</value><value>multinomial</value><value>trace</value><value>beach</value><value>elliptic_e</value><value>ruletype</value><value>∑</value><value>%lambda</value><value>palette</value><value>string</value><value>cylindrical</value><value>columnop</value><value>read_binary_matrix</value><value>kron_delta</value><value>file_type_lisp</value><value>bezout</value><value>copy_pts</value><value>answers_from_file</value><value>maxima_tempdir</value><value>%rnum_list</value><value>specint</value><value>inf</value><value>resolvante</value><value>matchfix</value><value>^^</value><value>liflag</value><value>matrixmap</value><value>non0</value><value>display</value><value>tlimswitch</value><value>wx_version_min</value><value>assign</value><value>array_dimension_n</value><value>bdiscr</value><value>zn_characteristic_factors</value><value>backtrace</value><value>nonscalars</value><value>expintexpand</value><value>ef_l2p</value><value>taytorat</value><value>perm_cycles</value><value>lproduct</value><value>gf_unit_p</value><value>let</value><value>read_hashed_array</value><value>&amp;</value><value>require_posinteger</value><value>angled</value><value>hypergeometric_simp</value><value>%Epsilon</value><value>par</value><value>ploteq</value><value>assume_pos_pred</value><value>straight</value><value>least_negative_float</value><value>gf_l2p</value><value>require_real_symmetric_matrix</value><value>prefix</value><value>report_synerr_line</value><value>file_output_append</value><value>unicode</value><value>info</value><value>powerdisp</value><value>nabla</value><value>integer_partitions</value><value>disjointp</value><value>unsum</value><value>omicron</value><value>chinese</value><value>sgreaterp</value><value>sumexpand</value><value>logarc</value><value>third</value><value>perms</value><value>~</value><value>zn_power_table</value><value>split</value><value>gnuplot_strings</value><value>residue</value><value>atvalue</value><value>Theta</value><value>from</value><value>adapt_depth</value><value>zeroa</value><value>permute</value><value>bfzeta</value><value>ultraspherical</value><value>moore_penrose_pseudoinverse</value><value>macro</value><value>gf_set_again</value><value>gf_eval</value><value>todd_coxeter</value><value>resolvante_produit_sym</value><value>opena_binary</value><value>linsolvewarn</value><value>savedef</value><value>wxcontour_plot</value><value>require_selfadjoint_matrix</value><value>cauchy_matrix</value><value>multiple_value_return</value><value>eivects</value><value>letrat</value><value>saturation</value><value>undefined</value><value>bfloatp</value><value>nzeta</value><value>ef_irreducible</value><value>display_index_separator</value><value>svg</value><value>infinity</value><value>read_binary_array</value><value>identity</value><value>float_approx_equal</value><value>amatrix</value><value>gray</value><value>ef_factor</value><value>%phi</value><value>elapsed_real_time</value><value>random</value><value>intosum</value><value>ratweights</value><value>sublist_indices</value><value>show_hash_array</value><value>ascii</value><value>hstep</value><value>constantp</value><value>resolvante_alternee1</value><value>new</value><value>struve_h</value><value>calls</value><value>cyan</value><value>plot_format</value><value>kappa</value><value>%zeta</value><value>expon</value><value>create_list</value><value>not_set_yet</value><value>somrac</value><value>picture_equalp</value><value>Eta</value><value>beta_incomplete_generalized</value><value>make_string_output_stream</value><value>perms_lex</value><value>stringdisp</value><value>partition</value><value>ilt</value><value>ubuntu</value><value>pdf_file</value><value>carlson_rc</value><value>defstruct</value><value>nonarray</value><value>expand_polynomials</value><value>bfpsi</value><value>arg</value><value>lsquares_estimates</value><value>meaningless</value><value>sequalignore</value><value>gf_gcdex</value><value>expintegral_si</value><value>read_lisp_array</value><value>nonz</value><value>animated_gif</value><value>nand</value><value>inverse_jacobi_nd</value><value>mandelbrot</value><value>trace2f1</value><value>thru</value><value>prefer_gamma_incomplete</value><value>current_let_rule_package</value><value>first</value><value>sexplode</value><value>pui</value><value>¬</value><value>wxdraw_list</value><value>charfun</value><value>wxmaximaversion</value><value>request_rational_matrix</value><value>regex_subst</value><value>zerob</value><value>grid</value><value>diamond</value><value>facexpand</value><value>part</value><value>ef_set_again</value><value>ef_div</value><value>matrix_size</value><value>png_file</value><value>define_opproperty</value><value>%e</value><value>file_search_cache</value><value>throw</value><value>%Phi</value><value>points</value><value>taylor_simplifier</value><value>pui_direct</value><value>unlabelled</value><value>opena</value><value>noylabel</value><value>cint</value><value>algdelta</value><value>exact</value><value>dot0nscsimp</value><value>symmetric</value><value>linenum</value><value>sqrtdispflag</value><value>ordermagnitudep</value><value>epsrel</value><value>declare_linear_operator</value><value>wxxmltag</value><value>antisymmetric</value><value>list</value><value>eta</value><value>nofeature</value><value>macroexpansion</value><value>props</value><value>mdebug_print_length</value><value>share_tests</value><value>poisexpt</value><value>cre</value><value>%mu</value><value>::</value><value>iterations</value><value>evflag</value><value>rootsof</value><value>emaxima</value><value>ytics</value><value>ef_nth_root</value><value>ef_power_table</value><value>block</value><value>get_output_stream_string</value><value>gnuplot_view_args</value><value>inrt</value><value>useminmax</value><value>taylordepth</value><value>off</value><value>+</value><value>carlson_rf</value><value>gf_random</value><value>inverse_jacobi_sc</value><value>md5sum</value><value>lispdisp</value><value>struve_l</value><value>tr_warn_fexpr</value><value>nterms</value><value>asksign</value><value>multiplicities</value><value>wxdraw</value><value>ef_gcd</value><value>factor_max_degree</value><value>gf_primitive</value><value>substinpart</value><value>%i1</value><value>denom</value><value>ef_info</value><value>next</value><value>pollard_rho_tests</value><value>lambda</value><value>nu</value><value>intersect</value><value>catch</value><value>charp</value><value>⊽</value><value>testsuite_files</value><value>expandwrt</value><value>limsubst</value><value>tmlinsolve</value><value>tr_float_can_branch_complex</value><value>ef_set_data</value><value>redundant</value><value>ecm_max_limit</value><value>activate</value><value>ps_file</value><value>tr_warnings_get</value><value>laplace</value><value>adjust_external_format</value><value>orderless</value><value>maxpsifracnum</value><value>jacobi_dc</value><value>all</value><value>perm_lex_next</value><value>loadarrays</value><value>title</value><value>simtran</value><value>demoivre</value><value>firstn</value><value>*</value><value>carlson_rd</value><value>nolighting</value><value>noprint</value><value>facout</value><value>%emode</value><value>sum</value><value>tr_warn_undefined_variable</value><value>integer_decode_float</value><value>linalg_rank</value><value>gnuplot_4_0</value><value>prompt</value><value>zeroequiv</value><value>stirling2</value><value>airy_dbi</value><value>%i</value><value>mat_fullunblocker</value><value>derivative</value><value>eigenvectors</value><value>]</value><value>gf_exp</value><value>errcatch</value><value>get_tex_environment_default</value><value>digitcharp</value><value>moebius</value><value>minfactorial</value><value>%Zeta</value><value>display_matrix_padding_vertical</value><value>real</value><value>defint</value><value>multinomial_coeff</value><value>ratsubst</value><value>substitute</value><value>ask_hide_prompt</value><value>savefactors</value><value>test_means_difference</value><value>display_all</value><value>lisp</value><value>display_matrix_padding_horizontal</value><value>ratnum</value><value>⋁</value><value>rat</value><value>expandwrt_nonrat</value><value>float</value><value>ef_infolist</value><value>pickapart</value><value>collapse</value><value>xy_scale</value><value>object</value><value>trigsimp</value><value>z2</value><value>true</value><value>prodrac</value><value>kostka</value><value>taylorp</value><value>linechar</value><value>rectform</value><value>sparse</value><value>pic_width</value><value>colnames</value><value>disjoin</value><value>carlson_rj</value><value>with_slider_draw</value><value>%Xi</value><value>test_normality</value><value>cont2part</value><value>setdifference</value><value>integrate_use_rootsof</value><value>color_bar_tics</value><value>assoc_legendre_q</value><value>⋀</value><value>compgrind</value><value>inverse_jacobi_dn</value><value>detout</value><value>@-function</value><value>identfor</value><value>Gamma</value><value>primelmt</value><value>flength</value><value>scatterplot_description</value><value>z1</value><value>sumsplitfact</value><value>help</value><value>setp</value><value>file_search_lisp</value><value>cequal</value><value>poissquare</value><value>geomview_command</value><value>arraysetapply</value><value>cyclep</value><value>ecm_limit</value><value>ef_minimal_set</value><value>inverse_jacobi_sd</value><value>ef_minimal_poly</value><value>Alpha</value><value>m1pbranch</value><value>eigenvalues</value><value>loadfile</value><value>frontend</value><value>cfexpand</value><value>tr_warn_meval</value><value>eighth</value><value>draw_file</value><value>%l</value><value>load_pathname</value><value>newline</value><value>setdiff</value><value>file_name</value><value>lighting</value><value>comp2pui</value><value>ef_normal</value><value>expandwrt_factored</value><value>show_image</value><value>status</value><value>/#&amp;</value><value>reveal</value><value>rownames</value><value>⇔</value><value>cl_eval</value><value>ⅇ</value><value>nonzero</value><value>gf_characteristic</value><value>newdet</value><value>algepsilon</value><value>file_search1</value><value>lu_factor</value><value>grindswitch</value><value>floor</value><value>permutations</value><value>%m</value><value>ez</value><value>maxima_frontend_bugreportinfo</value><value>jacobi_nc</value><value>lisp_macro</value><value>optimwarn</value><value>quad_qag</value><value>%beta</value><value>simpproduct</value><value>maxapplyheight</value><value>listarray</value><value>csch</value><value>wxplot_size</value><value>lisp_version</value><value>showratvars</value><value>tldefint</value><value>exp</value><value>with_default_2d_display</value><value>garbage_collect</value><value>save_primes</value><value>inverx</value><value>read_xpm</value><value>debug</value><value>label</value><value>multiplot_mode</value><value>row_names</value><value>quit</value><value>%r</value><value>set_random_state</value><value>read_maxima_array</value><value>bftrunc</value><value>domxplus</value><value>abserr</value><value>jacobi_nd</value><value>infix</value><value>pfet</value><value>propvars</value><value>ef_unit_p</value><value>im</value><value>%w</value><value>atomgrad</value><value>locate_matrix_entry</value><value>mgf1_sha1</value><value>value_check</value><value>col</value><value>reset_verbosely</value><value>rassociative</value><value>tr_warn_undeclared</value><value>gauss</value><value>extremal_subset</value><value>initial</value><value>isolate_wrt_times</value><value>verbose</value><value>acsch</value><value>ratepsilon</value><value>scale_float</value><value>ptriangularize</value><value>%s</value><value>jacobi</value><value>zn_order</value><value>build_info</value><value>ef_add_table</value><value>expintegral_chi</value><value>set_plot_option</value><value>fresnel_c</value><value>taylor_order_coefficients</value><value>factlim</value><value>;</value><value>grad</value><value>fibtophi</value><value>xml</value><value>taylordef</value><value>maxposex</value><value>invert_method</value><value>ⅈ</value><value>homog_hack</value><value>ratcoef</value><value>power_mod</value><value>intervalp</value><value>activate_window</value><value>N</value><value>ratweight</value><value>pwilt</value><value>tlimit</value><value>wxanimate_draw3d</value><value>show_openplot</value><value>ef_degree</value><value>%p</value><value>mapatom</value><value>ef_n2l</value><value>gf_make_arrays</value><value>sinsert</value><value>rule</value><value>poisctimes</value><value>intersection</value><value>packagefile</value><value>ef_at</value><value>require_symmetric_matrix</value><value>sech</value><value>remlet</value><value>strdisp</value><value>polynome2ele</value><value>nonumfactor</value><value>exponentialize</value><value>nullity</value><value>ef_sub</value><value>integral</value><value>grind</value><value>fortindent</value><value>histogram_description</value><value>backsubst</value><value>make_transform</value><value>fpprec</value><value>zn_primroot_limit</value><value>wxplot_usesvg</value><value>phi</value><value>gamma_expand</value><value>%q</value><value>predset</value><value>nosame_xy</value><value>pdiff_uses_named_subscripts_for_derivatives</value><value>ed</value><value>radexpand</value><value>%kappa</value><value>plus</value><value>quad_qawo</value><value>:</value><value>domxnctimes</value><value>lcharp</value><value>zn_primroot_verbose</value><value>read</value><value>next_prime</value><value>xbounds</value><value>inverse_jacobi_sn</value><value>linsimp</value><value>bit_length</value><value>require_square_matrix</value><value>find_root_error</value><value>cequalignore</value><value>quad_qagp</value><value>define_variable</value><value>gf_power_table</value><value>do</value><value>deactivate</value><value>elide</value><value>zeromatrix</value><value>eval_string_lisp</value><value>banding</value><value>g533</value><value>describe</value><value>ef_irreducible_p</value><value>evolution2d</value><value>noytics</value><value>rest</value><value>ef_l2n</value><value>nz</value><value>maybe</value><value>macroexpand</value><value>let_rule_packages</value><value>elementp</value><value>make_array</value><value>set_tex_environment_default</value><value>spherical</value><value>bftorat</value><value>unit_step</value><value>outative</value><value>card_orbit</value><value>gf_zech_logs</value><value>erfc</value><value>negative</value><value>whittaker_w</value><value>known_index_properties</value><value>lognegint</value><value>ef_index</value><value>dependency</value><value>regex_match_pos</value><value>ef_add</value><value>assoc</value><value>resolvante_vierer</value><value>least_negative_normalized_float</value><value>polyfactor</value><value>ctranspose</value><value>notcomparable</value><value>ode2</value><value>imaxima</value><value>inverse_jacobi_cd</value><value>matrix</value><value>flatten</value><value>subvarp</value><value>with_stdout</value><value>bullet</value><value>divide</value><value>current_error</value><value>red</value><value>wxanimate</value><value>asinh</value><value>simple_linear_regression</value><value>%alpha</value><value>logabs</value><value>simpsum</value><value>square</value><value>Chi</value><value>%t</value><value>berlefact</value><value>spherical_bessel_y</value><value>gf_irreducible_p</value><value>prefer_whittaker</value><value>at_difference</value><value>bigfloat_bits</value><value>sample</value><value>require_symbol</value><value>decode_float</value><value>sstatus</value><value>dimensions</value><value>gnuplot_curve_styles</value><value>least_positive_float</value><value>gctime</value><value>nogrid2d</value><value>gf_powers</value><value>spherical_harmonic</value><value>read_binary_list</value><value>erf_representation</value><value>equal</value><value>rescan</value><value>ef_coeff_exp</value><value>make_level_picture</value><value>gf_cardinality</value><value>quad_qags</value><value>mon2schur</value><value>ifactor_verbose</value><value>mapset</value><value>%u</value><value>psubst</value><value>inverse_erf</value><value>Quotient</value><value>tokens</value><value>%Iota</value><value>grey</value><value>maperror</value><value>lu_backsub</value><value>gnuplot</value><value>gf_normal_basis_rep</value><value>ef_n2p</value><value>xmaxima_plot_command</value><value>zn_log</value><value>maplist</value><value>qput</value><value>pade</value><value>ratwtlvl</value><value>bernpoly</value><value>fix</value><value>orderlessp</value><value>expand_hypergeometric</value><value>inpart</value><value>charat</value><value>splitfield</value><value>noxlabel</value><value>makelist</value><value>radcan</value><value>openw</value><value>doallmxops</value><value>row</value><value>parse_timedate</value><value>programmode</value><value>lisp_print</value><value>triangularize</value><value>lassociative</value><value>resolvante_klein</value><value>fixp</value><value>ef_get_data</value><value>apply2</value><value>ezgcd</value><value>divsum</value><value>trace_break_arg</value><value>::=</value><value>save</value><value>solve</value><value>hypergeometric_u</value><value>asech</value><value>hankel</value><value>values</value><value>mesh_lines_color</value><value>cosh</value><value>q</value><value>gnuplot_svg_term_command</value><value>bit_and</value><value>%theta</value><value>upsilon</value><value>levels</value><value>maxtayorder</value><value>pred</value><value>mod</value><value>html</value><value>eval</value><value>scalar</value><value>zeta%pi</value><value>xi</value><value>invert_by_adjoint_size_limit</value><value>nopalette</value><value>timestamp</value><value>fillarray</value><value>tcl_output</value><value>mat_unblocker</value><value>barsplot_description</value><value>%Pi</value><value>box</value><value>clesspignore</value><value>wxstatusbar</value><value>labels</value><value>fullratsimp</value><value>generalized_lambert_w</value><value>factorial_expand</value><value>myoptions</value><value>wxxml_subscript</value><value>tellrats</value><value>decreasing</value><value>mode_declare</value><value>gf_add</value><value>yx_ratio</value><value>get_pixel</value><value>slow</value><value>black_and_white</value><value>Epsilon</value><value>isolate</value><value>smake</value><value>full_listify</value><value>compile_file</value><value>accumulate</value><value>lpart</value><value>ef_order</value><value>list_matrix_entries</value><value>mx0simp</value><value>**</value><value>base64_decode</value><value>args</value><value>Tau</value><value>gradient</value><value>jacobi_ds</value><value>operator</value><value>wxbug_report</value><value>strim</value><value>version</value><value>if</value><value>gnuplot_replot</value><value>tr_warn_mode</value><value>w</value><value>sort</value><value>ele2comp</value><value>remrule</value><value>maxima_special_form</value><value>asterisk</value><value>closefile</value><value>showtime</value><value>cabs</value><value>plot_options</value><value>ef_determinant</value><value>file_search_ignore_dirs</value><value>errormsg</value><value>bothcoef</value><value>lisp_name</value><value>setcheckbreak</value><value>%Delta</value><value>askinteger</value><value>untimer</value><value>gnuplot_send</value><value>plotdf</value><value>eval_string</value><value>draw3d</value><value>noninteger</value><value>maxima_userdir</value><value>spherical_to_xyz</value><value>function</value><value>tests</value><value>fasttimes</value><value>operatorp</value><value>unless</value><value>solid</value><value>wxdeclare_subscript</value><value>maxmin_effort</value><value>v</value><value>member</value><value>bindtest</value><value>Kappa</value><value>trigrat</value><value>&gt;</value><value>slesspignore</value><value>lbfgs</value><value>readonly</value><value>complex</value><value>copymatrix</value><value>airy_dai</value><value>%Upsilon</value><value>expt</value><value>solvenullwarn</value><value>random_perm</value><value>trigexpandtimes</value><value>jacobi_p</value><value>tr_true_name_of_file_being_translated</value><value>ef_normal_basis_rep</value><value>map</value><value>and</value><value>rembox</value><value>dispfun</value><value>gnuplot_reset</value><value>ef_eval</value><value>exp-form</value><value>omega</value><value>entier</value><value>tex1</value><value>fortmx</value><value>smismatch</value><value>zlabel</value><value>bug_report</value><value>addcol</value><value>display_box_double_lines</value><value>Lambda</value><value>linelabels</value><value>close</value><value>nonnegintegerp</value><value>only</value><value>gf_jacobi</value><value>ic2</value><value>%Sigma</value><value>linear2</value><value>readbyte</value><value>tr_array_as_ref</value><value>=</value><value>wxplot_preamble</value><value>elem</value><value>gf_invert_by_lu</value><value>derivdegree</value><value>nolegend</value><value>printf</value><value>spmod</value><value>gf_minimal_set</value><value>ceiling</value><value>nonscalar</value><value>remove</value><value>product</value><value>done</value><value>quad_qagi</value><value>even</value><value>make_string_input_stream</value><value>wxworksheettotex</value><value>pnz</value><value>carg</value><value>gcd</value><value>subsample</value><value>declared</value><value>gf_gcd</value><value>determinant_by_lu</value><value>subset</value><value>gamma</value><value>cartesian_product_list</value><value>concat_polygons</value><value>intfaclim</value><value>t</value><value>number_to_octets</value><value>orbits</value><value>perm_rank</value><value>notransform_xy</value><value>fib</value><value>erf</value><value>askexp</value><value>columnspace</value><value>&lt;</value><value>odd</value><value>sigma</value><value>assume_external_byte_order</value><value>postsuperscript</value><value>constant</value><value>evenp</value><value>rotation1</value><value>ssubstfirst</value><value>super</value><value>elevation</value><value>tcontract</value><value>cunlisp</value><value>%nu</value><value>gf_inv</value><value>flonum</value><value>gf_mult</value><value>error_size</value><value>simp</value><value>Pi</value><value>get_range</value><value>zeta</value><value>puireduc</value><value>nosame_xyz</value><value>alt_format_prompt</value><value>[</value><value>false</value><value>inchar</value><value>gf_neg</value><value>transfun</value><value>#</value><value>auto_mexpr</value><value>rowswap</value><value>rem</value><value>int_range</value><value>writefile</value><value>trunc</value><value>assumescalar</value><value>fifth</value><value>taylor</value><value>sremove</value><value>wxbuild_info</value><value>erfi</value><value>julia</value><value>gnuplot_term</value><value>dpart</value><value>background_color</value><value>pstream</value><value>commutative</value><value>laguerre</value><value>Omega</value><value>beta_incomplete_regularized</value><value>desolve</value><value>expintrep</value><value>ratdenom</value><value>conjugate</value><value>bit_onep</value><value>hypergeometric</value><value>z</value><value>fast_bfloat_threshold</value><value>todd_coxeter_state</value><value>%gamma</value><value>mat_cond</value><value>dependencies</value><value>ef_normal_basis</value><value>fullmap</value><value>simplode</value><value>algnorm</value><value>infolists</value><value>gf_rat</value><value>elementof</value><value>divisors</value><value>png</value><value>spherical_hankel2</value><value>pdiff_prime_limit</value><value>perm_lex_unrank</value><value>recognized_encoding_p</value><value>trigsign</value><value>max_fpprec</value><value>zerofor</value><value>resultant</value><value>ef_jacobi</value><value>tree_reduce</value><value>treillis</value><value>nusum</value><value>letrules</value><value>require_integer</value><value>y</value><value>hilbert_matrix</value><value>!</value><value>addrow</value><value>gf_norm</value><value>%Lambda</value><value>linear</value><value>infeval</value><value>nouns</value><value>Xi</value><value>enter</value><value>lhospitallim</value><value>noundisp</value><value>file_search_tests</value><value>any</value><value>perm_undecomp</value><value>splice</value><value>kronecker_product</value><value>algfac</value><value>fresnel_s</value><value>multiplicative</value><value>letvarsimp</value><value>augcoefmatrix</value><value>hipow_gzero</value><value>piechart_description</value><value>arraymake</value><value>poisplus</value><value>solvedecomposes</value><value>%eta</value><value>x</value><value>zn_invert_by_lu</value><value>wx_matrix</value><value>report_synerr_info</value><value>autoload</value><value>supcase</value><value>Delta</value><value>dotconstrules</value><value>expintegral_ei</value><value>zn_factor_generators</value><value>tpartpol</value><value>largest_negative_float</value><value>wxanimate_framerate</value><value>%upsilon</value><value>equiv_classes</value><value>complete</value><value>nocolor_bar</value><value>maybe-boole-eval</value><value>ratnump</value><value>lambert_w</value><value>matrix_element_mult</value><value>features</value><value>makeset</value><value>invert_by_gausselim</value><value>comp2ele</value><value>alpha</value><value>opproperties</value><value>ecm_number_of_curves</value><value>ev</value><value>boolean</value><value>noxtics</value><value>_</value><value>functional</value><value>print_function</value><value>xreduce</value><value>symdiff</value><value>return</value><value>mapprint</value><value>or</value><value>isqrt</value><value>regex_match</value><value>float2bf</value><value>display_determinant_bars</value><value>timer_info</value><value>limitdomain</value><value>logconcoeffp</value><value>with_slider_draw3d</value><value>Omicron</value><value>encode_time</value><value>freeof</value><value>acsc</value><value>**error**</value><value>outlabels</value><value>sreverse</value><value>set_partitions</value><value>local</value><value>ratfac</value><value>explose</value><value>unknown?</value><value>default_let_rule_package</value><value>ef_normal_p</value><value>has_key</value><value>maxmin</value><value>^</value><value>set_tex_environment</value><value>asec</value><value>gr3d</value><value>none</value><value>string_to_octets</value><value>gf_get_data</value><value>bfpsi0</value><value>max</value><value>sha256sum</value><value>Psi</value><value>not_done</value><value>%Omega</value><value>ptriangularize_with_proviso</value><value>zn_nth_root</value><value>algebraic</value><value>List</value><value>nobox</value><value>auto</value><value>xvar</value><value>subnumsimp</value><value>%catalan</value><value>flush_output</value><value>ratvarswitch</value><value>elliptic_ec</value><value>%</value><value>ylabel</value><value>compile</value><value>plotepsilon</value><value>eigens_by_jacobi</value><value>signbfloat</value><value>warning</value><value>second</value><value>maxfpprintprec</value><value>wxhistogram</value><value>errexp1</value><value>ef_mult</value><value>rank</value><value>polytocompanion</value><value>gr2d</value><value>yaxis</value><value>%e_to_numlog</value><value>magenta</value><value>matrixexp</value><value>lines</value><value>poly_discriminant</value><value>setcheck</value><value>in</value><value>maxima_frontend</value><value>gradefs</value><value>maxpsiposint</value><value>ef_coeff_add</value><value>trigexpandplus</value><value>ordergreat</value><value>elseif</value><value>gf_factor</value><value>display_graphics</value><value>pdiff_uses_prime_for_derivatives</value><value>$</value><value>symmdifference</value><value>ps</value><value>adjoin</value><value>printfile</value><value>dispterms</value><value>median</value><value>fortspaces</value><value>hash_table</value><value>dotdistrib</value><value>float_bits</value><value>gamma_incomplete</value><value>expintegral_ci</value><value>outchar</value><value>%sigma</value><value>is_power_of_two</value><value>numfactor</value><value>ef_inv</value><value>ef_invert_by_lu</value><value>nullspace</value><value>cubrt</value><value>time</value><value>airy_bi</value><value>tminverse</value><value>errexp3</value><value>float_nan_p</value><value>pic_height</value><value>facsum_combine</value><value>gen_laguerre</value><value>sremovefirst</value><value>Expt</value><value>sin</value><value>gnuplot_start</value><value>feature</value><value>fool</value><value>pui2polynome</value><value>put</value><value>set</value><value>get_tex_environment</value><value>cauchysum</value><value>b</value><value>perm_decomp</value><value>funcsolve</value><value>chi</value><value>optimize</value><value>taylor_truncate_polynomials</value><value>every</value><value>wxdraw3d</value><value>noztics</value><value>declare</value><value>inverse_erfc</value><value>%f</value><value>lsum</value><value>assoc_legendre_p</value><value>pochhammer</value><value>string_to_regex</value><value>ef_matadd</value><value>:=</value><value>errexp2</value><value>%th</value><value>asin</value><value>distrib</value><value>fixed_num_args_function</value><value>gf_logs</value><value>noprincipal</value><value>inferred_encoding</value><value>__</value><value>%delta</value><value>setval</value><value>fixnum</value><value>context</value><value>a</value><value>while</value><value>prederror</value><value>pop</value><value>poismap</value><value>poisint</value><value>cot</value><value>domxmxops</value><value>striml</value><value>polysign</value><value>)</value><value>same_xy</value><value>bit_not</value><value>xtics</value><value>solveexplicit</value><value>maxima</value><value>tr_state_vars</value><value>yvar</value><value>symbolp</value><value>wxpiechart</value><value>beta_expand</value><value>algtrace</value><value>leftjust</value><value>hue</value><value>additive</value><value>draw_compound</value><value>vandermonde_matrix</value><value>apply1</value><value>X</value><value>maxp1</value><value>depends</value><value>nzetar</value><value>%Rho</value><value>evaluated_when</value><value>implies</value><value>Nu</value><value>draw2d</value><value>@</value><value>read_list</value><value>floatp</value><value>completearray</value><value>errorcatch</value><value>alphacharp</value><value>emptyp</value><value>openw_binary</value><value>toeplitz</value><value>bessel_j</value><value>(</value><value>newcontext</value><value>negdistrib</value><value>gnuplot_postamble</value><value>sprint</value><value>window</value><value>arrayfun</value><value>yes</value><value>keepfloat</value><value>lratsubst</value><value>nor</value><value>mean</value><value>nomesh_lines</value><value>point_type</value><value>gf_trace</value><value>factors_only</value><value>good_pivot</value><value>axes</value><value>ratcoeff</value><value>quad_control</value><value>errexp</value><value>topdown</value><value>gf_mult_table</value><value>tellsimpafter</value><value>/</value><value>bool</value><value>gentranlang</value><value>jacobian</value><value>ratprint</value><value>ifs</value><value>lastn</value><value>cartesian_product</value><value>draw_command</value><value>log_gamma</value><value>wxworksheettohtml</value><value>ef_primitive_poly</value><value>utf8_to_unicode</value><value>gradef</value><value>sstatus-aux</value><value>polymod</value><value>jacobi_cd</value><value>atan</value><value>oid_to_octets</value><value>gf_balanced</value><value>display_format_internal</value><value>genindex</value><value>bessel_k</value><value>.</value><value>test_mean</value><value>supcontext</value><value>gcfactor</value><value>tr_numer</value><value>url_base</value><value>transpose</value><value>chaosgame</value><value>pathname_type</value><value>gensumnum</value><value>kelliptic</value><value>parse_string</value><value>disolate</value><value>wxfilename</value><value>not</value><value>listconstvars</value><value>stringout</value><value>%Eta</value><value>nostring</value><value>expop</value><value>positive</value><value>dotassoc</value><value>in_netmath</value><value>powerseries</value><value>&amp;&amp;</value><value>unorder</value><value>sign</value><value>gf_infolist</value><value>⇒</value><value>-</value><value>define</value><value>max_message</value><value>elliptic_pi</value><value>share_testsuite_files</value><value>nr</value><value>gf_matinv</value><value>unicode_to_utf8</value><value>wxanimate_from_imgfiles</value><value>lowercasep</value><value>remarray</value><value>setequalp</value><value>exit</value><value>ef_mult_table</value><value>scalarp</value><value>alphanumericp</value><value>ranks</value><value>ef_trace</value><value>dot0simp</value><value>gf_n2p</value><value>ifactors</value><value>∏</value><value>float_eps</value><value>gnuplot_dumb_term_command</value><value>rootscontract</value><value>get_lu_factors</value><value>gf_cantor_zassenhaus</value><value>d</value><value>totaldisrep</value><value>num_partitions</value><value>resolvante_unitaire</value><value>poissubst</value><value>wxsubscripts</value><value>gf_determinant</value><value>cos</value><value>translate_fast_arrays</value><value>gf_minimal_poly</value><value>,</value><value>octets_to_string</value><value>xlabel</value><value>monochromatic</value><value>gcdex</value><value>wxdeclare_subscripted</value><value>display2d</value><value>charlist</value><value>float_approx_equal_tolerance</value><value>lmax</value><value>ic1</value><value>%rnum</value><value>gnuplot_ps_term_command</value><value>piechart</value><value>no_default</value><value>gfactorsum</value><value>options</value><value>k</value><value>concat</value><value>scaled_bessel_i</value><value>prev_prime</value><value>ratdiff</value><value>hgfred</value><value>mkey</value><value>listdummyvars</value><value>%Beta</value><value>unique</value><value>listarith</value><value>get</value><value>ef_primitive</value><value>delta</value><value>double_factorial</value><value>openr_binary</value><value>&lt;=</value><value>sposition</value><value>random_permutation</value><value>doscmxplus</value><value>expintegral_trig</value><value>%Omicron</value><value>facsum</value><value>apply_cycles</value><value>j</value><value>contexts</value><value>expintegral_hyp</value><value>solvefactors</value><value>big</value><value>declare_translated</value><value>wise</value><value>matrix_element_transpose</value><value>zeroim</value><value>derivabbrev</value><value>var</value><value>sublist</value><value>factorout</value><value>gf_normal_basis</value><value>polarform</value><value>stderr</value><value>rowop</value><value>changevar</value><value>in_exactly_one</value><value>zero_fun</value><value>allroots</value><value>ef_primitive_p</value><value>cf</value><value>defrule</value><value>kill</value><value>orbit</value><value>i</value><value>%epsilon</value><value>rainbow</value><value>intanalysis</value><value>realroots</value><value>-read-aux</value><value>texend</value><value>gf_make_logs</value><value>is-boole-eval</value><value>std</value><value>color</value><value>trace_max_indent</value><value>evolution</value><value>underflow</value><value>gnuplot_pdf_term_command</value><value>add_zeroes</value><value>gf_n2l</value><value>jacobi_cn</value><value>draw</value><value>reset_plot_options</value><value>ef_coeff_mult</value><value>mainvar</value><value>arrays</value><value>π</value><value>halfangles</value><value>compare</value><value>matrixfun</value><value>write_binary_data</value><value>error_syms</value><value>expintegral_li</value><value>zn_mult_table</value><value>multi_pui</value><value>gnuplot_command</value><value>realonly</value><value>read_matrix</value><value>ltreillis</value><value>remfunction</value><value>norepeat</value><value>pfactoralg</value><value>uk</value><value>require_list</value><value>multiple_values</value><value>gnuplot_svg_background</value><value>dumb</value><value>aliases</value><value>maxtaydiff</value><value>global</value><value>display_matrix_brackets</value><value>crc24sum</value><value>nozlabel</value><value>gf_div</value><value>verbify</value><value>partswitch</value><value>bf_find_root</value><value>prod</value><value>require_unblockedmatrix</value><value>mode_checkp</value><value>tr_bound_function_applyp</value><value>sixth</value><value>dontknow</value><value>deftaylor</value><value>fposition</value><value>quad_qawf</value><value>%omicron</value><value>pollard_rho_limit_step</value><value>multi</value><value>run_viewer</value><value>tau</value><value>inverse_jacobi_dc</value><value>domxexpt</value><value>invert_by_lu</value><value>transload</value><value>wxplot2d</value><value>linsolve_by_lu</value><value>jacobi_sd</value><value>ef_exp</value><value>psexpand</value><value>punt_nil</value><value>zerobern</value><value>pos</value><value>plot3d</value><value>ef_matneg</value><value>matchdeclare</value><value>n</value><value>transrun</value><value>gf_index</value><value>pui2ele</value><value>gruntz</value><value>remove_index_properties</value><value>to_lisp</value><value>ssort</value><value>wxxmlput</value><value>gamma_incomplete_lower</value><value>linespoints</value><value>make_elliptic_e</value><value>scene</value><value>expandwrt_denom</value><value>gamma_incomplete_regularized</value><value>endcons</value><value>permut</value><value>maybe-boole-verify</value><value>svg_file</value><value>dots</value><value>bffac</value><value>maxima_fexpr</value><value>require_nonempty_matrix</value><value>jacobi_sc</value><value>ef_primitive_poly_p</value><value>zero</value><value>batch</value><value>file_type</value><value>histogram</value><value>sgreaterpignore</value><value>atom</value><value>numberp</value><value>m</value><value>base64</value><value>ratp</value><value>solvetrigwarn</value><value>GNUPLOT_4_0</value><value>jacobi_sn</value><value>nocolor_bat_tics</value><value>polydecomp</value><value>strimr</value><value>fullsetify</value><value>zeromatrixp</value><value>wxanimate_draw</value><value>wxanimate_autoplay</value><value>numerval</value><value>file_search</value><value>fortran</value><value>error</value><value>presubscript</value><value>sqrtdenest</value><value>barsplot</value><value>cbffac</value><value>spectral_rep</value><value>stdin</value><value>multsym</value><value>solve_congruences</value><value>common_lisp</value><value>output_format_for_help</value><value>float_infinity_p</value><value>ssearch</value><value>with_slider_draw2d</value><value>%Nu</value><value>general</value><value>l</value><value>elapsed_run_time</value><value>ecm_limit_delta</value><value>else</value><value>least_positive_normalized_float</value><value>gnuplot_png_term_command</value><value>debugmode</value><value>batch_answers_from_file</value><value>resolvante_diedrale</value><value>radsubstflag</value><value>integration_constant</value><value>limlst</value><value>circle</value><value>theta</value><value>evfun</value><value>bfloat_approx_equal</value><value>any_check</value><value>featurep</value><value>inflag</value><value>part2cont</value><value>gnuplot_script_file</value><value>disprule</value><value>hypergeometric_representation</value><value>mode_check_warnp</value><value>elliptic_eu</value><value>treinat</value><value>fullmapl</value><value>on</value><value>ttyoff</value><value>erf_%iargs</value><value>make_elliptic_f</value><value>gnuplot_pm3d</value><value>wxbarsplot</value><value>belln</value><value>mode</value><value>tan</value><value>type</value><value>ele2pui</value><value>alphabetic</value><value>cgreaterpignore</value><value>permult</value><value>print</value><value>%Mu</value><value>%pi</value><value>abs</value><value>iota</value><value>bfloat</value><value>gf_symmetric</value><value>nary</value><value>scroll</value><value>primep_number_of_tests</value><value>%xi</value><value>tmnewdet</value><value>schur2comp</value><value>regex_compile</value><value>texput</value><value>texinit</value><value>delete</value><value>alphabet</value><value>acos</value><value>bessel_i</value><value>%Gamma</value><value>qunit</value><value>maxpsifracdenom</value><value>quad_qawc</value><value>circulant</value><value>impulses</value><value>outofpois</value><value>find_root</value><value>%Alpha</value><value>ordergreatp</value><value>style</value><value>array</value><value>Sum</value><value>ratexpand</value><value>contour</value><value>polar_to_xy</value><value>gf_degree</value><value>@1</value><value>sec</value><value>bern</value><value>num</value><value>gammalim</value><value>gensym</value><value>ratalgdenom</value><value>expr</value><value>nthroot</value><value>alias</value><value>jacobi_cs</value><value>echelon</value><value>matrixp</value><value>copy</value><value>rgb2level</value><value>old_stdout</value><value>genmatrix</value><value>doscmxops</value><value>SPLITS IN Q</value><value>ef_random</value><value>li</value><value>bottomup</value><value>poislim</value><value>copylist</value><value>timer_reset</value><value>ztics</value><value>gnuplot_default_term_command</value><value>macros</value><value>black</value><value>beta</value><value>gf_compose</value><value>plot2d</value><value>√</value><value>eulerpoly</value><value>dotexptsimp</value><value>inverse_jacobi_nc</value><value>legend</value><value>nognuplot_strings</value><value>coeff</value><value>gf_random_normal</value><value>minus</value><value>integer</value><value>sinh</value><value>lhs</value><value>functions</value><value>%psi</value><value>bit_lsh</value><value>old_stderr</value><value>get_element</value><value>addmatrices</value><value>%piargs</value><value>control</value><value>ratsimp</value><value>minf</value><value>unknown</value><value>acoth</value><value>ef_unset</value><value>multi_elem</value><value>combine</value><value>decode_time</value><value>algexact</value><value>expintegral_shi</value><value>last</value><value>algsys</value><value>crering</value><value>value</value><value>gf_irreducible</value><value>diag_matrix</value><value>tr_optimize_max_loop</value><value>generalring</value><value>spherical_bessel_j</value><value>same_xyz</value><value>elliptic_kc</value><value>depend</value><value>letsimp</value><value>hankel_2</value><value>prefer_d</value><value>erf_generalized</value><value>gf_exponent</value><value>readline</value><value>breakup</value><value>derivsubst</value><value>kind</value><value>pathname_name</value><value>%rho</value><value>dispform</value><value>sumcontract</value><value>to_cl</value><value>system</value><value>plog</value><value>eivals</value><value>ef_compose</value><value>verify_html_index</value><value>exptisolate</value><value>nset</value><value>declare_index_properties</value><value>funmake</value><value>untellrat</value><value>multthru</value><value>gf_set</value><value>gf_at</value><value>ldefint</value><value>is-boole-verify</value><value>full</value><value>staircase</value><value>orthopoly_weight</value><value>hankel_1</value><value>psubstitute</value><value>table_form</value><value>Negterm</value><value>pfeformat</value><value>rootsconmode</value><value>nalgfac</value><value>orthogonal_complement</value><value>g566</value><value>gnuplot_close</value><value>zn_primroot_p</value><value>rootsepsilon</value><value>taylorinfo</value><value>find_runs</value><value>interval</value><value>content</value><value>to_poly_solve</value><value>g552</value><value>green</value><value>logy</value><value>nonscalarp</value><value>ibase</value><value>absolute_real_time</value><value>gf_nth_root</value><value>ordering</value><value>sqfr</value><value>floatnump</value><value>nognuplot_svg_background</value><value>poisz</value><value>set_display</value><value>stardisp</value><value>hashed</value><value>wxboxplot</value><value>permp</value><value>find_root_rel</value><value>ef_p2l</value><value>properties</value><value>ef_exponent</value><value>postfix</value><value>allbut</value><value>bit_xor</value><value>random_normal</value><value>appendfile</value><value>finite</value><value>ef_matmult</value><value>printprops</value><value>stringp</value><value>invert</value><value>ldisplay</value><value>with_slider</value><value>total</value><value>facts</value><value>acosh</value><value>del</value><value>∞</value><value>trace_options</value><value>resolvante_bipartite</value><value>gf_unset</value><value>&gt;=</value><value>%o1</value><value>gnuplot_preamble</value><value>factorflag</value><value>round</value><value>lgtreillis</value><value>matrix_element_add</value><value>oddp</value><value>maxnegex</value><value>epsilon</value><value>analytic</value><value>romberg</value><value>jacobi_am</value><value>mode_identity</value><value>ident</value><value>gf_primitive_p</value><value>eval_when</value><value>zn_primroot</value><value>nounify</value><value>intopois</value><value>freshline</value><value>ef_norm</value><value>both</value><value>assume</value><value>column_names</value><value>%edispflag</value><value>nointegrate</value><value>logx</value><value>multi_orbit</value><value>nzetai</value><value>wxwidgetsversion</value><value>find_root_abs</value><value>floatnum</value><value>subres</value><value>epsabs</value><value>exptdispflag</value><value>substring</value><value>pollard_rho_limit</value><value>union</value><value>perm_unrank</value><value>niceindices</value><value>sinc</value><value>boxplot</value><value>%chi</value><value>clear_rules</value><value>ef_p2n</value><value>csign</value><value>g519</value><value>gf_primitive_poly</value><value>gf_add_table</value><value>polynomialp</value><value>norun_viewer</value><value>file_type_maxima</value><value>trigreduce</value><value>most_negative_float</value><value>totaltime</value><value>quad_qaws</value><value>asymp</value><value>xthru</value><value>scsimp</value><value>factorfacsum</value><value>known_units</value><value>gf_sub</value><value>xmaxima</value><value>inverse_jacobi_ds</value><value>gf_matneg</value><value>%Theta</value><value>modulus</value><value>niceindicespref</value><value>scanmap</value><value>pdiff_diff_var_names</value><value>applyb1</value><value>partfrac</value><value>dontfactor</value><value>tr_file_tty_messagesp</value><value>logcontract</value><value>Sigma</value><value>@3</value><value>blue</value><value>makefact</value><value>chebyshev_u</value><value>poisdiff</value><value>bothcoeff</value><value>scalarmatrix</value><value>rk</value><value>pn</value><value>exptsubst</value><value>hsv</value><value>push</value><value>gnuplot_file_args</value><value>ef_gcdex</value><value>tex</value><value>sublis</value><value>⊻</value><value>color_bat_tics</value><value>read_array</value><value>xor</value><value>resimplify</value><value>pz</value><value>!!</value><value>rho</value><value>then</value><value>%iota</value><value>rational</value><value>@2</value><value>fullratsubst</value><value>tr_exponent</value><value>readchar</value><value>gnuplot_restart</value><value>outermap</value><value>write_data</value><value>posfun</value><value>hgfpoly</value><value>structures</value><value>blockmatrixp</value><value>implicit_plot</value><value>noun</value><value>charpoly</value><value>%omega</value><value>ratsimpexpons</value><value>tr_bind_mode_hook</value><value>lfreeof</value><value>desimp</value><value>number</value><value>untrace_it</value><value>atan2</value><value>activecontext</value><value>perm_parity</value><value>constituent</value><value>nolabels</value><value>filename_merge</value><value>ratnumer</value><value>inexact</value><value>perm_length</value><value>mu</value><value>%Tau</value><value>batchload</value><value>reverse</value><value>inv_mod</value><value>ef_reduction</value><value>slength</value><value>equiv</value><value>perm_next</value><value>pois1</value><value>directory</value><value>rationalize</value><value>kbateman</value><value>ef_cardinality</value><value>expintegral_e1</value><value>chebyshev_t</value><value>oversized</value><value>abramowitz_id</value><value>diff</value><value>collectterms</value><value>fpprintprec</value><value>tellsimp</value><value>grid2d</value><value>ssubst</value><value>inverse_jacobi_ns</value><value>time/call</value><value>gausselim</value><value>expintegral_e</value><value>diagmatrix</value><value>opsubst</value><value>perm_lex_rank</value><value>gfactor</value><value>columnswap</value><value>integrate</value><value>nologx</value><value>eliminate</value><value>rules</value><value>step</value><value>is</value><value>applyb2</value><value>irrational</value><value>for</value><value>slessp</value><value>set_draw_defaults</value><value>timedate</value><value>@4</value><value>scatterplot</value><value>pngcairo</value><value>expand</value><value>partpol</value><value>besselexpand</value><value>%iargs</value><value>maxpsinegint</value><value>announce_rules_firing</value><value>with_slider_draw_bare</value><value>∫</value><value>}</value><value>tab</value><value>partition_set</value><value>terminated</value><value>macroexpand1</value><value>oddfun</value><value>trigexpand</value><value>ef_coeff_inv</value><value>picturep</value><value>unit_in_last_place</value><value>cfdisrep</value><value>sha1sum</value><value>piece</value><value>clause</value><value>timer_devalue</value><value>listofvars</value><value>lreduce</value><value>gf_p2l</value><value>nextlayerfactor</value><value>printvarlist</value><value>airy_ai</value><value>go</value><value>logsimp</value><value>nummod</value><value>limit</value><value>sdowncase</value><value>inverse_jacobi_cn</value><value>%tau</value><value>neg</value><value>%Psi</value><value>primes</value><value>numer_pbranch</value><value>column_reduce</value><value>join</value><value>gf_info</value><value>nology</value><value>ef_random_normal</value><value>engineering_format_floats</value><value>ef_reduce</value><value>p</value><value>hessian</value><value>entermatrix</value><value>lopow</value><value>sinvertcase</value><value>rhs</value><value>realpart</value><value>translate</value><value>factorsum</value><value>linsolve_params</value><value>triginverses</value><value>ldisp</value><value>min</value><value>Upsilon</value><value>noplot_realpart</value><value>gf_normal</value></wxxml-symbols><variables><variable>
+<name>gnuplot_command</name>
+<value>/opt/homebrew/bin/gnuplot</value>
+</variable><variable>
+<name>gentranlang</name></variable><variable>
+<name>*maxima-demodir*</name>
+<value>/opt/homebrew/Cellar/maxima/5.50.0_2/share/maxima/5.50.0/demo</value>
+</variable><variable>
+<name>*autoconf-version*</name>
+<value>5.50.0</value>
+</variable><variable>
+<name>maxima_userdir</name>
+<value>/Users/diego/.maxima</value>
+</variable><variable>
+<name>maxima_tempdir</name>
+<value>/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T</value>
+</variable><variable>
+<name>*maxima-sharedir*</name>
+<value>/opt/homebrew/Cellar/maxima/5.50.0_2/share/maxima/5.50.0/share</value>
+</variable><variable>
+<name>*maxima-infodir*</name>
+<value>/opt/homebrew/Cellar/maxima/5.50.0_2/share/info</value>
+</variable><variable>
+<name>*maxima-htmldir*</name>
+<value>/opt/homebrew/Cellar/maxima/5.50.0_2/share/maxima/5.50.0/doc/html</value>
+</variable><variable>
+<name>*autoconf-host*</name>
+<value>arm-apple-darwin25.6.0</value>
+</variable><variable><name>*lisp-name*</name><value>SBCL</value></variable><variable><name>*lisp-version*</name><value>2.6.9</value></variable><variable><name>*wx-interrupt-channel-available*</name><value>true</value></variable></variables>
+<variables><variable>
+<name>output_format_for_help</name>
+<value>text</value>
+</variable><variable>
+<name>wxsubscripts</name>
+<value>all</value>
+</variable><variable>
+<name>opsubst</name>
+<value>true</value>
+</variable><variable>
+<name>logexpand</name>
+<value>true</value>
+</variable><variable>
+<name>sinnpiflag</name></variable><variable>
+<name>lmxchar</name>
+<value>[</value>
+</variable><variable>
+<name>numer</name>
+<value>false</value>
+</variable><variable>
+<name>stringdisp</name>
+<value>false</value>
+</variable><variable>
+<name>domain</name>
+<value>real</value>
+</variable><variable>
+<name>showtime</name>
+<value>false</value>
+</variable><variable>
+<name>algebraic</name>
+<value>false</value>
+</variable><variable>
+<name>debugmode</name>
+<value>false</value>
+</variable><variable>
+<name>engineering_format_floats</name></variable><variable>
+<name>wxanimate_autoplay</name>
+<value>false</value>
+</variable><variable>
+<name>display2d_unicode</name>
+<value>true</value>
+</variable><variable><name>display2d</name><value>true</value></variable><variable>
+<name>*alt-display2d*</name>
+<value>mydispla</value>
+</variable><variable><name>*maxima-operators*</name><value>&lt;operators&gt;&lt;operator&gt;^^&lt;/operator&gt;
+&lt;operator&gt;and&lt;/operator&gt;
+&lt;operator&gt;not&lt;/operator&gt;
+&lt;operator&gt;{&lt;/operator&gt;
+&lt;operator&gt;do_in&lt;/operator&gt;
+&lt;operator&gt;[&lt;/operator&gt;
+&lt;operator&gt;=&lt;/operator&gt;
+&lt;operator&gt;(&lt;/operator&gt;
+&lt;operator&gt;do&lt;/operator&gt;
+&lt;operator&gt;if&lt;/operator&gt;
+&lt;operator&gt;/&lt;/operator&gt;
+&lt;operator&gt;&amp;lt;&lt;/operator&gt;
+&lt;operator&gt;(&lt;/operator&gt;
+&lt;operator&gt;*&lt;/operator&gt;
+&lt;operator&gt;'&lt;/operator&gt;
+&lt;operator&gt;*&lt;/operator&gt;
+&lt;operator&gt;/&lt;/operator&gt;
+&lt;operator&gt;:=&lt;/operator&gt;
+&lt;operator&gt;/&lt;/operator&gt;
+&lt;operator&gt;.&lt;/operator&gt;
+&lt;operator&gt;#&lt;/operator&gt;
+&lt;operator&gt;!!&lt;/operator&gt;
+&lt;operator&gt;and&lt;/operator&gt;
+&lt;operator&gt;&amp;gt;=&lt;/operator&gt;
+&lt;operator&gt;=&lt;/operator&gt;
+&lt;operator&gt;+&lt;/operator&gt;
+&lt;operator&gt;&amp;lt;&lt;/operator&gt;
+&lt;operator&gt;$BFLOAT&lt;/operator&gt;
+&lt;operator&gt;!!&lt;/operator&gt;
+&lt;operator&gt;+&lt;/operator&gt;
+&lt;operator&gt;::&lt;/operator&gt;
+&lt;operator&gt;:=&lt;/operator&gt;
+&lt;operator&gt;^&lt;/operator&gt;
+&lt;operator&gt;&amp;lt;=&lt;/operator&gt;
+&lt;operator&gt;&amp;lt;=&lt;/operator&gt;
+&lt;operator&gt;-&lt;/operator&gt;
+&lt;operator&gt;:&lt;/operator&gt;
+&lt;operator&gt;{&lt;/operator&gt;
+&lt;operator&gt;-&lt;/operator&gt;
+&lt;operator&gt;&amp;gt;=&lt;/operator&gt;
+&lt;operator&gt;@&lt;/operator&gt;
+&lt;operator&gt;do_in&lt;/operator&gt;
+&lt;operator&gt;do&lt;/operator&gt;
+&lt;operator&gt;--&amp;gt;&lt;/operator&gt;
+&lt;operator&gt;#&lt;/operator&gt;
+&lt;operator&gt;^&lt;/operator&gt;
+&lt;operator&gt;.&lt;/operator&gt;
+&lt;operator&gt;/&lt;/operator&gt;
+&lt;operator&gt;^^&lt;/operator&gt;
+&lt;operator&gt;or&lt;/operator&gt;
+&lt;operator&gt;::=&lt;/operator&gt;
+&lt;operator&gt;::=&lt;/operator&gt;
+&lt;operator&gt;!&lt;/operator&gt;
+&lt;operator&gt;'&lt;/operator&gt;
+&lt;operator&gt;::&lt;/operator&gt;
+&lt;operator&gt;or&lt;/operator&gt;
+&lt;operator&gt;not&lt;/operator&gt;
+&lt;operator&gt;$SUBVAR&lt;/operator&gt;
+&lt;operator&gt;&amp;gt;&lt;/operator&gt;
+&lt;operator&gt;[&lt;/operator&gt;
+&lt;operator&gt;!&lt;/operator&gt;
+&lt;operator&gt;&amp;gt;&lt;/operator&gt;
+&lt;operator&gt;--&amp;gt;&lt;/operator&gt;
+&lt;operator&gt;:&lt;/operator&gt;
+&lt;operator&gt;if&lt;/operator&gt;
+&lt;operator&gt;}&lt;/operator&gt;
+&lt;/operators&gt;</value></variable></variables>
+<PROMPT><math><st>Is </st><mi lisp="*var-tag*">a</mi><st> positive or negative?</st></math></PROMPT>
+<math><lbl altCopy="%o1">(%o1) </lbl><mfrac lisp="wxxml-mquotient"><mrow><fn lisp="wxxml-function"><fnm lisp="wxxml-function">atan</fnm><mrow><p><mrow><mfrac lisp="wxxml-mquotient"><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><q><mi lisp="*var-tag*">a</mi></q></mrow></mfrac></mrow></p></mrow></fn></mrow><mrow><q><mi lisp="*var-tag*">a</mi></q></mrow></mfrac></math>
+<PROMPT>(%i2) </PROMPT><math><lbl altCopy="%o2">(%o2) </lbl><mn>4</mn></math>
+<PROMPT>(%i3) </PROMPT>
