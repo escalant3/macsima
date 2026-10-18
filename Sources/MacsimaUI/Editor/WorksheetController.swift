@@ -186,7 +186,10 @@ public final class WorksheetController {
     public func answer(_ text: String, for id: UUID) {
         guard asking == id, let session else { return }
         asking = nil
-        enqueue(id, .answered(text))
+        // Keep what Maxima gets (the session adds a missing ";"), as wxMaxima stores it.
+        var sent = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !sent.hasSuffix(";") && !sent.hasSuffix("$") { sent += ";" }
+        enqueue(id, .answered(sent))
         Task {
             do { try await session.answer(text) } catch { statusMessage = "\(error)" }
         }
