@@ -20,7 +20,7 @@ let package = Package(
         .library(name: "MaximaKit", targets: ["MaximaKit"]),
         .library(name: "WXMLKit", targets: ["WXMLKit"]),
         .library(name: "WorksheetKit", targets: ["WorksheetKit"]),
-        .executable(name: "Macsima", targets: ["Macsima"]),
+        .library(name: "MacsimaUI", targets: ["MacsimaUI"]),
         .executable(name: "maxima-spike", targets: ["maxima-spike"]),
         .executable(name: "maxima-session", targets: ["maxima-session"]),
     ],
@@ -32,11 +32,9 @@ let package = Package(
         ),
         .target(name: "WXMLKit"),
         .target(name: "WorksheetKit"),
-        .executableTarget(
-            name: "Macsima",
-            dependencies: ["MaximaKit", "WXMLKit", "WorksheetKit"],
-            path: "App/Macsima"
-        ),
+        // Everything the app shows. The app target itself (App/Macsima, built
+        // from project.yml with XcodeGen) only holds the @main entry point.
+        .target(name: "MacsimaUI", dependencies: ["MaximaKit", "WXMLKit", "WorksheetKit"]),
         // Phase 0 feasibility spike: raw socket link to Maxima, used to record transcripts.
         .executableTarget(name: "maxima-spike"),
         // Phase 1 exit test: runs a session script through MaximaSession.

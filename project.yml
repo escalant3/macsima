@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Generates Macsima.xcodeproj (gitignored):  xcodegen generate
+# Build:  xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build
+name: Macsima
+options:
+  bundleIdPrefix: local.macsima
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  Macsima:
+    path: .
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: YES
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    # Personal tool: ad-hoc signing, no sandbox, no hardened runtime (CLAUDE.md).
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: NO
+targets:
+  Macsima:
+    type: application
+    platform: macOS
+    sources:
+      - App/Macsima
+    dependencies:
+      - package: Macsima
+        product: MacsimaUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.macsima.Macsima
+        PRODUCT_NAME: Macsima
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: App/Macsima/Info.plist
+      properties:
+        CFBundleDisplayName: Macsima
+        CFBundleShortVersionString: "0.2"
+        CFBundleVersion: "1"
+        LSApplicationCategoryType: public.app-category.education
+        NSHumanReadableCopyright: GPL-2.0-or-later
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: wxMaxima Worksheet
+            CFBundleTypeRole: Editor
+            # Alternate: never take over .wxmx from wxMaxima.
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [net.sf.wxmaxima.wxmx]
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: net.sf.wxmaxima.wxmx
+            UTTypeDescription: wxMaxima Worksheet
+            UTTypeConformsTo: [public.zip-archive, public.data]
+            UTTypeTagSpecification:
+              public.filename-extension: [wxmx]

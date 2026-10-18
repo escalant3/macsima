@@ -2,3 +2,5 @@
 .swiftpm/
 *.swp
 .DS_Store
+Macsima.xcodeproj/
+App/Macsima/Info.plist
