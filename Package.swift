@@ -24,7 +24,11 @@ let package = Package(
         .executable(name: "maxima-spike", targets: ["maxima-spike"]),
     ],
     targets: [
-        .target(name: "MaximaKit"),
+        .target(
+            name: "MaximaKit",
+            exclude: ["Resources/README.md"],
+            resources: [.copy("Resources/wxMathML.lisp")]
+        ),
         .target(name: "WXMLKit"),
         .target(name: "WorksheetKit"),
         .executableTarget(

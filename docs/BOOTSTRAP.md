@@ -247,11 +247,12 @@ Macsima/
   CLAUDE.md              project rules and pointers for Claude Code
   Sources/
     MaximaKit/           engine: process, socket, scanner, session
+      Resources/         wxMathML.lisp copied unmodified from wxMaxima (GPL), a SwiftPM resource
+    maxima-session/      Phase 1 command-line runner for session scripts
     WXMLKit/             math XML to MathML (later a layout tree)
     WorksheetKit/        cells, .wxm and .wxmx read/write
     maxima-spike/        Phase 0 spike (command-line tool)
   App/Macsima/           SwiftUI shell + worksheet view
-  Resources/lisp/        wxMathML.lisp copied unmodified from wxMaxima (GPL)
   docs/
     BOOTSTRAP.md         this document
     WXMX_COMPAT.md       compatibility ledger
@@ -287,7 +288,7 @@ Read in full (as of 2026-10-14):
 
 - [wxMaxima repository README](https://github.com/wxMaxima-developers/wxmaxima)
 - [Maxima.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/Maxima.cpp), [MaximaProcessManager.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaProcessManager.cpp), [MaximaEvaluator.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaEvaluator.cpp), [MaximaInterruptChannel.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaInterruptChannel.cpp), [MaximaProtocol.h](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaProtocol.h)
-- [wxMathML.lisp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/wxMathML.lisp) (the first read was cut off near its end; in Phase 0 the whole file at commit 13e4aee was copied into `Resources/lisp/`)
+- [wxMathML.lisp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/wxMathML.lisp) (the first read was cut off near its end; in Phase 0 the whole file at commit 13e4aee was copied into `Resources/lisp/`, moved in Phase 1 to `Sources/MaximaKit/Resources/`)
 - [Compiling.md](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/Compiling.md)
 - [wxMaxima release Version-26.07.1](https://github.com/wxMaxima-developers/wxmaxima/releases/tag/Version-26.07.1)
 - [Maxima installation page](https://maxima.sourceforge.io/download.html) and [Maxima versions page](https://maxima.sourceforge.io/versions.html)

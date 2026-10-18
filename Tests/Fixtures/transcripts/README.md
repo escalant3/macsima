@@ -12,7 +12,7 @@ Recorded 2026-10-18 on macOS 26.5.1 (arm64) with Homebrew Maxima 5.50.0 (revisio
 - `scenarios/NN-name.scn`: what was sent, one statement per line (directives start with `!`, see the spike's
   header comment). `NAME.raw.scn` / `NAME.glue.scn` run in one mode only.
 - `raw/`: plain Maxima over the `-s` socket, no glue Lisp.
-- `glue/`: the same after sending `Resources/lisp/wxMathML.lisp` (wxMaxima 13e4aee) as one `:lisp-quiet` line,
+- `glue/`: the same after sending `Sources/MaximaKit/Resources/wxMathML.lisp` (wxMaxima 13e4aee) as one `:lisp-quiet` line,
   followed by wxMaxima's setup commands (gnuplot path, interrupt channel, prompt prefix and suffix).
 
 Each scenario runs in a fresh Maxima. Per scenario:

@@ -6,7 +6,7 @@
 set -eu
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 spike="$here/../../../.build/debug/maxima-spike"
-lisp="$here/../../../Resources/lisp/wxMathML.lisp"
+lisp="$here/../../../Sources/MaximaKit/Resources/wxMathML.lisp"
 for mode in raw glue; do
   mkdir -p "$here/$mode"
   for scn in "$here"/scenarios/*.scn; do

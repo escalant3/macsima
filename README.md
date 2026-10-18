@@ -11,4 +11,4 @@ Requires macOS 26 on Apple Silicon, Homebrew Maxima (`brew install maxima`, SBCL
     # Command Line Tools only (no Xcode): plain `swift test` runs zero tests; use
     swift test -Xswiftc -F/Library/Developer/CommandLineTools/Library/Developer/Frameworks
 
-License: GPL-2.0-or-later (see `LICENSE`). `Resources/lisp/wxMathML.lisp` is from wxMaxima, with its own notices.
+License: GPL-2.0-or-later (see `LICENSE`). `Sources/MaximaKit/Resources/wxMathML.lisp` is from wxMaxima, with its own notices.
