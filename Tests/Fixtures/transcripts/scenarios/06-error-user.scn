@@ -1,0 +1,2 @@
+error("custom failure");
+2+2;

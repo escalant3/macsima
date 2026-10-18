@@ -1,0 +1,2 @@
+!wait 30
+wxplot2d(sin(x),[x,0,%pi]);

@@ -1,0 +1,11 @@
+pid=2612
+Loading /Users/diego/.maxima/maxima-init.mac
+Maxima 5.50.0 https://maxima.sourceforge.io
+using Lisp SBCL 2.6.9
+Distributed under the GNU Public License. See the file COPYING.
+Dedicated to the memory of William Schelter.
+The function bug_report() provides bug reporting information.
+(%i1) 
+                       5      4       3       2
+(%o1)                 x  + 5 x  + 10 x  + 10 x  + 5 x + 1
+(%i2) 

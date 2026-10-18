@@ -1,0 +1,1 @@
+Connecting Maxima to server on port 56706

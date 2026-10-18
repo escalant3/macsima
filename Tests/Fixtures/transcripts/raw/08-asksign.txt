@@ -1,0 +1,13 @@
+pid=2711
+Loading /Users/diego/.maxima/maxima-init.mac
+Maxima 5.50.0 https://maxima.sourceforge.io
+using Lisp SBCL 2.6.9
+Distributed under the GNU Public License. See the file COPYING.
+Dedicated to the memory of William Schelter.
+The function bug_report() provides bug reporting information.
+(%i1) Is y positive, negative or zero?
+
+(%o1)                                 pos
+(%i2) 
+(%o2)                                  4
+(%i3) 

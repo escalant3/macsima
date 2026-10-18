@@ -1,0 +1,3 @@
+integrate(x^30*exp(-x^2)*sin(x)^20,x);
+<!signal 2 to process group>
+2+2;

@@ -1,0 +1,1 @@
+plot2d(sin(x),[x,0,%pi],[png_file,"/tmp/macsima-phase0-plot.png"]);

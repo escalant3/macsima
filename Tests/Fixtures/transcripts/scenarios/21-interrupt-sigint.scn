@@ -1,0 +1,4 @@
+!send integrate(x^30*exp(-x^2)*sin(x)^20,x);
+!sleep 3
+!sigint
+2+2;
