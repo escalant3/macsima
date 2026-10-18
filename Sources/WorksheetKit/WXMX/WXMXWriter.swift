@@ -84,21 +84,7 @@ public enum WXMXWriter {
             var attributes = cell.extraAttributes
             if attributes["uuid"] == nil { attributes["uuid"] = cell.id.uuidString.lowercased() }
             let (type, level) = Self.typeAttributes(cell.kind)
-            var questions: [(String, String)] = []
-            var nextQuestion = (attributes.keys.compactMap { key -> Int? in
-                key.hasPrefix("question") ? Int(key.dropFirst("question".count)) : nil
-            }.max() ?? 0) + 1
-            var outputXML = ""
-            for output in cell.outputs {
-                outputXML += self.output(output)
-                if case .question(let prompt, let answer) = output {
-                    let plain = (try? XMLTree.parseFragment(prompt))?.map(\.textContent).joined() ?? ""
-                    questions.append(("question\(nextQuestion)", plain))
-                    questions.append(("answer\(nextQuestion)", answer ?? ""))
-                    nextQuestion += 1
-                }
-            }
-            for (key, value) in questions { attributes[key] = value }
+            let outputXML = cell.outputs.map { self.output($0) }.joined()
 
             var out = "\n<cell uuid=\"\(XMLNode.escapeAttribute(attributes.removeValue(forKey: "uuid")!))\" type=\"\(type)\""
             if let level { out += " sectioning_level=\"\(level)\"" }
@@ -147,8 +133,12 @@ public enum WXMXWriter {
 
         mutating func output(_ output: Output) -> String {
             switch output {
-            case .math(let xml), .question(let xml, _):
+            case .math(let xml):
                 return Self.startLine(xml)
+            case .question(let prompt, let answer):
+                // As wxMaxima keeps them: the prompt, then the answer in an input editor.
+                let text = XMLNode.escapeText(answer ?? "").replacingOccurrences(of: "\n", with: "&#x0A;")
+                return Self.startLine(prompt) + "<editor type=\"input\">\n<line>" + text + "</line>\n</editor>\n"
             case .text(let text):
                 guard !text.isEmpty else { return "" }
                 return "<t breakline=\"true\">" + XMLNode.escapeText(text).replacingOccurrences(of: "\n", with: "&#x0A;") + "</t>"

@@ -80,7 +80,7 @@ struct WXMXRoundTripTests {
         #expect(xml.contains("<wxMaximaDocument version=\"1.5\" zoom=\"120\" activecell=\"3\""))
         #expect(xml.contains("type=\"subsection\" sectioning_level=\"4\""))
         #expect(xml.contains("<line>integrate(sin(x), x);&#x0A;a: 3$ a^2;</line>"))
-        #expect(xml.contains("question1=\"Is y positive?\""))
+        #expect(xml.contains("<st breakline=\"true\">Is </st><mi>y</mi><st> positive?</st><editor type=\"input\">\n<line>pos;</line>"))
     }
 
     @Test func imageNamesAvoidAttachments() throws {
@@ -199,6 +199,15 @@ struct WXMXSampleTests {
         #expect(throws: WXMXError.notAZipArchive) {
             try WXMXReader.read(try Data(contentsOf: Self.dir.appending(path: "\(name).wxmx")))
         }
+    }
+
+    /// wxMaxima keeps an answered question in the output: prompt, then the answer's editor.
+    @Test func questionsFromWxMaxima() throws {
+        let r = try WXMXReader.read(try Data(contentsOf: Self.dir.appending(path: "all-celltypes.wxmx")))
+        let questions = r.worksheet.cells.flatMap(\.outputs).compactMap { o -> String? in
+            if case .question(_, let answer) = o { answer } else { nil }
+        }
+        #expect(questions.contains("y;") && questions.contains("n;"))
     }
 
     @Test func allCellTypes() throws {

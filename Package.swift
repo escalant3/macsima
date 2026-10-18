@@ -64,7 +64,7 @@ let package = Package(
         ),
         .testTarget(
             name: "WXMLKitTests",
-            dependencies: ["WXMLKit", "MaximaKit"],
+            dependencies: ["WXMLKit", "MaximaKit", "WorksheetKit"],
             exclude: ["Snapshots"],
             swiftSettings: [.unsafeFlags(["-F", "\(cltDeveloper)/Frameworks"])]
         ),

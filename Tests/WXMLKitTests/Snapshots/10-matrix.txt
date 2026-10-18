@@ -3,4 +3,4 @@ in:    <math><lbl altCopy="%o1">(%o1) </lbl><tb bracketParens="true"><mtr><mtd><
 label: %o1
 image: -
 text:  1234
-out:   <math display="block"><mrow><mo>(</mo><mtable><mtr><mtd><mrow displaystyle="true"><mn>1</mn></mrow></mtd><mtd><mrow displaystyle="true"><mn>2</mn></mrow></mtd></mtr><mtr><mtd><mrow displaystyle="true"><mn>3</mn></mrow></mtd><mtd><mrow displaystyle="true"><mn>4</mn></mrow></mtd></mtr></mtable><mo>)</mo></mrow></math>
+out:   <math display="block"><mrow><mo>[</mo><mtable><mtr><mtd><mrow displaystyle="true"><mn>1</mn></mrow></mtd><mtd><mrow displaystyle="true"><mn>2</mn></mrow></mtd></mtr><mtr><mtd><mrow displaystyle="true"><mn>3</mn></mrow></mtd><mtd><mrow displaystyle="true"><mn>4</mn></mrow></mtd></mtr></mtable><mo>]</mo></mrow></math>

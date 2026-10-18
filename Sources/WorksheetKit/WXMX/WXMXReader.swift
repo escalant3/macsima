@@ -183,7 +183,8 @@ private struct Reader {
     }
 
     /// Splits `<output><mth>…</mth></output>` into outputs: a new output
-    /// starts at every element marked `breakline="true"`.
+    /// starts at every element marked `breakline="true"`, at every label
+    /// (older files mark no line starts), and after a question's answer.
     mutating func outputs(_ output: XMLNode, attributes: inout [String: String]) -> [Output] {
         var result: [Output] = []
         for mth in output.elementChildren {
@@ -195,11 +196,15 @@ private struct Reader {
             var chunk: [XMLNode] = []
             for node in mth.children {
                 if case .text(let t) = node, t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { continue }
-                if node.attributes["breakline"] == "true", !chunk.isEmpty {
+                if node.attributes["breakline"] == "true" || node.name == "lbl", !chunk.isEmpty {
                     result += outputs(fromChunk: chunk, attributes: &attributes)
                     chunk = []
                 }
                 chunk.append(node)
+                if node.name == "editor" {
+                    result += outputs(fromChunk: chunk, attributes: &attributes)
+                    chunk = []
+                }
             }
             if !chunk.isEmpty { result += outputs(fromChunk: chunk, attributes: &attributes) }
         }
@@ -242,18 +247,15 @@ private struct Reader {
                 return [.image(data: data, format: format.isEmpty ? "png" : format, label: label, attributes: imgAttributes)]
             }
         }
-        let xml = "<math>" + chunk.map(\.xml).joined() + "</math>"
-        // A question this app wrote: its prompt matches a questionN attribute.
-        let plain = chunk.map(\.textContent).joined()
-        for (key, question) in attributes where key.hasPrefix("question") && question == plain {
-            let n = key.dropFirst("question".count)
-            if let answer = attributes["answer\(n)"] {
-                attributes[key] = nil
-                attributes["answer\(n)"] = nil
-                return [.question(prompt: xml, answer: answer.isEmpty ? nil : answer)]
-            }
+        // A question and its answer: the prompt, then <editor type="input">.
+        // (Not when a label is in the chunk: then the editor belongs to some
+        // other layout, as in wxMaxima's hand-made test benches; kept as math.)
+        if let last = chunk.last, last.name == "editor", chunk.count > 1, !chunk.contains(where: { $0.name == "lbl" }) {
+            let answer = last.elementChildren.filter { $0.name == "line" }.map(\.textContent).joined(separator: "\n")
+            let prompt = "<math>" + chunk.dropLast().map(\.xml).joined() + "</math>"
+            return [.question(prompt: prompt, answer: answer.isEmpty ? nil : answer)]
         }
-        return [.math(xml: xml)]
+        return [.math(xml: "<math>" + chunk.map(\.xml).joined() + "</math>")]
     }
 
     /// `(%o3)\t` or `(%o3) ` → `%o3`.

@@ -111,13 +111,22 @@ public enum XMLTreeError: Error, Equatable, Sendable, CustomStringConvertible {
 }
 
 public enum XMLTree {
+    /// Deeper nesting is refused: the tree code is recursive, and a crafted
+    /// file nested 100,000 levels deep would overflow the stack.
+    public static let maxDepth = 512
+
     /// Parses a whole document; returns the root element.
     public static func parse(_ data: Data) throws(XMLTreeError) -> XMLNode {
         let builder = Builder()
         let parser = XMLParser(data: data)
         parser.delegate = builder
         parser.shouldResolveExternalEntities = false
-        guard parser.parse(), let root = builder.roots.first(where: { $0.name != nil }) else {
+        let parsed = parser.parse()
+        if builder.tooDeep {
+            throw .malformed(line: parser.lineNumber, column: parser.columnNumber,
+                             message: "elements nested more than \(maxDepth) levels deep")
+        }
+        guard parsed, let root = builder.roots.first(where: { $0.name != nil }) else {
             throw .malformed(line: parser.lineNumber, column: parser.columnNumber,
                              message: parser.parserError?.localizedDescription ?? "no root element")
         }
@@ -139,9 +148,15 @@ public enum XMLTree {
     private final class Builder: NSObject, XMLParserDelegate {
         var stack: [(name: String, attributes: [String: String], children: [XMLNode])] = []
         var roots: [XMLNode] = []
+        var tooDeep = false
 
         func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?,
                     qualifiedName: String?, attributes: [String: String] = [:]) {
+            guard stack.count < XMLTree.maxDepth else {
+                tooDeep = true
+                parser.abortParsing()
+                return
+            }
             stack.append((name, attributes, []))
         }
 

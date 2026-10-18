@@ -24,11 +24,18 @@ public struct MathOutput: Equatable, Sendable {
 }
 
 public enum MathMLTranslator {
+    /// Elements deeper than this render as their text. Each level costs a few
+    /// KB of stack (about 4.6 KB measured), so 400 levels stay well inside the
+    /// main thread's 8 MB; translate on the main thread (TranslationCache does).
+    public static let maxDepth = 400
+
     /// Every tag the translator handles. Anything else is "unknown".
     public static let knownTags: Set<String> = [
         "math", "mth", "mrow", "lbl", "mi", "mn", "mo", "st", "t", "fnm", "fn", "p", "q", "mfrac",
         "msup", "msub", "munder", "ie", "mmultiscripts", "mprescripts", "none", "tb", "mtr", "mtd",
         "sm", "in", "lm", "d", "at", "hl", "cj", "a", "g", "s", "h", "mspace", "img",
+        // The names wxMaxima writes in .wxmx files for the same constructs.
+        "r", "v", "n", "f", "e", "i", "limit", "editor", "line",
     ]
 
     public static func translate(_ xml: String) -> MathOutput {
@@ -62,6 +69,7 @@ public enum MathMLTranslator {
 }
 
 private struct Context {
+    var depth = 0
     var label: String?
     var imagePaths: [String] = []
     var unknown: Set<String> = []
@@ -71,23 +79,33 @@ private struct Context {
             let text = node.textContent
             return text.trimmingCharacters(in: .whitespaces).isEmpty ? "" : Self.mtext(text)
         }
+        depth += 1
+        defer { depth -= 1 }
+        if depth > MathMLTranslator.maxDepth { return Self.mtext(node.textContent) }
         let kids = node.elementChildren
         switch name {
-        case "mrow" where attrs["list"] == "true" || attrs["set"] == "true":
+        case "mrow" where attrs["list"] == "true" || attrs["set"] == "true",
+             "r" where attrs["list"] == "true" || attrs["set"] == "true":
             // List and set brackets arrive as <t listdelim="true">; size them like parens.
             let outer = fencesStretch
             fencesStretch = Self.isTall(node)
             defer { fencesStretch = outer }
             return row(children)
-        case "math", "mth", "mrow", "d":
+        case "math", "mth", "mrow", "r", "d":
             return row(children)
+        case "editor":
+            // A question's answer, inside an output in .wxmx files.
+            let answer = kids.filter { $0.name == "line" }.map(\.textContent).joined(separator: " ")
+            return answer.isEmpty ? "" : "<mspace width=\"0.5em\"/>" + Self.mtext(answer)
+        case "line":
+            return Self.mtext(node.textContent)
         case "lbl":
             let raw = attrs["altCopy"] ?? node.textContent
             label = raw.trimmingCharacters(in: CharacterSet(charactersIn: "() "))
             return ""
-        case "mi":
+        case "mi", "v":
             return identifier(node.textContent)
-        case "mn":
+        case "mn", "n":
             return "<mn>\(esc(node.textContent))</mn>"
         case "mo":
             return "<mo>\(esc(Self.operatorText(node.textContent)))</mo>"
@@ -97,7 +115,13 @@ private struct Context {
             if attrs["listdelim"] == "true" { return Self.fence(node.textContent, stretchy: fencesStretch) }
             return Self.mtext(node.textContent)
         case "fnm":
-            return "<mi>\(esc(node.textContent))</mi>"
+            // wxMaxima's .wxmx files keep operators (+, −, =) as fnm too.
+            let text = node.textContent
+            if text.isEmpty { return "" }
+            if text.unicodeScalars.allSatisfy({ CharacterSet.alphanumerics.contains($0) || $0 == "_" || $0 == "%" }) {
+                return "<mi>\(esc(text))</mi>"
+            }
+            return "<mo>\(esc(Self.operatorText(text)))</mo>"
         case "fn":
             guard let head = kids.first else { return row(children) }
             let name = head.name == "g" ? greek(head.textContent, asFunction: true) : emit(head)
@@ -112,11 +136,11 @@ private struct Context {
             // so √a clears the bar and √2·√π line up (WebKit sizes each
             // radical to its own content).
             return "<msqrt>\(Self.radicalStrut)\(row(children))</msqrt>"
-        case "mfrac":
+        case "mfrac", "f":
             guard kids.count == 2 else { return unknownElement(node) }
             let line = attrs["line"] == "no" ? " linethickness=\"0\"" : ""
             return "<mfrac\(line)>\(emit(kids[0]))\(emit(kids[1]))</mfrac>"
-        case "msup":
+        case "msup", "e":
             guard kids.count == 2 else { return unknownElement(node) }
             var exponent = emit(kids[1])
             if attrs["mat"] == "true" { exponent = "<mrow><mo>&#x27E8;</mo>\(exponent)<mo>&#x27E9;</mo></mrow>" }
@@ -124,11 +148,24 @@ private struct Context {
         case "msub":
             guard kids.count == 2 else { return unknownElement(node) }
             return "<msub>\(emit(kids[0]))\(emit(kids[1]))</msub>"
-        case "munder":
+        case "munder", "i":
             guard kids.count == 2 else { return unknownElement(node) }
-            // Array subscripts (x[1]) are printed as munder with an "array" lisp attribute.
-            let tag = (attrs["lisp"] ?? "").contains("array") ? "msub" : "munder"
+            // Array subscripts (x[1]) are printed as munder with an "array" lisp
+            // attribute; .wxmx files write subscripts as i.
+            let tag = name == "i" || (attrs["lisp"] ?? "").contains("array") ? "msub" : "munder"
             return "<\(tag)>\(emit(kids[0]))\(emit(kids[1]))</\(tag)>"
+        case "ie" where kids.dropFirst().contains { $0.attribute("pos") != nil }:
+            // Pre- and post-scripts as .wxmx files write them: children marked
+            // pos="presub|presup|postsub|postsup" after the base.
+            var part: [String: String] = [:]
+            for kid in kids.dropFirst() {
+                if let pos = kid.attribute("pos") { part[pos] = emit(kid) }
+            }
+            var out = "<mmultiscripts>" + emit(kids[0]) + (part["postsub"] ?? "<none/>") + (part["postsup"] ?? "<none/>")
+            if part["presub"] != nil || part["presup"] != nil {
+                out += "<mprescripts/>" + (part["presub"] ?? "<none/>") + (part["presup"] ?? "<none/>")
+            }
+            return out + "</mmultiscripts>"
         case "ie":
             guard kids.count == 3 else { return unknownElement(node) }
             return "<msubsup>\(emit(kids[0]))\(emit(kids[1]))\(emit(kids[2]))</msubsup>"
@@ -140,8 +177,16 @@ private struct Context {
             return "<none/>"
         case "tb":
             let rows = kids.map { emit($0) }.joined()
-            let (open, close) = attrs["bracketParens"] == "true" ? ("(", ")") : ("[", "]")
-            return "<mrow><mo>\(open)</mo><mtable>\(rows)</mtable><mo>\(close)</mo></mrow>"
+            // As wxMaxima's MatrCell: square for bracketParens (Maxima's default
+            // lmxchar "["), angled, straight or none when asked, round otherwise.
+            let (open, close): (String, String) =
+                attrs["bracketParens"] == "true" ? ("[", "]")
+                : attrs["angledParens"] == "true" ? ("&#x27E8;", "&#x27E9;")
+                : attrs["straightParens"] == "true" ? ("|", "|")
+                : attrs["noneParens"] == "true" ? ("", "")
+                : ("(", ")")
+            let fence = { (s: String) in s.isEmpty ? "" : "<mo>\(s)</mo>" }
+            return "<mrow>\(fence(open))<mtable>\(rows)</mtable>\(fence(close))</mrow>"
         case "mtr":
             return "<mtr>\(kids.map { emit($0) }.joined())</mtr>"
         case "mtd":
@@ -158,7 +203,7 @@ private struct Context {
             }
             guard kids.count == 4 else { return unknownElement(node) }
             return "<mrow><msubsup><mo>&#x222B;</mo>\(emit(kids[0]))\(emit(kids[1]))</msubsup>\(emit(kids[2]))<mspace width=\"0.2em\"/>\(emit(kids[3]))</mrow>"
-        case "lm":
+        case "lm", "limit":
             guard kids.count == 3 else { return unknownElement(node) }
             return "<mrow><munder><mo>\(esc(kids[0].textContent))</mo>\(emit(kids[1]))</munder>\(emit(kids[2]))</mrow>"
         case "at":

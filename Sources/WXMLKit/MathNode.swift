@@ -38,13 +38,16 @@ public enum MathNode: Equatable, Sendable {
 /// Parses math XML (a whole `<math>…</math>` or `<mth>…</mth>` chunk, or any
 /// fragment) into a tree. Returns nil when the XML is not well formed.
 public enum MathXMLParser {
+    /// Deeper nesting is refused (the tree code is recursive; see MathMLTranslator.maxDepth).
+    public static let maxDepth = 512
+
     public static func parse(_ xml: String) -> MathNode? {
         // A fragment may have several top-level nodes; wrap it so XMLParser sees one root.
         let delegate = TreeBuilder()
         let parser = XMLParser(data: Data("<wxml-root>\(xml)</wxml-root>".utf8))
         parser.delegate = delegate
         parser.shouldProcessNamespaces = false
-        guard parser.parse(), let root = delegate.root else { return nil }
+        guard parser.parse(), !delegate.tooDeep, let root = delegate.root else { return nil }
         let top = root.children
         if top.count == 1, top[0].name != nil { return top[0] }
         return .element(name: "mrow", attributes: [:], children: top)
@@ -54,9 +57,15 @@ public enum MathXMLParser {
 private final class TreeBuilder: NSObject, XMLParserDelegate {
     private var stack: [(name: String, attributes: [String: String], children: [MathNode])] = []
     var root: MathNode?
+    var tooDeep = false
 
     func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?,
                 qualifiedName: String?, attributes: [String: String] = [:]) {
+        guard stack.count < MathXMLParser.maxDepth else {
+            tooDeep = true
+            parser.abortParsing()
+            return
+        }
         stack.append((name, attributes, []))
     }
 
