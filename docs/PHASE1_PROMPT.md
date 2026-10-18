@@ -1,0 +1,23 @@
+Read CLAUDE.md, docs/BOOTSTRAP.md and docs/PHASE0_REPORT.md. We are doing Phase 1 only: the engine kit (MaximaKit). No UI, no MathML translation, no .wxmx work.
+
+Goal: a tested Swift engine that starts Maxima, talks to it through the glue Lisp, runs statements one at a time, handles questions, errors, interrupts, kills and restarts, and never leaves processes or temp files behind. Everything must be testable without a window, mostly from the Phase 0 transcripts.
+
+Work in this order, one commit per step, and run `swift build` and `swift test` (check N > 0) before each commit.
+
+1. Tag scanner (pure, no I/O). `feed(Data) -> [Event]`. Events: prompt (raw content), math chunk (raw XML, not parsed), plain text, and a generic tag event for the rest (`variables`, `wxxml-symbols`, `suppressOutput`, `statusbar`, `wxxml-key`, `wxxml-asciimath`, `wxasync`, `watch_variables_add`, `html-manual-keywords`, `worksheetexport`). Top-level tags have no attributes; inner tags do, so match only top-level open tags. Handle UTF-8 split across reads, strip carriage returns, keep the `pid=N` line as text. Tests: every fixture fed whole and fed in random chunk sizes (including 1 byte) must give identical events. Time the 75 KB startup fixture.
+
+2. Prompt classifier and statement splitter.
+   - Classifier: a PROMPT holding a bare `(%iN)` label (with or without trailing space) is a main prompt; a PROMPT containing `math` is a question; `(dbm:N)` is debugger; `MAXIMA>` is Lisp mode. Test against the fixtures.
+   - Splitter: split cell text into statements on `;` and `$`, respecting strings, `/* */` comments and `:lisp` lines; add a missing terminator; refuse unbalanced parentheses with a clear error. Unit tests with tricky cases.
+
+3. Process and server. Bind 127.0.0.1 port 0, spawn `/opt/homebrew/bin/maxima -s <port>` with posix_spawn and POSIX_SPAWN_SETPGROUP, set MAXIMA_AUTH_CODE to a fresh random token. Accept the control connection; treat a second connection as the interrupt channel only after its token handshake. Drop all data until `<wxxml-key>` matches the token. Send the glue Lisp the way Phase 0 did (one `:lisp-quiet` line) and do not wait for prompts after setup lines. Connect watchdog: if not connected within 5 s, report it; on early exit retry a limited number of times, then fail with a clear error.
+
+4. MaximaSession actor and state machine. States: starting, authenticating, configuring, idle, busy, question, debugger, lisp, dead. Public API roughly: `start()`, `evaluate(cellID:, text:) -> AsyncStream<SessionEvent>`, `answer(_:)`, `interrupt()`, `restart()`, `shutdown()`. Before each statement send `:lisp-quiet (setq $linel N)` and, when the cell changes, the `*wx-cell-id*` line, as wxMaxima does. Send the next statement only after a main prompt. Detect errors from the plain-text output (learn the exact text from the fixtures, document what you rely on); on error, stop the rest of that cell's queue by default. Route `wxasync` output to its cell ID. Test the state machine with a fake transport that replays recorded transcripts, so most tests run without Maxima.
+
+5. Interrupt, kill, restart, orphan guard. Interrupt via the second socket, falling back to SIGINT to the process group. Kill: close socket, SIGTERM the group, SIGKILL after 2 s, then delete leftover `maxout*` files in Maxima's temp folder. Keep a signal-safe list of child PIDs and kill them from SIGTERM, SIGINT and SIGHUP handlers, so quitting the host never orphans Maxima.
+
+6. Exit test. A command-line target (for example `maxima-session`) that runs a script file through MaximaSession and prints a readable event log. Write a 50-command script that includes plain results, `$` statements, at least two kinds of error, an `asksign` question answered from the script, an interrupt through the channel, an interrupt through SIGINT, a kill while busy followed by a restart, a `wxplot2d`, and a `:lisp` line. Run it against the real Maxima and add it as an integration test that is skipped when /opt/homebrew/bin/maxima is missing. After the run, check that no Maxima or gnuplot processes and no `maxout*` files remain.
+
+7. Write docs/PHASE1_REPORT.md: what works, what the public API looks like, what differed from BOOTSTRAP.md (update BOOTSTRAP.md where it was wrong), what is still untested (for example the debugger, `to_lisp()`, paths with spaces), and anything that changes Phase 2. Then update the "Current phase" section of CLAUDE.md.
+
+Rules: use fixtures and normalize the machine-specific text listed in the fixtures README; do not compare it literally. Record new transcripts with record.sh when you need behaviour Phase 0 did not capture. Do not start Phase 2. Stop when the report is written and show me its summary.
