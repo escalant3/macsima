@@ -68,4 +68,5 @@ Things to know when using these as test fixtures:
 | 27 | background job (glue only, Phase 1) | cell id `cell-A`, `wx-spawn-async` that prints `done` after 1 s, cell id `cell-B`, `2+2;`, `3+3;`: the `<wxasync>` keeps `cell-A` |
 | 28 | more errors (glue only, Phase 1) | `?car(1);` (Lisp error), `error("value is", x^2);` (message as a `math` chunk), `2+2;` |
 | 29 | Lisp mode (glue only, Phase 1) | `to_lisp();`, `(+ 1 2)`, `(to-maxima)`, `2+2;` |
+| 31 | display forms (glue only, Phase 2) | 47 statements, one per 2D construct: noun sum, product, integrals, limits, derivatives, `at`, `box`, subscripts, conjugate, abs, roots, lists, sets, matrices, operators, Greek, floats, a long expansion |
 | 30 | debugger (glue only, Phase 1) | `debugmode(true)$`, `error("x");`, `:top`, `2+2;` |
