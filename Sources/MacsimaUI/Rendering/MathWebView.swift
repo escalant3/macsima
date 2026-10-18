@@ -132,7 +132,7 @@ public struct ImageOutputView: View {
     }
 
     public var body: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: CGFloat(MathHTML.gap)) {
             Text(label.map { "(\($0))" } ?? "")
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(Color(white: 0.54))

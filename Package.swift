@@ -49,6 +49,16 @@ let package = Package(
             linkerSettings: [.unsafeFlags(cltTestingFlags)]
         ),
         .testTarget(
+            name: "WorksheetKitTests",
+            dependencies: ["WorksheetKit"],
+            swiftSettings: [.unsafeFlags(["-F", "\(cltDeveloper)/Frameworks"])]
+        ),
+        .testTarget(
+            name: "MacsimaUITests",
+            dependencies: ["MacsimaUI", "WorksheetKit"],
+            swiftSettings: [.unsafeFlags(["-F", "\(cltDeveloper)/Frameworks"])]
+        ),
+        .testTarget(
             name: "WXMLKitTests",
             dependencies: ["WXMLKit", "MaximaKit"],
             exclude: ["Snapshots"],

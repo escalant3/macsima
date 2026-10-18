@@ -1,0 +1,18 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Runs a key script against the Debug app and checks its dumps.
+# Usage (repository root, after xcodebuild): Tests/Fixtures/keyscripts/run.sh editor-basics
+# The app is activated with an Apple Event; key events are synthesized inside
+# the app (KeyScriptDriver), so no Accessibility permission is needed.
+set -eu
+name=$1
+app=.build/xcode/Build/Products/Debug/Macsima.app/Contents/MacOS/Macsima
+mkdir -p .build/keyscripts
+rm -f .build/keyscripts/"${name%%-*}"-*.json
+"$app" -NSShowAppCentricOpenPanelInsteadOfUntitledFile NO -MacsimaKeyScript "Tests/Fixtures/keyscripts/$name.keys" 2>/dev/null &
+pid=$!
+sleep 1
+osascript -e 'tell application "Macsima" to activate' >/dev/null
+for _ in $(seq 1 60); do sleep 1; kill -0 $pid 2>/dev/null || break; done
+kill $pid 2>/dev/null || true
+python3 "Tests/Fixtures/keyscripts/check.py" "$name"

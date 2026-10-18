@@ -1,0 +1,27 @@
+# Editor basics (Phase 2, step 4): typing, Return vs Shift+Return, insert
+# shortcuts, undo of typing and of an insert, delete. Dumps go to
+# .build/keyscripts/ and are checked by run.sh.
+type x+1;
+key return
+type y
+key return shift
+dump .build/keyscripts/editor-1.json
+key 1 cmd
+type Some prose.
+key 2 cmd
+type A title
+key 3 cmd
+type A section
+key 4 cmd
+type A subsection
+key 0 cmd
+type diff(x^3,x);
+dump .build/keyscripts/editor-2.json
+shot .build/keyscripts/editor.png
+key z cmd
+dump .build/keyscripts/editor-3.json
+key z cmd
+dump .build/keyscripts/editor-4.json
+key backspace cmd shift
+dump .build/keyscripts/editor-5.json
+quit

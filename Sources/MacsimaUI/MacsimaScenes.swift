@@ -11,11 +11,17 @@ extension UTType {
 
 /// The app's scenes: one document window per worksheet.
 public struct MacsimaScenes: Scene {
-    public init() {}
+    public init() {
+        #if DEBUG
+        Task { @MainActor in KeyScriptDriver.startIfRequested() }
+        #endif
+    }
 
     public var body: some Scene {
-        DocumentGroup(newDocument: { WorksheetDocument() }) { file in
+        DocumentGroup(newDocument: { WorksheetDocument(worksheet: DemoWorksheet.requested ? DemoWorksheet.make() : .empty()) }) { file in
             WorksheetWindow(document: file.document)
         }
+        .defaultSize(width: 900, height: 980)
+        .commands { WorksheetCommands() }
     }
 }
