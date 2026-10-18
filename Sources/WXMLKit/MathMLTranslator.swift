@@ -210,11 +210,18 @@ private struct Context {
 
     /// Children in an `mrow`. Hidden multiplication (`h`) is a thin space, as
     /// with wxMaxima's default "hide multiplication sign", except between two
-    /// numbers (`1.5·10^-10`), where a space would read as one number.
+    /// numbers (`1.5·10^-10`), where a space would read as one number, and
+    /// after a differential `d`, where it is dropped.
     mutating func row(_ nodes: [MathNode]) -> String {
         let elements = nodes.filter { $0.name != nil || !$0.textContent.trimmingCharacters(in: .whitespaces).isEmpty }
         var parts: [String] = []
         for (i, node) in elements.enumerated() {
+            // A differential binds to its variable: d x prints as dx (as the
+            // integral's dx already does), while dx dy keeps its thin space.
+            if node.name == "h", i > 0, elements[i - 1].name == "s",
+               elements[i - 1].textContent == "d" {
+                continue
+            }
             if node.name == "h", i > 0, i + 1 < elements.count,
                Self.isNumber(elements[i - 1]), Self.isNumber(elements[i + 1]) {
                 parts.append("<mo>&#x22C5;</mo>")

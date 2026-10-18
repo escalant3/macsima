@@ -150,6 +150,9 @@ struct MathMLTranslatorTests {
     @Test func hiddenMultiplication() {
         #expect(ml("<math><mrow><mn>1.5</mn><h>*</h><msup><mn>10</mn><mn>-10</mn></msup></mrow></math>").contains("&#x22C5;"))
         #expect(!ml("<math><mn>2</mn><h>*</h><mi>x</mi></math>").contains("&#x22C5;"))
+        // The differential's d sits right against its variable; dx and dy stay apart.
+        let denominator = ml(#"<math><mrow><s lisp="wxxml-tag">d</s><h>*</h><mi>x</mi><h>*</h><s lisp="wxxml-tag">d</s><h>*</h><mi>y</mi></mrow></math>"#)
+        #expect(denominator == #"<math display="block"><mrow><mi mathvariant="normal">d</mi><mi>x</mi><mspace width="0.17em"/><mi mathvariant="normal">d</mi><mi>y</mi></mrow></math>"#)
     }
 
     @Test func unknownTagsKeepTheirText() {
