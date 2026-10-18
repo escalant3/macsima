@@ -21,6 +21,8 @@ public final class MathWKWebView: WKWebView {
     /// Number of web views that have reported a size at least once.
     @MainActor public static var sizedCount = 0
     private var hasSized = false
+    /// Token of the page loaded last; size reports with another token are stale.
+    private var pageToken = 0
     private var handler: SizeHandler?
 
     public init() {
@@ -54,16 +56,19 @@ public final class MathWKWebView: WKWebView {
     }
 
     public func show(mathML: String, label: String?) {
-        loadHTMLString(MathHTML.page(mathML: mathML, label: label), baseURL: nil)
+        pageToken += 1
+        loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken), baseURL: nil)
     }
 
     private final class SizeHandler: NSObject, WKScriptMessageHandler {
         weak var view: MathWKWebView?
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            guard let pair = message.body as? [NSNumber], pair.count == 2 else { return }
-            let size = CGSize(width: pair[0].doubleValue, height: pair[1].doubleValue)
+            guard let values = message.body as? [NSNumber], values.count == 3 else { return }
+            let size = CGSize(width: values[0].doubleValue, height: values[1].doubleValue)
             MainActor.assumeIsolated {
-                guard let view else { return }
+                // A page that was replaced can still report (for example when the
+                // view is resized for the next render); ignore it.
+                guard let view, values[2].intValue == view.pageToken else { return }
                 if !view.hasSized { view.hasSized = true; MathWKWebView.sizedCount += 1 }
                 view.onSize?(size)
                 view.sizeObserver?(size)

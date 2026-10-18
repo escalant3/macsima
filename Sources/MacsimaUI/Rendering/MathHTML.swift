@@ -8,8 +8,10 @@ public enum MathHTML {
     public static let mathSize = 19
 
     /// A page holding `mathML` with an optional output label on the left.
-    /// The page reports its content size to the `size` message handler.
-    public static func page(mathML: String, label: String?) -> String {
+    /// The page reports `[width, height, token]` to the `size` message
+    /// handler; the token tells reports from this page apart from late
+    /// reports of the page it replaced.
+    public static func page(mathML: String, label: String?, token: Int = 0) -> String {
         let labelHTML = label.map { "<span class=\"lbl\">(\(escape($0)))</span>" } ?? ""
         return """
         <!doctype html><html><head><meta charset="utf-8"><style>
@@ -25,10 +27,10 @@ public enum MathHTML {
         <script>
         function report() {
           const r = document.querySelector('.row').getBoundingClientRect();
-          window.webkit.messageHandlers.size.postMessage([Math.ceil(r.width), Math.ceil(r.height)]);
+          window.webkit.messageHandlers.size.postMessage([Math.ceil(r.width), Math.ceil(r.height), \(token)]);
         }
-        window.addEventListener('load', report);
-        document.fonts.ready.then(report);
+        // Report once painted (two frames after fonts are ready), then on every resize.
+        document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(report)));
         new ResizeObserver(report).observe(document.querySelector('.row'));
         </script></body></html>
         """
