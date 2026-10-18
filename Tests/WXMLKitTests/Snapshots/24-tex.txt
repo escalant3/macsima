@@ -1,0 +1,6 @@
+### 1
+in:    <math><lbl altCopy="%o1">(%o1) </lbl><t lisp="false">false</t></math>
+label: %o1
+image: -
+text:  false
+out:   <math display="block"><mtext>false</mtext></math>

@@ -1,0 +1,13 @@
+### 1
+in:    <math><lbl altCopy="%t1">(%t1) </lbl><img lisp="wxxml-tag">/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_3484_1_113500.png</img></math>
+label: %t1
+image: /var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_3484_1_113500.png
+text:  
+out:   
+
+### 2
+in:    <math><lbl altCopy="%o1">(%o1) </lbl><st></st></math>
+label: %o1
+image: -
+text:  
+out:   <math display="block"><mtext></mtext></math>

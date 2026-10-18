@@ -1,0 +1,6 @@
+### 1
+in:    <math><st>hello</st><st> </st></math>
+label: -
+image: -
+text:  hello
+out:   <math display="block"><mrow><mtext>hello</mtext><mtext> </mtext></mrow></math>

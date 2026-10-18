@@ -1,0 +1,6 @@
+### 1
+in:    <math><lbl altCopy="%o1">(%o1) </lbl><tb bracketParens="true"><mtr><mtd><mn>1</mn></mtd><mtd><mn>2</mn></mtd></mtr><mtr><mtd><mn>3</mn></mtd><mtd><mn>4</mn></mtd></mtr></tb></math>
+label: %o1
+image: -
+text:  1234
+out:   <math display="block"><mrow><mo>(</mo><mtable><mtr><mtd><mn>1</mn></mtd><mtd><mn>2</mn></mtd></mtr><mtr><mtd><mn>3</mn></mtd><mtd><mn>4</mn></mtd></mtr></mtable><mo>)</mo></mrow></math>

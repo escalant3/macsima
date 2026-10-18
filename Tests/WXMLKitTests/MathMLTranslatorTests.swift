@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+import Foundation
+import MaximaKit
+import Testing
+@testable import WXMLKit
+
+enum MathFixtures {
+    static let testsDir = URL(filePath: #filePath).deletingLastPathComponent()
+    static let transcripts = testsDir.deletingLastPathComponent().appending(path: "Fixtures/transcripts/glue")
+    static let snapshots = testsDir.appending(path: "Snapshots")
+
+    static var names: [String] {
+        ((try? FileManager.default.contentsOfDirectory(atPath: transcripts.path)) ?? [])
+            .filter { $0.hasSuffix(".txt") && !$0.hasSuffix(".sent.txt") && !$0.hasSuffix(".stdio.txt") }
+            .map { String($0.dropLast(4)) }.sorted()
+    }
+
+    /// Every math chunk in a glue fixture: results, question prompts and
+    /// the payload of `wxasync` blocks.
+    static func chunks(_ name: String) throws -> [String] {
+        var scanner = TagScanner()
+        let data = try Data(contentsOf: transcripts.appending(path: "\(name).txt"))
+        return (scanner.feed(data) + scanner.flush()).compactMap { event in
+            switch event {
+            case .math(let xml): xml
+            case .prompt(let p) where p.contains("<math>"): p
+            case .tag("wxasync", let c): c.range(of: "</id>").map { String(c[$0.upperBound...]) }
+            default: nil
+            }
+        }
+    }
+}
+
+/// True when `xml` parses as XML.
+func isWellFormed(_ xml: String) -> Bool {
+    XMLParser(data: Data(xml.utf8)).parse()
+}
+
+struct MathMLSnapshotTests {
+    /// Set MACSIMA_RECORD_SNAPSHOTS=1 to rewrite the snapshot files.
+    static let recording = ProcessInfo.processInfo.environment["MACSIMA_RECORD_SNAPSHOTS"] == "1"
+
+    @Test(arguments: MathFixtures.names)
+    func snapshot(_ name: String) throws {
+        let chunks = try MathFixtures.chunks(name)
+        var lines: [String] = []
+        for (i, chunk) in chunks.enumerated() {
+            let out = MathMLTranslator.translate(chunk)
+            #expect(out.wellFormed, "\(name) #\(i + 1) parses")
+            #expect(out.unknownTags.isEmpty, "\(name) #\(i + 1) unknown tags: \(out.unknownTags)")
+            if !out.mathML.isEmpty { #expect(isWellFormed(out.mathML), "\(name) #\(i + 1) MathML is well formed") }
+            lines += [
+                "### \(i + 1)", "in:    \(chunk)", "label: \(out.label ?? "-")",
+                "image: \(out.imagePaths.isEmpty ? "-" : out.imagePaths.joined(separator: " "))",
+                "text:  \(out.plainText)", "out:   \(out.mathML)", "",
+            ]
+        }
+        let text = lines.joined(separator: "\n")
+        let file = MathFixtures.snapshots.appending(path: "\(name).txt")
+        let existing = try? String(contentsOf: file, encoding: .utf8)
+        if Self.recording || existing == nil {
+            try text.write(to: file, atomically: true, encoding: .utf8)
+            if !Self.recording { Issue.record("recorded a new snapshot for \(name); check it and rerun") }
+        } else {
+            #expect(existing == text, "snapshot \(name) changed; rerun with MACSIMA_RECORD_SNAPSHOTS=1 if intended")
+        }
+    }
+
+    @Test func everyFixtureChunkKeepsItsText() throws {
+        var total = 0
+        for name in MathFixtures.names {
+            for chunk in try MathFixtures.chunks(name) {
+                total += 1
+                let out = MathMLTranslator.translate(chunk)
+                guard let tree = MathXMLParser.parse(chunk) else { Issue.record("no tree: \(chunk)"); continue }
+                // Every identifier and number of the input shows up in the output.
+                for leaf in leaves(tree) where !leaf.isEmpty {
+                    #expect(out.mathML.contains(MathMLTranslator.escape(leaf)) || mapped(leaf),
+                            "\(name): \(leaf) missing from \(out.mathML)")
+                }
+            }
+        }
+        print("translated \(total) math chunks")
+        #expect(total > 80)
+    }
+
+    /// Text of mi and mn leaves.
+    func leaves(_ node: MathNode) -> [String] {
+        if node.name == "mi" || node.name == "mn" {
+            return [node.textContent.trimmingCharacters(in: .whitespaces)]
+        }
+        return node.children.flatMap(leaves)
+    }
+
+    /// Leaves the translator maps to other characters.
+    func mapped(_ s: String) -> Bool { ["-", ",", "and", ".", "not"].contains(s) }
+}
+
+struct MathMLTranslatorTests {
+    func ml(_ xml: String) -> String { MathMLTranslator.translate(xml).mathML }
+
+    @Test func labelsAndImages() {
+        let out = MathMLTranslator.translate(#"<math><lbl altCopy="%t1">(%t1) </lbl><img lisp="wxxml-tag">/tmp/a.png</img></math>"#)
+        #expect(out.label == "%t1")
+        #expect(out.imagePaths == ["/tmp/a.png"])
+        #expect(out.mathML == "")
+    }
+
+    @Test func constructs() {
+        #expect(ml("<math><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac></math>")
+                == #"<math display="block"><mfrac><mn>1</mn><mn>2</mn></mfrac></math>"#)
+        #expect(ml("<math><q><mi>x</mi></q></math>").contains("<msqrt><mi>x</mi></msqrt>"))
+        #expect(ml(#"<math><munder lisp="wxxml-array-no-display-properties"><mrow><mi>x</mi></mrow><mrow><mn>1</mn></mrow></munder></math>"#)
+                .contains("<msub><mi>x</mi><mn>1</mn></msub>"))
+        #expect(ml(#"<math><sm type="prod"><mrow><mi>k</mi></mrow><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></sm></math>"#)
+                .contains("<munderover><mo>&#x220F;</mo>"))
+        #expect(ml(#"<math><p print="no"><mfrac line="no"><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></mfrac></p></math>"#)
+                .contains(#"<mfrac linethickness="0">"#))
+        #expect(ml("<math><mi> and </mi></math>").contains("<mo>and</mo>"))
+        #expect(ml("<math><mo>-&gt;</mo></math>").contains("<mo>\u{2192}</mo>"))
+        #expect(ml("<math><s>%pi</s></math>").contains("&#x03C0;"))
+        #expect(ml("<math><g>%alpha</g></math>").contains("<mi>α</mi>"))
+    }
+
+    @Test func hiddenMultiplication() {
+        #expect(ml("<math><mrow><mn>1.5</mn><h>*</h><msup><mn>10</mn><mn>-10</mn></msup></mrow></math>").contains("&#x22C5;"))
+        #expect(!ml("<math><mn>2</mn><h>*</h><mi>x</mi></math>").contains("&#x22C5;"))
+    }
+
+    @Test func unknownTagsKeepTheirText() {
+        let out = MathMLTranslator.translate("<math><mi>a</mi><slide><mi>frame</mi></slide></math>")
+        #expect(out.unknownTags == ["slide"])
+        #expect(out.mathML.contains("frame"))
+    }
+
+    @Test func malformedXMLKeepsText() {
+        let out = MathMLTranslator.translate("<math><mi>x</math>")
+        #expect(!out.wellFormed)
+        #expect(out.mathML.contains("x"))
+    }
+}

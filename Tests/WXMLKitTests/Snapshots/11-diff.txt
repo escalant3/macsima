@@ -1,0 +1,6 @@
+### 1
+in:    <math><lbl altCopy="%o1">(%o1) </lbl><mn>2</mn><h>*</h><fn lisp="wxxml-function"><fnm lisp="wxxml-function">cos</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn><h>*</h><fn lisp="wxxml-function"><fnm lisp="wxxml-function">sin</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></math>
+label: %o1
+image: -
+text:  2*cos(x)*sin(x)
+out:   <math display="block"><mrow><mn>2</mn><mspace width="0.17em"/><mrow><mi>cos</mi><mo>&#x2061;</mo><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow></mrow><mspace width="0.17em"/><mrow><mi>sin</mi><mo>&#x2061;</mo><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow></mrow></mrow></math>

@@ -1,0 +1,20 @@
+### 1
+in:    <math><lbl altCopy="%o1">(%o1) </lbl><mn>3.141592653589793</mn></math>
+label: %o1
+image: -
+text:  3.141592653589793
+out:   <math display="block"><mn>3.141592653589793</mn></math>
+
+### 2
+in:    <math><lbl altCopy="%o2">(%o2) </lbl><mi lisp="*var-tag*">x</mi></math>
+label: %o2
+image: -
+text:  x
+out:   <math display="block"><mi>x</mi></math>
+
+### 3
+in:    <math><lbl altCopy="%o3">(%o3) </lbl><mn>0.3333333333333333</mn></math>
+label: %o3
+image: -
+text:  0.3333333333333333
+out:   <math display="block"><mn>0.3333333333333333</mn></math>

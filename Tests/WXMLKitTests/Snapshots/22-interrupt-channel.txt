@@ -1,0 +1,6 @@
+### 1
+in:    <math><lbl altCopy="%o2">(%o2) </lbl><mn>4</mn></math>
+label: %o2
+image: -
+text:  4
+out:   <math display="block"><mn>4</mn></math>

@@ -1,0 +1,20 @@
+### 1
+in:    <math><st>Is </st><mi lisp="*var-tag*">a</mi><st> positive or negative?</st></math>
+label: -
+image: -
+text:  Is a positive or negative?
+out:   <math display="block"><mrow><mtext>Is </mtext><mi>a</mi><mtext> positive or negative?</mtext></mrow></math>
+
+### 2
+in:    <math><lbl altCopy="%o1">(%o1) </lbl><mfrac lisp="wxxml-mquotient"><mrow><fn lisp="wxxml-function"><fnm lisp="wxxml-function">atan</fnm><mrow><p><mrow><mfrac lisp="wxxml-mquotient"><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><q><mi lisp="*var-tag*">a</mi></q></mrow></mfrac></mrow></p></mrow></fn></mrow><mrow><q><mi lisp="*var-tag*">a</mi></q></mrow></mfrac></math>
+label: %o1
+image: -
+text:  (atan((x)/(sqrt(a))))/(sqrt(a))
+out:   <math display="block"><mfrac><mrow><mi>atan</mi><mo>&#x2061;</mo><mrow><mo>(</mo><mfrac><mi>x</mi><msqrt><mi>a</mi></msqrt></mfrac><mo>)</mo></mrow></mrow><msqrt><mi>a</mi></msqrt></mfrac></math>
+
+### 3
+in:    <math><lbl altCopy="%o2">(%o2) </lbl><mn>4</mn></math>
+label: %o2
+image: -
+text:  4
+out:   <math display="block"><mn>4</mn></math>

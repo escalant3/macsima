@@ -45,6 +45,12 @@ let package = Package(
             swiftSettings: [.unsafeFlags(["-F", "\(cltDeveloper)/Frameworks"])],
             linkerSettings: [.unsafeFlags(cltTestingFlags)]
         ),
+        .testTarget(
+            name: "WXMLKitTests",
+            dependencies: ["WXMLKit", "MaximaKit"],
+            exclude: ["Snapshots"],
+            swiftSettings: [.unsafeFlags(["-F", "\(cltDeveloper)/Frameworks"])]
+        ),
     ],
     swiftLanguageModes: [.v6]
 )
