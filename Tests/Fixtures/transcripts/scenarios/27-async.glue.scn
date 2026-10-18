@@ -1,0 +1,7 @@
+# Background output is wrapped in <wxasync> with the cell id captured at spawn time.
+!send :lisp-quiet (setq *wx-cell-id* "cell-A")
+!send :lisp-quiet (wx-spawn-async (sleep 1) (wx-async-text "done"))
+!send :lisp-quiet (setq *wx-cell-id* "cell-B")
+2+2;
+!sleep 2
+3+3;

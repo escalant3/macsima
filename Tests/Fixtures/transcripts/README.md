@@ -64,5 +64,8 @@ Things to know when using these as test fixtures:
 | 23 | plot | raw `plot2d(...,[png_file,...])`; glue `wxplot2d(sin(x),[x,0,%pi]);` |
 | 24 | tex | `tex(x^2/2);` |
 | 25 | quit | `quit();` (socket closes, no output) |
+| 26 | prelude lines (glue only, Phase 1) | `:lisp-quiet (setq $linel 80)` and `*wx-cell-id*` lines with `!send`, then `2+2;`, `3+3;`: no prompt for the prelude |
+| 27 | background job (glue only, Phase 1) | cell id `cell-A`, `wx-spawn-async` that prints `done` after 1 s, cell id `cell-B`, `2+2;`, `3+3;`: the `<wxasync>` keeps `cell-A` |
+| 28 | more errors (glue only, Phase 1) | `?car(1);` (Lisp error), `error("value is", x^2);` (message as a `math` chunk), `2+2;` |
 | 29 | Lisp mode (glue only, Phase 1) | `to_lisp();`, `(+ 1 2)`, `(to-maxima)`, `2+2;` |
 | 30 | debugger (glue only, Phase 1) | `debugmode(true)$`, `error("x");`, `:top`, `2+2;` |

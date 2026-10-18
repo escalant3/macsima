@@ -1,0 +1,6 @@
+# The lines wxMaxima sends before each statement get no prompt back.
+!send :lisp-quiet (setq $linel 80)
+!send :lisp-quiet (setq *wx-cell-id* "cell-1")
+2+2;
+!send :lisp-quiet (setq $linel 80)
+3+3;

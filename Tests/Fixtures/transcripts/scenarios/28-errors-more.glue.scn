@@ -1,0 +1,4 @@
+# A Lisp error from Maxima code, and an error() message holding an expression.
+?car(1);
+error("value is", x^2);
+2+2;
