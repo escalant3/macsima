@@ -1,0 +1,3349 @@
+(format t "~:@csuppressOutput~:@c~%" (code-char 60) (code-char 62))
+;; wxMaxima xml format (based on David Drysdale MathML printing)
+;; Andrej Vodopivec,   2004-2014
+;; Gunter Koenigsmann, 2014-2023
+;; Robert Dodier,      2019-2020
+;;  SPDX-License-Identifier: GPL-2.0+
+
+;; This file isn't directly loaded by maxima on startup of wxMaxima.
+;; Instead it is converted to a C header file, compiled in the wxMaxima
+;; binary and sent to Maxima using a :lisp-quiet command.
+;; If you want to use a file (on disk), you can use the command line
+;; option --wxmathml-lisp=<str> to specify the path to a file, which
+;; will be used instead of the compiled-in file.
+;; This might be useful, if you want to test a new wxMathML.lisp file
+;; without recompiling wxMaxima.
+;;
+;; Rationale: This approach means that wxMaxima doesn't need to
+;; know where wxMathml.lisp was moved by the ArchLinux, Gentoo,
+;; Macports, cygwin, fink, homebrew, app-in-dmg, Ubuntu or similar
+;; packager.
+
+;; The MathML-printing part (which makes up most of this file)
+;; was created by David Drysdale (DMD), December 2002/January 2003
+;; closely based on the original TeX conversion code in mactex.lisp,
+;; for which the following credits apply:
+;;   (c) copyright 1987, Richard J. Fateman
+;;   small corrections and additions: Andrey Grozin, 2001
+;;   additional additions: Judah Milgram (JM), September 2001
+;;   additional corrections: Barton Willis (BLW), October 2001
+
+;; Method:
+;; Producing wxml from a Maxima internal expression is done by
+;; a reversal of the parsing process.  Fundamentally, a
+;; traversal of the expression tree is produced by the program,
+;; with appropriate substitutions and recognition of the
+;; infix / prefix / postfix / matchfix relations on symbols. Various
+;; changes are made to this so that MathML will like the results.
+
+;(format t "<wxxml-start/>")
+
+;; TODO: outchar isn't properly escaped in xml
+
+;; Maxima (compiled with gcl) creates an error, when called with:
+;; maxima --init-lisp=path/to/wxMathML.lisp
+;; and the command :lisp-quiet (wxPrint_autocompletesymbols)
+;; is entered:
+;; Maxima encountered a Lisp error:
+;;
+;; Condition in MACSYMA-TOP-LEVEL [or a callee]: INTERNAL-SIMPLE-ERROR: Caught fatal error [memory may be damaged]
+;;
+;; Camm recommends that command to solve the problem
+;; (see https://groups.google.com/g/linux.debian.bugs.dist/c/YJRvUrVUHGQ)
+;; and indeed it seems to solve the issue.
+#+gcl (si::readline-off)
+
+(format t "<wxxml-key>~A</wxxml-key>~%" (maxima-getenv "MAXIMA_AUTH_CODE"))
+
+(in-package :maxima)
+
+;; For debugging only
+;;(declaim (optimize (speed 0) (space 0) (safety 3) (debug 3)))
+
+;; This makes the variables lop, rop and inchar use dynamic scope.
+;; What it does to wxxml-lbp and wxxml-rbp I don't know, though.
+(declare-top
+ (special lop rop $inchar)
+ (*expr wxxml-lbp wxxml-rbp))
+
+(setf *prompt-prefix* "<PROMPT>")
+(setf *prompt-suffix* "</PROMPT>")
+;; Permanently assign a property named indic with the value val to the symbol sym
+;;
+;; Properties can, for example, tell the formatter how to express this
+;; function in xml.
+;;
+;; To make these assignments survive a kill() even if the symbol was assigned
+;; a value the new symbol value has to be appended to *builtin-symbol-props*
+;; but according to #1754 that doesn't work correctly
+(defmacro wx-defprop (sym val indic)
+  `(progn
+     (let ((existing-props (and (boundp '*builtin-symbol-props*)
+                                (gethash ',sym *builtin-symbol-props*))))
+       (when existing-props
+         (setf (gethash ',sym *builtin-symbol-props*) (append (list ',indic ',val) existing-props))))
+     (defprop ,sym ,val ,indic)))
+
+;; Define a few variables whose value will be set by wxMaxima
+(defvar *wx-plot-num* 0 "The serial number of the current plot")
+(defvar $wxfilename "" "The filename of the current wxMaxima worksheet")
+(defvar $wxdirname "" "The directory the current wxMaxima worksheet is located")
+(defvar $wxanimate_autoplay nil "Automatically playback new animations?")
+(defvar wxUserConfDir "" "The location wxMaxima looks for maxima's config files in")
+(defvar wxHelpDir "" "The location wxMaxima searches for help files in")
+(defvar wxMaximaLispLocation "" "The location wxMaxima searches for lisp files in")
+(defvar $wxplot_size '((mlist simp) 800 600) "The size of new plots")
+(defvar $wxmaximaversion t "The wxMaxima version")
+(wx-defprop $wxmaximaversion read-only-assign assign)
+(defvar $wxwidgetsversion t "The wxWidgets version wxMaxima is using.")
+(wx-defprop $wxwidgetsversion read-only-assign assign)
+(defvar *wx-defer-queries* nil "If true, wxMaxima defers querying variables and functions until it leaves batch mode.")
+(defvar $wxsubscripts '$all
+  "Recognize TeX-style subscripts")
+(defvar $wxplot_usesvg nil "Create scalable plots?")
+(defvar $wxplot_pngcairo nil "Use gnuplot's pngcairo terminal for new plots?")
+
+;; A string replace function that we later use excessively.
+;; Now iterative to avoid stack overflows on large strings.
+(defun wxxml-string-substitute (newstring oldchar x)
+  (with-output-to-string (s)
+    (loop for c across x
+          do (if (char= c oldchar)
+                 (princ newstring s)
+                 (princ c s)))))
+
+
+
+;; Tell maxima how to send a list of manual topics to show to us
+(defun display-frontend-topics (topiclist)
+  (format t "<html-manual-keywords>")
+  (mapcar #'(lambda (&rest x) (format t "<keyword>~a</keyword>"
+				      (wxxml-fix-string
+				       (first (second (first x))))))
+	  topiclist)
+  (format t "</html-manual-keywords>~%"))
+
+;; Escapes all chars that need escaping in XML
+;;
+;; This makes it possible to make maxima's output on the screen contain strings
+;; that look like XML tags: The string "<variable name>" is, if run through
+;; wxxml-fix-string, transferred as "&lt;variable name&gt;", which clearly is
+;; not an XML tag name
+(declaim (ftype (function (string) string) wxxml-fix-string))
+(defun wxxml-fix-string (x)
+  (if (stringp x)
+      (with-output-to-string (s)
+        (loop for c across x
+              do (cond
+                   ((char= c #\&) (princ "&amp;" s))
+                   ((char= c #\<) (princ "&lt;" s))
+                   ((char= c #\>) (princ "&gt;" s))
+                   ((char= c #\") (princ "&quot;" s))
+                   (t (write-char c s)))))
+      nil))
+
+
+;; Converts x to a string using mstring and then escapes all special chars for XML
+;; (declaim (ftype (function (any) string) wxxml-mstring))
+(defun wxxml-mstring (x)
+  (coerce (mstring x) 'string))
+
+;; Generates an alt-copy-text from maths in sexp form
+;; (declaim (ftype (function (list) string) wxxml-alt-copy-text))
+(defun wxxml-alt-copy-text (x)
+  (wxxml-fix-string (format nil "~{~a~}" (mstring x))))
+
+;; Allow the user to communicate what to display in the statusbar whilst
+;; the current program is running
+(defun $wxstatusbar (&rest status)
+  (finish-output)
+  (format t "<statusbar>~a</statusbar>~%" (wxxml-fix-string
+					   (apply '$sconcat status)))
+  (finish-output)
+  t
+  )
+
+;; Export the current worksheet to a file from within a Maxima session.
+;;
+;; All wxworksheetto* commands (currently only html; tex and pdf are planned)
+;; share ONE <worksheetexport> tag so wxMaxima's XML-tag scanner stays small.
+;; That scanner only recognizes attribute-free opening tags, so the export kind
+;; and the keyword options travel as child ELEMENTS, which wxMaxima parses as
+;; XML: <worksheetexport><type>html</type><file>...</file>
+;;      <option name="flavor">svg</option>...</worksheetexport>
+(defun wxexport-keyname (sym)
+  (string-downcase ($sconcat sym)))
+
+(defun wxexport-valstr (val)
+  (cond ((eq val t) "true")
+	((null val) "false")
+	((eq val '$true) "true")
+	((eq val '$false) "false")
+	(t ($sconcat val))))
+
+(defun wxexport-options-xml (opts)
+  ;; Turn the key=value options (Maxima mequal expressions) into
+  ;; <option name="key">value</option> children.
+  (let ((s ""))
+    (dolist (o opts s)
+      (when (and (consp o) (consp (car o)) (eq (caar o) 'mequal))
+	(setq s (concatenate 'string s
+			     "<option name=\"" (wxexport-keyname (second o)) "\">"
+			     (wxxml-fix-string (wxexport-valstr (third o)))
+			     "</option>"))))))
+
+(defun wxexport-emit (type filename opts)
+  (finish-output)
+  (let ((absname (or (ignore-errors
+		       (namestring (merge-pathnames ($sconcat filename))))
+		     ($sconcat filename))))
+    (format t "<worksheetexport><type>~a</type><file>~a</file>~a</worksheetexport>~%"
+	    type
+	    (wxxml-fix-string absname)
+	    (wxexport-options-xml opts)))
+  (finish-output)
+  filename)
+
+;; wxworksheettohtml("file.html" [, flavor=..., wxmx=...])
+;;   flavor in {mathml (default), mathjax, svg, bitmap}
+;;   wxmx = true embeds a downloadable .wxmx copy of the session
+(defun $wxworksheettohtml (filename &rest opts)
+  (wxexport-emit "html" filename opts))
+
+;; wxworksheettotex("file.tex" [, documentclass=..., documentclassoptions=...,
+;;                    wxmx=...])
+;;   documentclass         overrides the LaTeX \documentclass (e.g. "report")
+;;   documentclassoptions  overrides its options (e.g. "12pt,a4paper")
+;;   wxmx = true           embeds the session in the PDF as a file attachment
+(defun $wxworksheettotex (filename &rest opts)
+  (wxexport-emit "tex" filename opts))
+
+;; Muffles compiler-notes where we don't want to drown in debug messages.
+(defmacro no-warning (form)
+  #+sbcl `(handler-bind
+	      ((style-warning #'muffle-warning)
+	       (sb-ext:compiler-note #'muffle-warning))
+	    ,form)
+  #+clisp `(let ((custom:*suppress-check-redefinition* t)) ,form)
+  #-(or sbcl clisp) `(progn ,form))
+
+;;; Is somehow used for setting the $wxmaxima variable from wxMaxima.cpp
+(defun read-wxmaxima-version (v)
+  (let* ((d1 (position #\. v))
+	 (year (subseq v 0 d1))
+	 (d2 (position #\. v :start (1+ d1)))
+	 (month (subseq v (1+ d1) d2))
+	 (rest (subseq v (1+ d2))))
+    (list '(mlist simp) (parse-integer year) (parse-integer month) rest)))
+
+;;; Splits the leading "26.08.0" part of a version string into a list of
+;;; integers, (26 8 0). Anything from the first character that is neither a
+;;; digit nor a dot on is ignored, which drops both a "-dev" suffix and the
+;;; "_GTK3"-style toolkit suffix wxMaxima appends to $wxmaximaversion.
+;;; Returns nil if the string doesn't start with a number.
+(defun wx-version-components (v)
+  (let* ((end (or (position-if-not (lambda (c) (or (digit-char-p c) (char= c #\.))) v)
+                  (length v)))
+         (numeric (subseq v 0 end))
+         (result nil)
+         (start 0))
+    (loop
+      (let* ((dot (position #\. numeric :start start))
+             (part (subseq numeric start dot)))
+        (when (string= part "") (return))
+        (push (parse-integer part) result)
+        (if dot (setq start (1+ dot)) (return))))
+    (nreverse result)))
+
+;;; wx_version_min("26.08.0"): true if the running wxMaxima is at least that
+;;; version. Components are compared numerically, so "26.10.0" is newer than
+;;; "26.9.0", and a missing component counts as 0 ("26.08" = "26.08.0").
+;;; A development build counts as the version it will be released as, since
+;;; it already contains that version's features. Outside wxMaxima (where
+;;; $wxmaximaversion never gets set to a string) the answer is false.
+(defun $wx_version_min (required)
+  (unless (stringp required)
+    (merror "wx_version_min: expected a version string like \"26.08.0\", got ~M" required))
+  (let ((want (wx-version-components required)))
+    (unless want
+      (merror "wx_version_min: ~M is not a version number like \"26.08.0\"" required))
+    (unless (stringp $wxmaximaversion)
+      (return-from $wx_version_min nil))
+    (let ((have (wx-version-components $wxmaximaversion)))
+      (loop
+        (when (and (null have) (null want)) (return t))
+        (let ((h (or (pop have) 0))
+              (w (or (pop want) 0)))
+          (cond ((> h w) (return t))
+                ((< h w) (return nil))))))))
+
+  ;;; Any half-way new maxima will define these variables that add
+  ;;; info about the front-end to the build_info(). If we encounter
+  ;;; an old maxima that is no problem since we can create them
+  ;;; ourselves.
+(defvar $maxima_frontend nil)
+(defvar $maxima_frontend_version nil)
+(defvar $maxima_frontend_bugreportinfo nil)
+
+;; The frontend name we know already. The frontend version is assigned
+;; using a :lisp command from the C++ program, instead.
+(setf (symbol-value '$maxima_frontend) "wxMaxima")
+(setf (symbol-value '$maxima_frontend_bugreportinfo)
+      (format nil "A problem in the graphical user interface is probably a wxMaxima bug.~%
+The wxMaxima bug database is available at~%
+    https://github.com/wxMaxima-developers/wxmaxima/issues~%
+Submit bug reports by following the 'New issue' link on that page."))
+
+;; wxbuild_info() provides a nicer formatted version of the build_info() command.
+;; It also includes more info, e.g. the directory information from Maxima.
+(defun $wxbuild_info ()
+  (progv  '(seconds minute hour day month year) cl-user:*maxima-build-time*
+    (format t "~30a~a~%" "WxMaxima version:" $wxmaximaversion)
+    (format t "~30a~a~%" "Using wxWidgets version:" $wxwidgetsversion)
+    (format t "~30a~a~%" "Maxima version:" *autoconf-version*)
+    (format t "~30a~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~%" "Maxima build date:"
+           year month day hour minute seconds)
+    (format t "~30a~a~%" "Host type:" *autoconf-host*)
+    (format t "~30a~a ~a ~a~%" "System type:" (software-type) (software-version) (machine-type))
+    (format t "~30a~a~%" "Lisp implementation type:" (lisp-implementation-type))
+    (format t "~30a~a~%" "Lisp implementation version:" (lisp-implementation-version))
+    (format t "~30a~a~%~a~%" "WxMaxima help dir:" wxHelpDir "----------" ))
+    (format t "~%~%Maxima's idea of the directory layout is:~%")
+    (format t "~a~%" (print-directories))
+  "")
+
+;; Tell the user where to report bugs.
+;; TODO: Make this to maxima's bug_report() when everybody uses a maxima that shows
+;; our extensions to that command.
+(defmfun $wxbug_report ()
+  (format t "WxMaxima is a graphical front end for Maxima, which does the mathematics in the background.~%")
+  (format t "If you encounter a mathematical problem, it is probably a Maxima bug and should be submitted there.~%")
+  (format t "~%The Maxima bug database is available at~%")
+  (format t "    https://sourceforge.net/p/maxima/bugs~%")
+  (format t "Submit bug reports by following the 'Create Ticket' link on that page.~%")
+  (format t "To report a Maxima bug, you must have a Sourceforge account.~%~%")
+  (format t "A problem in the graphical user interface is probably a wxMaxima bug.~%")
+  (format t "The wxMaxima bug database is available at~%")
+  (format t "    https://github.com/wxMaxima-developers/wxmaxima/issues~%")
+  (format t "Submit bug reports by following the 'New issue' link on that page.~%~%")
+  (format t "Please check before submitting, if your bug was already reported.~%~%")
+  (format t "Please include the following information with your bug report:~%")
+  (format t "-------------------------------------------------------------~%")
+   ; Display the 2D-formatted build information
+  (let (($display2d t))
+    (displa ($wxbuild_info)))
+  (format t "-------------------------------------------------------------~%"))
+
+
+;; The tag that is put around something that might be a variable or function name
+;;
+;; My guess is that since in maxima functions and variables can have the same name
+;; and lazy evaluation means that often it is only later decided which one is used
+;; this variable informs the code that prints out the symbol's name if we know that
+;; this time the symbol names a function.
+(defvar *var-tag* '("<mi lisp=\"*var-tag*\">" "</mi>"))
+
+;; Returns the value of the property prop, if is x is a symbol that has this
+;; property. In all other cases nil is returned.
+(defun wxxml-get (x prop)
+  (if (symbolp x) (get x prop)))
+
+;; Display all kinds of arrays.
+;;
+;; As arrays are most likely either meant for efficiently handling big amounts of
+;; data or as a vehicle for pre- and post-subscripts we only output info about the
+;; array, not the contents thereof.
+;;
+;; Adapted from DIMENSION-ARRAY and DIMENSION-INDICES in Maxima src/displa.lisp.
+(defun wxxml-array (x l r &aux (base-symbol nil))
+  (unless (eq (caar x) 'mqapply)
+      (setq base-symbol (caar x)))
+  (let
+      ((display-indices (safe-mget base-symbol 'display-indices))
+       (indices (cdr x)))
+    (if (and (> (length display-indices) 0) (not (= (length display-indices) (length indices))))
+        ;; Ignore DISPLAY-INDICES if it's nonempty and not the same size as INDICES.
+        (setq display-indices nil))
+    (let (pre-subscripts pre-superscripts post-subscripts post-superscripts)
+      (if display-indices
+          (progn
+            (setq pre-subscripts (extract-indices indices display-indices '$presubscript)
+                  pre-superscripts (extract-indices indices display-indices '$presuperscript)
+                  post-subscripts (extract-indices indices display-indices '$postsubscript)
+                  post-superscripts (extract-indices indices display-indices '$postsuperscript))
+            (wxxml-array-with-display-properties x base-symbol l r pre-subscripts pre-superscripts post-subscripts post-superscripts))
+          (wxxml-array-no-display-properties x l r)))))
+
+
+;; Display an array with pre- or post- super- or subscripts.
+(defun wxxml-array-with-display-properties (x base-symbol l r pre-subscripts pre-superscripts post-subscripts post-superscripts)
+  (let*
+      ((separator (let ((x (safe-$get base-symbol '$display_index_separator))) (if (or (null x) (stringp x)) x (wxxml-mstring  x))))
+       (separator-xml (if (and separator (string= separator "")) "" (concatenate 'string "<mi>" (or separator ",") "</mi>")))
+       (mrow-terminate (list (concatenate 'string "</mrow>" (coerce (list #\Newline) 'string))))
+       (pre-subscripts-xml (if pre-subscripts (wxxml-list pre-subscripts (list "<mrow>") mrow-terminate separator-xml) (list "<none/>")))
+       (pre-superscripts-xml (if pre-superscripts (wxxml-list pre-superscripts (list "<mrow>") mrow-terminate separator-xml) (list "<none/>")))
+       (post-subscripts-xml (if post-subscripts (wxxml-list post-subscripts (list "<mrow>") mrow-terminate separator-xml) (list "<none/>")))
+       (post-superscripts-xml (if post-superscripts (wxxml-list post-superscripts (list "<mrow>") mrow-terminate separator-xml) (list "<none/>")))
+       (mmultiscripts-xml
+	(append l (list (format nil "<mmultiscripts lisp=\"wxxml-array-with-display-properties\" altCopy=\"~A\">" (wxxml-alt-copy-text x)))
+		(wxxml base-symbol nil nil 'mparen 'mparen)
+		post-subscripts-xml post-superscripts-xml
+		(list (concatenate
+		       'string "<mprescripts/>"
+		       (coerce (list #\Newline) 'string)))
+		pre-subscripts-xml pre-superscripts-xml
+		(list (concatenate
+		       'string "</mmultiscripts>"
+		       (coerce (list #\Newline) 'string)))
+		r)))
+    mmultiscripts-xml))
+
+;; Display arrays without pre- or post- super- or subscripts..
+;;
+;; As this kind of arrays are most likely either meant for efficiently handling
+;; big amounts of data we only output info about the array, not the contents
+;; thereof.
+(defun wxxml-array-no-display-properties (x l r &aux f)
+  (if (eq 'mqapply (caar x))
+      (setq f (cadr x)
+	    x (cdr x)
+	    l (wxxml f (append l (list "<munder lisp=\"wxxml-array-no-display-properties\"><p>")) (list "</p>")
+		     'mparen 'mparen))
+      (setq f (caar x)
+	    l (wxxml f (append l '("<munder lisp=\"wxxml-array-no-display-properties\"><mrow>"))
+		     (list "</mrow>") lop 'mfunction)))
+  (setq r (nconc (wxxml-list (cdr x) (list "<mrow>")
+			     (list "</mrow></munder>") "<mi>,</mi>")
+		 r))
+  (nconc l r))
+
+;; (maketag value tagname) produces the text <tagname>value</tagname>.
+(defmacro make-tag (val tag)
+  ``((wxxmltag simp) ,,val ,,tag))
+
+;; wxxmltag(value tagname) produces the text <tagname>value</tagname>.
+(defun $wxxmltag (val tag)
+  (make-tag (wxxml-fix-string ($sconcat val)) ($sconcat tag)))
+
+;; Declare one or more textsnippets to be always subscripted by the
+;; autosubscript feature
+(defun $wxdeclare_subscript (x &optional (opt t))
+  (unless (listp x)
+    (setq x (list '(mlist simp) x)))
+  (dolist (s (cdr x))
+    ($put s opt '$wxxml_subscript))
+  opt)
+
+;; Declare one or more variables to be always displayed with autosubscript on
+;;
+;; The declaration is a plain Lisp property, not a Maxima one made by put():
+;; put() adds the symbol to the props infolist, and kill(all) then unbinds
+;; every symbol on that list - which, as wxMathML.lisp declares Maxima's own
+;; underscore variables at startup, unbound variables like
+;; display_format_internal that Maxima needs to display anything.
+(defun $wxdeclare_subscripted (x &optional (opt t))
+  (unless (listp x)
+    (setq x (list '(mlist simp) x)))
+  (dolist (s (cdr x))
+    (when (symbolp s)
+      (setf (get s 'wxxml-subscripted) (if opt :yes :no))))
+  opt)
+
+;; What wxdeclare_subscripted() said about the symbol x: (t) or (nil) if it
+;; was declared to be (or not to be) subscripted, nil if it never was declared.
+;; "Declared false" has to differ from "not declared" (#1653), hence :yes/:no.
+(defun wx-subscripted-declaration (x)
+  (when (symbolp x)
+    (case (get x 'wxxml-subscripted)
+      (:yes (list t))
+      (:no (list nil)))))
+
+;; Returns either nil (no autosubscript needed) or the result
+;; of the autosubscript process
+(defun subscriptp (x)
+  (unless (symbolp x)
+    (return-from subscriptp x))
+  (let* ((name ($sconcat x))
+	 (pos (search "_" name :from-end t)))
+    (when pos
+      (let* (
+	     ;; sub is the part of x after the "_"
+	     (sub (subseq name (+ pos 1)))
+	     ;; sub-var is the part of x in front of the "_"
+	     (sub-var (subseq name 0 pos))
+	     (sub-var-symb (read-from-string (concatenate 'string "$" sub-var)))
+	     (sub-symb (read-from-string (concatenate 'string "$" sub)))
+	     ;; sub-int is the part of x after the "_" converted to integer
+	     (sub-int (ignore-errors
+			(parse-integer sub))))
+	(when (and (and (> (length sub-var) 0) (> (length sub) 0) )
+		   (let ((declared (wx-subscripted-declaration x)))
+		     ;; An explicit wxdeclare_subscripted(x, true|false) wins
+		     ;; over the rules wxsubscripts selects.
+		     (if declared
+			 (car declared)
+			 (or sub-int
+			     (eq $wxsubscripts '$all)
+			     (= (length sub) 1)
+			     (= (length sub-var) 1)
+			     ($get sub-symb '$wxxml_subscript)))))
+	  (format nil  "<munder altCopy=\"~A\"><mrow>~a</mrow><mrow>~a</mrow></munder>"
+		  (wxxml-alt-copy-text x)
+		  (or (get sub-var-symb 'wxxmlword) (format nil "<mi>~a</mi>" (wxxml-fix-string (remove (char "\\" 0) (format nil "~A" sub-var)))))
+		  (format nil "<mi>~a</mi>" (wxxml-fix-string (remove (char "\\" 0) (format nil "~A" sub))))))))))
+
+(defun wxxmlescapenum (atom)
+  (wxxml-fix-string
+   (format nil "~{~c~}" atom)))
+
+;; Converts numbers to XML
+(defun wxxmlnumformat (atom)
+  (let (r firstpart exponent)
+    (cond ((integerp atom)
+	   (format nil "<mn>~a</mn>" (wxxmlescapenum (exploden atom))))
+	  (t
+	   (setq r (exploden atom))
+	   (setq exponent (member 'e r :test #'string-equal))
+	   (cond ((null exponent)
+		  (format nil "<mn>~a</mn>" (wxxmlescapenum r)))
+		 (t
+		  (setq firstpart
+			(nreverse (cdr (member 'e (reverse r)
+					       :test #'string-equal))))
+		  (if (/= atom atom)
+		      (format nil
+			      "<mn>~a</mn>"
+			      (wxxmlescapenum (exploden atom)))
+		      (progn (if (char= (cadr exponent) #\+)
+				 (setq exponent (cddr exponent))
+				 (setq exponent (cdr exponent)))
+			     (format nil
+				     "<mrow><mn>~a</mn><h>*</h><msup><mn>10</mn><mn>~a</mn></msup></mrow>"
+				     (wxxmlescapenum firstpart) (wxxmlescapenum exponent))))))))))
+
+;; Converts a symbol name to a XML-escaped string.
+(defun wxxml-stripdollar (sym &aux pname)
+  (or (symbolp sym)
+      (return-from wxxml-stripdollar
+	(wxxml-fix-string (stripdollar sym))))
+  (setq pname (maybe-invert-string-case (symbol-name sym)))
+  (setq pname (cond ((and (> (length pname) 0)
+			  (member (elt pname 0) '(#\$ #\&) :test #'eq))
+		     (subseq pname 1))
+		    ((and (> (length pname) 0)
+			  (equal (elt pname 0) #\%))
+		     (if $noundisp
+			 (concatenate 'string "'"
+				      (subseq pname 1))
+			 (subseq pname 1)))
+		    ($lispdisp
+		     (concatenate 'string "?" pname))
+		    (t pname)))
+  (setq pname (wxxml-fix-string (format nil "~A" pname)))
+  (concatenate 'string (car *var-tag*) pname (cadr *var-tag*)))
+
+;; Convert the atom (a sexp element without parameters) x to XML
+;;
+;;  * l is the opening xml tag to put before it
+;;  * r is the opening xml tag to put before it
+;;  * tmp-x isn't a parameter, but a temporary variable
+;;
+;; Automatically quotes special characters for XML
+(defun wxxml-atom (x l r &aux tmp-x)
+  (append l
+	  (list (cond ((numberp x) (wxxmlnumformat x))
+		      ((and (symbolp x) (get x 'wxxmlword)))
+		      ((and (symbolp x) (get x 'reversealias))
+		       (wxxml-stripdollar (get x 'reversealias)))
+		      ((stringp x)
+		       (setq tmp-x (wxxml-fix-string x))
+		       (if (and (boundp '$stringdisp) $stringdisp)
+			   (setq tmp-x (format nil "\"~a\"" tmp-x)))
+		       (concatenate 'string "<st>" tmp-x "</st>"))
+		      ((arrayp x)
+		       ;; Of arrays we print the dimensions, not the contents:
+		       ;; arrays are all about fast handling of big amounts of
+		       ;; data. Displaying that data would be slow and most
+		       ;; probably generate more screenfuls of contents than
+		       ;; anybody would be willing to read
+		       (format nil "<mi lisp=\"wxxml-atom arrayp\">#{Lisp array [~{~a~^,~}]}</mi>"
+			       (array-dimensions x)))
+		      ((functionp x)
+		       (format nil "<mi lisp=\"wxxml-atom functionp\" altCopy=\"~A\">~A</mi>"
+			       (wxxml-alt-copy-text x)
+			       (wxxml-fix-string
+				(format nil "~A"
+					(stripdollar
+					 (maybe-invert-string-case
+					  (symbol-name x)))))))
+		      ((streamp x)
+		       (format nil "<mi>#{Stream [~A]</mi>}"
+			       (stream-element-type x)))
+		      ((member (type-of x) '(GRAPH DIGRAPH))
+		       (format nil "<mi lisp=\"wxxml-atom graph digraph\">~a</mi>" x))
+		      ((typep x 'structure-object)
+		       (let ((tmp-string (format nil "~s" x)))
+			 (format nil "<st>~a</st>" (wxxml-fix-string tmp-string))))
+		      ((hash-table-p x)
+		       (format nil "<mi lisp=\"wxxml-atom hashtable\">#{HashTable}</mi>"))
+		      ((and $wxsubscripts (subscriptp x)))
+		      (t (wxxml-stripdollar x))))
+	  r))
+
+;; Converts the function x to xml
+;;
+;; we could patch this so sin x rather than sin(x), but instead we made
+;; sin a prefix operator
+;;
+;; l and r are the additional XML tags we should put around the function.
+(defun wxxml-function (x l r)
+  (setq l
+	(let ((*var-tag* '("<fnm lisp=\"wxxml-function\">" "</fnm>")))
+	  (wxxml (caar x) (append l '("<fn lisp=\"wxxml-function\">"))
+		 nil 'mparen 'mparen))
+	r (wxxml (cons '(mprogn) (cdr x)) nil (append '("</fn>") r)
+		 'mparen 'mparen))
+  (append l r))
+
+;; Converts the defstruct x to xml
+;;
+;; l and r are the additional XML tags we should put around the defstruct.
+(defun wxxml-defstruct (x l r)
+  (let ((L1 (cdr (get (caar x) 'defstruct-template)))
+	(L2 (cdr x)))
+    (wxxml-function
+     (cons (car x)
+	   (mapcar #'(lambda (e1 e2) (if (eq e1 e2) e1 `((mequal) ,e1 ,e2))) L1 L2))
+     l r)))
+
+(defun wxxml-matchfix-dim (x l r)
+  (setq l (append l
+		  (list (wxxml-dissym-to-string (car (get (caar x) 'dissym)))))
+	r (append (list (wxxml-dissym-to-string (cdr (get (caar x) 'dissym))))
+		  r)
+	x (wxxml-list (cdr x) nil r "<mo>,</mo>"))
+  (append l x))
+
+(defun wxxml-nary (x l r)
+  (let* ((op (caar x))
+	 (sym (cond ((member op '(mtimes wxtimes) :test #'eq)
+		     (if $stardisp
+			 "<mo>*</mo>"
+			 "<h>*</h>"))
+					;((wxxmlsym op))
+		    ((eq (get op 'dimension) 'dimension-nary)
+		     (wxxml-dissym-to-string (get op 'dissym)))))
+	 (y (cdr x))
+	 (ext-lop lop)
+	 (ext-rop rop))
+    (cond ((null y)
+	   (wxxml-function x l r)) ; this should not happen
+	  ((null (cdr y))
+	   (wxxml-function x l r)) ; this should not happen, too
+	  (t (do ((nl) (lop ext-lop op)
+		  (rop op (if (null (cdr y)) ext-rop op)))
+		 ((null (cdr y))
+		  (setq nl (nconc nl (wxxml (car y) l r lop rop))) nl)
+	       (setq nl (nconc nl (wxxml (car y) l (list sym) lop rop))
+		     y (cdr y)
+		     l nil))))))
+
+;; GH #1948: box()'s displayed precedence depends on whether it actually
+;; draws a border (always self-delimiting, so it should never need parens,
+;; see the high wxxml-lbp/rbp below) or is being used purely to color its
+;; content red without a border (boxname "highlight" -- see
+;; MathParser::ParseHighlightTag on the C++ side, which skips creating a
+;; BoxCell for that specific boxname and just applies a color instead). A
+;; bare color change doesn't visually delimit its own extent the way an
+;; actual border does, so that variant still needs the old, low precedence.
+;; Both variants of the *labelled* form (box(expr, boxname), including the
+;; "highlight" boxname) share the very same mlabox head symbol -- the
+;; unlabelled form box(expr) is mbox instead -- differing only in this
+;; argument, so a plain per-symbol wxxml-lbp/rbp property can't tell them
+;; apart. These wrappers can, since (unlike wxxml-lbp/rbp) they see the
+;; whole form, not just its head symbol.
+(defun wxxml-form-is-highlight-only-box (x)
+  (and (member (caar x) '(mbox mlabox))
+       (caddr x)
+       (equal (wxxml-mstring (caddr x)) "highlight")))
+
+(defun wxxml-form-lbp (x)
+  (if (wxxml-form-is-highlight-only-box x) 10. (wxxml-lbp (caar x))))
+
+(defun wxxml-form-rbp (x)
+  (if (wxxml-form-is-highlight-only-box x) 10. (wxxml-rbp (caar x))))
+
+;; Converts a sexp element to XML
+;;
+;; Most objects are assigned properties to, that tell this function how to
+;; deal with it. But there are many special cases...
+(defun wxxml (x l r lop rop)
+  (setq x (nformat x))
+  (cond ((atom x) (wxxml-atom x l r))
+	((not (listp (car x)))
+	 (wxxml (cons '(mlist simp) x) l r lop rop))
+	((or (<= (wxxml-form-lbp x) (wxxml-rbp lop))
+	     (> (wxxml-lbp rop) (wxxml-form-rbp x)))
+	 (wxxml-paren x l r))
+	;; special check needed because macsyma notates arrays peculiarly
+	((member 'array (cdar x) :test #'eq) (wxxml-array x l r))
+	;; If the object has a property named "wxxml" cal the function
+	;; the propertie's value tells us to call
+	((wxxml-get (caar x) 'wxxml) (funcall (get (caar x) 'wxxml) x l r))
+	((equal (wxxml-get (caar x) 'dimension) 'dimension-infix)
+	 (wxxml-infix x l r))
+	((equal (wxxml-get (caar x) 'dimension) 'dimension-match)
+	 (wxxml-matchfix-dim x l r))
+	((equal (wxxml-get (caar x) 'dimension) 'dimension-nary)
+	 (wxxml-nary x l r))
+	((equal (wxxml-get (caar x) 'dimension) 'dimension-postfix)
+	 (wxxml-postfix x l r))
+	((wxxml-get (caar x) 'defstruct-template)
+	 (wxxml-defstruct x l r))
+	(t (wxxml-function x l r))))
+
+;; Handle converting parenthesis to xml
+;; x is the contents of the parenthesis, l and r are the opening and closing tag
+;; we want to put around the parenthesis tag.
+(defun wxxml-paren (x l r)
+  (wxxml x (append l '("<mrow lisp=\"wxxml-paren\"><p lisp=\"wxxml-paren\">"))
+	 (cons "</p></mrow>" r) 'mparen 'mparen))
+
+;; set up a list , separated by symbols (, * ...)  and then tack on the
+;; ending item (e.g. "]" or perhaps ")"
+(defun wxxml-list (x l r sym)
+  (if (null x) r
+      (do ((nl))
+	  ((null (cdr x))
+	   (setq nl (nconc nl (wxxml (car x)  l r 'mparen 'mparen)))
+	   nl)
+	(setq nl (nconc nl (wxxml (car x)  l (list sym) 'mparen 'mparen))
+	      x (cdr x)
+	      l nil))))
+
+;; Like wxxml-list, but wrap each item in itemstart and itemend.
+(defun wxxml-list-wrapitem (x l r sym itemstart itemend)
+  (if (null x) r
+      (do ((nl))
+	  ((null (cdr x))
+	   (setq nl (nconc nl (list itemstart) (wxxml (car x) l (nconc (list itemend) r) 'mparen 'mparen) ))
+	   nl)
+	(setq nl (nconc nl (list itemstart) (wxxml (car x) l (list itemend sym ) 'mparen 'mparen))
+	      x (cdr x)
+	      l nil))))
+
+;;; Now we have functions which are called via property lists
+(defun wxxml-prefix (x l r)
+  (wxxml (cadr x) (append l (wxxmlsym (caar x))) r (caar x) rop))
+
+;; Convert infix operators to XML
+;;
+;; Infix operators are operators that stand between the two operands,
+;; like a "+" or a "-".
+(defun wxxml-infix (x l r)
+  ;; check for 2 args
+  (if (or (null (cddr x)) (cdddr x)) (return-from wxxml-infix (wxxml-function x l r)))
+  (setq l (wxxml (cadr x) l nil lop (caar x)))
+  (wxxml (caddr x) (append l (wxxmlsym (caar x))) r (caar x) rop))
+
+;; Convert postfix operators to XML
+;;
+;; Postfix operators like the "!" operator apply to the operand in front of them
+(defun wxxml-postfix (x l r)
+  (wxxml (cadr x) l (append (wxxmlsym (caar x)) r) lop (caar x)))
+
+
+;; Convert nofix operators to XML
+;;
+;; Nofix operators have no arguments
+(defun wxxml-nofix (x l r) (wxxml (caar x) l r (caar x) rop))
+
+;; Convert matchfix operators to XML
+;;
+;; Matchfix operators consist of two parts: A lead operator and a trailing op.
+;; The operands are then in between them.
+(defun wxxml-matchfix (x l r)
+  (setq l (append l (car (wxxmlsym (caar x))))
+	;; car of wxxmlsym of a matchfix operator is the lead op
+	r (append (cdr (wxxmlsym (caar x))) r)
+	;; cdr is the trailing op
+	x (wxxml-list-wrapitem (cdr x) nil r "<mo>,</mo>" "<mrow>" "</mrow>"))
+  (append l x))
+
+;; Converts the sexp representation of a generic symbol
+;; [variable name, operator or similar] to xml
+;;
+;; pname is not a parameter, but a temporary variable name
+(defun wxxml-dissym-to-string (lst &aux pname)
+  (setq pname
+	(wxxml-fix-string (format nil "~{~a~}" lst)))
+  (if (wxxml-get lst 'op)
+      (concatenate 'string "<mo>" pname "</mo>")
+      (concatenate 'string "<mi>" pname "</mi>")))
+
+
+;; Converts a symbol to a <mi> tag, if necessary escaping its name for XML.
+;;
+;; Seems not to be responsible for printing error messages
+(defun wxxmlsym (x)
+  (or (get x 'wxxmlsym)
+      (get x 'strsym)
+      (and (get x 'dissym)
+	   (list (wxxml-dissym-to-string (get x 'dissym))))
+      (list (wxxml-stripdollar x))))
+
+(defun wxxmlword (x)
+  (or (get x 'wxxmlword)
+      (wxxml-stripdollar x)))
+
+;;(defun mathml-bigfloat (x l r) (declare (ignore l r)) (fpformat x))
+(defun wxxml-bigfloat (x l r)
+  (append l '("<mn>") (fpformat x) '("</mn>") r))
+
+(wx-defprop bigfloat wxxml-bigfloat wxxml)
+
+(wx-defprop mprog  "<fnm lisp=\"mprog\">block</fnm>" wxxmlword)
+(wx-defprop $true  "<t lisp=\"true\">true</t>"  wxxmlword)
+(wx-defprop $false "<t lisp=\"false\">false</t>" wxxmlword)
+
+(wx-defprop mprogn wxxml-matchfix wxxml)
+(wx-defprop mprogn (("<mrow><p>") "</p></mrow>") wxxmlsym)
+
+(wx-defprop mlist wxxml-matchfix wxxml)
+(wx-defprop mlist (("<mrow list=\"true\"><t lisp=\"mlist\" listdelim=\"true\">[</t>")"<t lisp=\"mlist\" listdelim=\"true\">]</t></mrow>") wxxmlsym)
+
+(wx-defprop $set wxxml-matchfix wxxml)
+(wx-defprop $set (("<mrow set=\"true\"><t lisp=\"set\" listdelim=\"true\">{</t>")"<t lisp=\"set\" listdelim=\"true\">}</t></mrow>") wxxmlsym)
+
+(wx-defprop mabs wxxml-matchfix wxxml)
+(wx-defprop mabs (("<mrow><a>")"</a></mrow>") wxxmlsym)
+
+(wx-defprop $interval wxxml-matchfix wxxml)
+(wx-defprop $interval (("<fn interval=\"true\"><fnm>interval</fnm><mrow><p>")"</p></mrow></fn>") wxxmlsym)
+
+(wx-defprop $conjugate wxxml-matchfix wxxml)
+(wx-defprop $conjugate (("<mrow><cj>")"</cj></mrow>") wxxmlsym)
+
+(wx-defprop %conjugate wxxml-matchfix wxxml)
+(wx-defprop %conjugate (("<mrow><cj>")"</cj></mrow>") wxxmlsym)
+
+(wx-defprop mbox wxxml-mbox wxxml)
+(wx-defprop mlabox wxxml-mbox wxxml)
+
+;; GH #1948: box() draws its own border around its argument (see
+;; wxxml-mbox below, dispatched via the "wxxml" property above) and is
+;; therefore always self-delimiting, exactly like a matched-delimiter
+;; construct (a matrix, absolute value, ...) -- it should never need an
+;; extra pair of parentheses no matter what operator surrounds it. But the
+;; generic paren-insertion check in wxxml (wxxml-lbp/wxxml-rbp comparison)
+;; runs *before* the "wxxml" property dispatch, so a low precedence here
+;; still wraps the box in a redundant, wrong-looking pair of parentheses,
+;; e.g. "a*box(b)*c" (120 for mtimes). 250 clears every real operator's
+;; precedence in this file with headroom, including mquote's 201 (the
+;; highest otherwise in use, using a plain "<=" comparison so an exact tie
+;; would still parenthesize). mlabox (box(expr, boxname), the labelled
+;; form -- see wxxml-mbox below, which handles both) gets the same
+;; treatment; wxxml-form-lbp/rbp above override both back down to the old
+;; low precedence for the "highlight" boxname specifically.
+(wx-defprop mbox 250. wxxml-rbp)
+(wx-defprop mbox 250. wxxml-lbp)
+
+(wx-defprop mlabox 250. wxxml-rbp)
+(wx-defprop mlabox 250. wxxml-lbp)
+
+;; mlabbox (double b) does not appear to be an internal representation any
+;; live Maxima code path actually produces (box(expr, boxname) is mlabox,
+;; single b, above) -- left untouched since there's nothing to verify this
+;; against.
+(wx-defprop mlabbox 10. wxxml-rbp)
+(wx-defprop mlabbox 10. wxxml-lbp)
+
+;; Creates the XML output for box() commands.
+(defun wxxml-mbox (x l r)
+  (let ((boxname (caddr x)))
+    (setq l (wxxml (cadr x) (append l
+				    (if boxname
+					(list (format nil "<mrow><hl boxname=\"~a\">"
+						      (wxxml-fix-string
+						       (wxxml-mstring boxname))))
+					'("<mrow><hl>"))
+				    )
+		   nil 'mparen 'mparen)
+	  r (append '("</hl></mrow>") r))
+    (append l r))
+  )
+;; (caddr x) should return the optional argument
+
+(defun wxxml-mqapply (x l r)
+  (setq l (wxxml (cadr x) (append l '("<fn>"))
+		 (list "<p>" ) lop 'mfunction)
+	r (wxxml-list (cddr x) nil (cons "</p></fn>" r) "<mo>,</mo>"))
+  (append l r))
+
+(wx-defprop mqapply wxxml-mqapply wxxml)
+
+(wx-defprop $zeta "<g>zeta</g>" wxxmlword)
+(wx-defprop %zeta "<g>zeta</g>" wxxmlword)
+
+;;
+;; Greek characters
+;;
+(wx-defprop $%alpha "<g>%alpha</g>" wxxmlword)
+(wx-defprop $alpha "<g>alpha</g>" wxxmlword)
+(wx-defprop $%beta "<g>%beta</g>" wxxmlword)
+(wx-defprop $beta "<g>beta</g>" wxxmlword)
+(wx-defprop %beta "<g>beta</g>" wxxmlword) ; Maxima commit [446bc6] requires, that $beta must be replaced with %beta, keep both, so that older and younger Maxima versions work.
+(wx-defprop $%gamma "<g>%gamma</g>" wxxmlword)
+(wx-defprop %gamma "<g>gamma</g>" wxxmlword)
+(wx-defprop $%delta "<g>%delta</g>" wxxmlword)
+(wx-defprop $delta "<g>delta</g>" wxxmlword)
+(wx-defprop $%epsilon "<g>%epsilon</g>" wxxmlword)
+(wx-defprop $epsilon "<g>epsilon</g>" wxxmlword)
+(wx-defprop $%zeta "<g>%zeta</g>" wxxmlword)
+(wx-defprop $%eta "<g>%eta</g>" wxxmlword)
+(wx-defprop $eta "<g>eta</g>" wxxmlword)
+(wx-defprop $%theta "<g>%theta</g>" wxxmlword)
+(wx-defprop $theta "<g>theta</g>" wxxmlword)
+(wx-defprop $%iota "<g>%iota</g>" wxxmlword)
+(wx-defprop $iota "<g>iota</g>" wxxmlword)
+(wx-defprop $%kappa "<g>%kappa</g>" wxxmlword)
+(wx-defprop $kappa "<g>kappa</g>" wxxmlword)
+(wx-defprop $%lambda "<g>%lambda</g>" wxxmlword)
+(wx-defprop lambda "<g>lambda</g>" wxxmlword) ; No preceding "$" required, see https://sourceforge.net/p/maxima/mailman/message/37764771/ - "lambda" is treated differently (than other greek letters) in share/contrib/lurkmathml/mathml.lisp in the (current) Maxima source code. But this causes several issues in wxMaxima...
+(wx-defprop $%mu "<g>%mu</g>" wxxmlword)
+(wx-defprop $mu "<g>mu</g>" wxxmlword)
+(wx-defprop $%nu "<g>%nu</g>" wxxmlword)
+(wx-defprop $nu "<g>nu</g>" wxxmlword)
+(wx-defprop $%xi "<g>%xi</g>" wxxmlword)
+(wx-defprop $xi "<g>xi</g>" wxxmlword)
+(wx-defprop $%omicron "<g>%omicron</g>" wxxmlword)
+(wx-defprop $omicron "<g>omicron</g>" wxxmlword)
+(wx-defprop $%pi "<s>%pi</s>" wxxmlword)
+(wx-defprop $pi "<g>pi</g>" wxxmlword)
+(wx-defprop $%rho "<g>%rho</g>" wxxmlword)
+(wx-defprop $rho "<g>rho</g>" wxxmlword)
+(wx-defprop $%sigma "<g>%sigma</g>" wxxmlword)
+(wx-defprop $sigma "<g>sigma</g>" wxxmlword)
+(wx-defprop $%tau "<g>%tau</g>" wxxmlword)
+(wx-defprop $tau "<g>tau</g>" wxxmlword)
+(wx-defprop $%upsilon "<g>%upsilon</g>" wxxmlword)
+(wx-defprop $upsilon "<g>upsilon</g>" wxxmlword)
+(wx-defprop $%phi "<g>%phi</g>" wxxmlword)
+(wx-defprop $phi "<g>phi</g>" wxxmlword)
+(wx-defprop $%chi "<g>%chi</g>" wxxmlword)
+(wx-defprop $chi "<g>chi</g>" wxxmlword)
+(wx-defprop $%psi "<g>%psi</g>" wxxmlword)
+(wx-defprop $psi "<g>psi</g>" wxxmlword)
+(wx-defprop $%omega "<g>%omega</g>" wxxmlword)
+(wx-defprop $omega "<g>omega</g>" wxxmlword)
+(wx-defprop |$%Alpha| "<g>%Alpha</g>" wxxmlword)
+(wx-defprop |$Alpha| "<g>Alpha</g>" wxxmlword)
+(wx-defprop |$%Beta| "<g>%Beta</g>" wxxmlword)
+(wx-defprop |$Beta| "<g>Beta</g>" wxxmlword)
+(wx-defprop |$%Gamma| "<g>%Gamma</g>" wxxmlword)
+(wx-defprop |$Gamma| "<g>Gamma</g>" wxxmlword)
+(wx-defprop |$%Delta| "<g>%Delta</g>" wxxmlword)
+(wx-defprop |$Delta| "<g>Delta</g>" wxxmlword)
+(wx-defprop |$%Epsilon| "<g>%Epsilon</g>" wxxmlword)
+(wx-defprop |$Epsilon| "<g>Epsilon</g>" wxxmlword)
+(wx-defprop |$%Zeta| "<g>%Zeta</g>" wxxmlword)
+(wx-defprop |$Zeta| "<g>Zeta</g>" wxxmlword)
+(wx-defprop |$%Eta| "<g>%Eta</g>" wxxmlword)
+(wx-defprop |$Eta| "<g>Eta</g>" wxxmlword)
+(wx-defprop |$%Theta| "<g>%Theta</g>" wxxmlword)
+(wx-defprop |$Theta| "<g>Theta</g>" wxxmlword)
+(wx-defprop |$%Iota| "<g>%Iota</g>" wxxmlword)
+(wx-defprop |$Iota| "<g>Iota</g>" wxxmlword)
+(wx-defprop |$%Kappa| "<g>%Kappa</g>" wxxmlword)
+(wx-defprop |$Kappa| "<g>Kappa</g>" wxxmlword)
+(wx-defprop |$%Lambda| "<g>%Lambda</g>" wxxmlword)
+(wx-defprop |$Lambda| "<g>Lambda</g>" wxxmlword)
+(wx-defprop |$%Mu| "<g>%Mu</g>" wxxmlword)
+(wx-defprop |$Mu| "<g>Mu</g>" wxxmlword)
+(wx-defprop |$%Nu| "<g>%Nu</g>" wxxmlword)
+(wx-defprop |$Nu| "<g>Nu</g>" wxxmlword)
+(wx-defprop |$%Xi| "<g>%Xi</g>" wxxmlword)
+(wx-defprop |$Xi| "<g>Xi</g>" wxxmlword)
+(wx-defprop |$%Omicron| "<g>%Omicron</g>" wxxmlword)
+(wx-defprop |$Omicron| "<g>Omicron</g>" wxxmlword)
+(wx-defprop |$%Rho| "<g>%Rho</g>" wxxmlword)
+(wx-defprop |$Rho| "<g>Rho</g>" wxxmlword)
+(wx-defprop |$%Sigma| "<g>%Sigma</g>" wxxmlword)
+(wx-defprop |$Sigma| "<g>Sigma</g>" wxxmlword)
+(wx-defprop |$%Tau| "<g>%Tau</g>" wxxmlword)
+(wx-defprop |$Tau| "<g>Tau</g>" wxxmlword)
+(wx-defprop |$%Upsilon| "<g>%Upsilon</g>" wxxmlword)
+(wx-defprop |$Upsilon| "<g>Upsilon</g>" wxxmlword)
+(wx-defprop |$%Phi| "<g>%Phi</g>" wxxmlword)
+(wx-defprop |$Phi| "<g>Phi</g>" wxxmlword)
+(wx-defprop |$%Chi| "<g>%Chi</g>" wxxmlword)
+(wx-defprop |$Chi| "<g>Chi</g>" wxxmlword)
+(wx-defprop |$%Psi| "<g>%Psi</g>" wxxmlword)
+(wx-defprop |$Psi| "<g>Psi</g>" wxxmlword)
+(wx-defprop |$%Omega| "<g>%Omega</g>" wxxmlword)
+(wx-defprop |$Omega| "<g>Omega</g>" wxxmlword)
+(wx-defprop |$%Pi| "<g>%Pi</g>" wxxmlword)
+(wx-defprop |$Pi| "<g>Pi</g>" wxxmlword)
+
+(wx-defprop $%i "<s>%i</s>" wxxmlword)
+(wx-defprop $%e "<s>%e</s>" wxxmlword)
+(wx-defprop $inf "<s>inf</s>" wxxmlword)
+(wx-defprop $minf "<s>minf</s>" wxxmlword)
+
+(wx-defprop mreturn "return" wxxmlword)
+
+(wx-defprop mquote wxxml-prefix wxxml)
+(wx-defprop mquote ("<mo>'</mo>") wxxmlsym)
+(wx-defprop mquote "<mo>'</mo>" wxxmlword)
+(wx-defprop mquote 201. wxxml-rbp)
+
+(wx-defprop msetq wxxml-infix wxxml)
+(wx-defprop msetq ("<mo>:</mo>") wxxmlsym)
+(wx-defprop msetq "<mo>:</mo>" wxxmlword)
+(wx-defprop msetq 180. wxxml-rbp)
+(wx-defprop msetq 20. wxxml-rbp)
+
+(wx-defprop mset wxxml-infix wxxml)
+(wx-defprop mset ("<mo>::</mo>") wxxmlsym)
+(wx-defprop mset "<mo>::</mo>" wxxmlword)
+(wx-defprop mset 180. wxxml-lbp)
+(wx-defprop mset 20. wxxml-rbp)
+
+(wx-defprop mdefine wxxml-infix wxxml)
+(wx-defprop mdefine ("<mo>:=</mo>") wxxmlsym)
+(wx-defprop mdefine "<mo>:=</mo>" wxxmlword)
+(wx-defprop mdefine 180. wxxml-lbp)
+(wx-defprop mdefine 20. wxxml-rbp)
+
+(wx-defprop mdefmacro wxxml-infix wxxml)
+(wx-defprop mdefmacro ("<mo>::=</mo>") wxxmlsym)
+(wx-defprop mdefmacro "<mo>::=</mo>" wxxmlword)
+(wx-defprop mdefmacro 180. wxxml-lbp)
+(wx-defprop mdefmacro 20. wxxml-rbp)
+
+(wx-defprop marrow wxxml-infix wxxml)
+(wx-defprop marrow ("<mo>-></mo>") wxxmlsym)
+(wx-defprop marrow "<mo>-></mo>" wxxmlword)
+(wx-defprop marrow 25 wxxml-lbp)
+(wx-defprop marrow 25 wxxml-rbp)
+
+(wx-defprop mfactorial wxxml-postfix wxxml)
+(wx-defprop mfactorial ("<mo>!</mo>") wxxmlsym)
+(wx-defprop mfactorial "<mo>!</mo>" wxxmlword)
+(wx-defprop mfactorial 160. wxxml-lbp)
+(wx-defprop mfactorial 159. wxxml-rbp)
+
+(wx-defprop mexpt wxxml-mexpt wxxml)
+(wx-defprop mexpt 140. wxxml-lbp)
+(wx-defprop mexpt 139. wxxml-rbp)
+
+(wx-defprop %sum 90. wxxml-rbp)
+(wx-defprop %product 95. wxxml-rbp)
+
+;; insert left-angle-brackets for mncexpt. a^<t> is how a^^n looks.
+
+(defun wxxml-mexpt (x l r)
+  (cond ((atom (cadr x))
+	 (wxxml-mexpt-simple x l r))
+	((member 'array (caadr x))
+	 (wxxml-mexpt-array x l r))
+	(t
+	 (wxxml-mexpt-simple x l r))))
+
+(defun wxxml-mexpt-array (x l r)
+  (let* ((nc (eq (caar x) 'mncexpt))
+	 f (xarr (cadr x))
+	 (xexp (nformat (caddr x))))
+    ;; the index part
+    (if (eq 'mqapply (caar xarr))
+	(setq f (cadr xarr)
+	      xarr (cdr xarr)
+	      l (wxxml f (append l (list "<ie><p>")) (list "</p>")
+		       'mparen 'mparen))
+	(setq f (caar xarr)
+	      l (wxxml f (append l (if nc
+				       (list "<ie mat=\"true\"><mrow>")
+				       (list "<ie><mrow>")))
+		       (list "</mrow>") lop 'mfunction)))
+    (setq  l (append l (wxxml-list (cdr xarr) (list "<mrow>")
+				   (list "</mrow>") "<mi>,</mi>")))
+    ;; The exponent part
+    (setq r (if (mmminusp xexp)
+		;; the change in base-line makes parens unnecessary
+		(wxxml (cadr xexp) '("<mrow><mi>-</mi>")
+		       (cons "</mrow></ie>" r) 'mparen 'mparen)
+		(if (and (integerp xexp) (< xexp 10))
+		    (wxxml xexp nil
+			   (cons "</ie>" r) 'mparen 'mparen)
+		    (wxxml xexp (list "<mrow>")
+			   (cons "</mrow></ie>" r) 'mparen 'mparen)
+		    )))
+    (append l r)))
+
+(defun wxxml-mexpt-simple (x l r)
+  (let((nc (eq (caar x) 'mncexpt)))
+    (setq l (wxxml (cadr x) (append l (if nc
+					  '("<msup mat=\"true\"><mrow>")
+					  '("<msup><mrow>")))
+		   nil lop (caar x))
+	  r (if (mmminusp (setq x (nformat (caddr x))))
+		;; the change in base-line makes parens unnecessary
+		(wxxml (cadr x) '("</mrow><mrow><mi>-</mi>")
+		       (cons "</mrow></msup>" r) 'mminus 'mminus)
+		(if (and (integerp x) (< x 10))
+		    (wxxml x (list "</mrow>")
+			   (cons "</msup>" r) 'mparen 'mparen)
+		    (wxxml x (list "</mrow><mrow>")
+			   (cons "</mrow></msup>" r) 'mparen 'mparen)
+		    )))
+    (append l r)))
+
+(wx-defprop mncexpt wxxml-mexpt wxxml)
+
+(wx-defprop mncexpt 135. wxxml-lbp)
+(wx-defprop mncexpt 134. wxxml-rbp)
+
+(wx-defprop mnctimes wxxml-nary wxxml)
+(wx-defprop mnctimes "<mo>.</mo>" wxxmlsym)
+(wx-defprop mnctimes "<mo>.</mo>" wxxmlword)
+(wx-defprop mnctimes 110. wxxml-lbp)
+(wx-defprop mnctimes 109. wxxml-rbp)
+
+(wx-defprop mtimes wxxml-nary wxxml)
+(wx-defprop mtimes "<h>*</h>" wxxmlsym)
+(wx-defprop mtimes "<mo>*</mo>" wxxmlword)
+(wx-defprop mtimes 120. wxxml-lbp)
+(wx-defprop mtimes 120. wxxml-rbp)
+
+(wx-defprop wxtimes wxxml-nary wxxml)
+(wx-defprop wxtimes "<h>*</h>" wxxmlsym)
+(wx-defprop wxtimes "<mo>*</mo>" wxxmlword)
+(wx-defprop wxtimes 120. wxxml-lbp)
+(wx-defprop wxtimes 120. wxxml-rbp)
+
+(wx-defprop %sqrt wxxml-sqrt wxxml)
+
+;; Creates the XML tags for sqrt()
+(defun wxxml-sqrt (x l r)
+  (wxxml (cadr x) (append l  '("<q>"))
+	 (append '("</q>") r) 'mparen 'mparen))
+
+;; Creates the XML tags for quotients
+(defun wxxml-mquotient (x l r)
+  (if (or (null (cddr x)) (cdddr x)) (return-from wxxml-mquotient (wxxml-function x l r)))
+  (setq l (wxxml (cadr x) (append l '("<mfrac lisp=\"wxxml-mquotient\"><mrow>")) nil
+                 'mparen 'mparen)
+	r (wxxml (caddr x) (list "</mrow><mrow>")
+		 (append '("</mrow></mfrac>")r) 'mparen 'mparen))
+  (append l r))
+
+(wx-defprop mquotient wxxml-mquotient wxxml)
+(wx-defprop mquotient ("<mo>/</mo>") wxxmlsym)
+(wx-defprop mquotient "<mo>/</mo>" wxxmlword)
+(wx-defprop mquotient 122. wxxml-lbp) ;;dunno about this
+(wx-defprop mquotient 123. wxxml-rbp)
+
+;; Tests if a matrix() command contains a square list of lists
+;;
+;; If not the matrix is displayed as function call, not as a matrix
+(defun wxxml-matrix-test (x l r)
+  (if (every #'$listp (cdr x))
+      (wxxml-matrix x l r)
+      (wxxml-function x l r)))
+
+(wx-defprop $matrix wxxml-matrix-test wxxml)
+
+;; Generates the XML for matrices
+(defun wxxml-matrix(x l r) ;;matrix looks like ((mmatrix)((mlist) a b) ...)
+  (cond ((null (cdr x))
+	 (append l `("<fn><fnm>matrix</fnm><p/></fn>") r))
+	((and (null (cddr x))
+	      (null (cdadr x)))
+	 (append l `("<fn><fnm>matrix</fnm><p><t>[</t><t>]</t></p></fn>") r))
+	(t
+	 (let ((tb-tag "<tb")
+	       (mtrx (car x)))
+	   (when (find 'inference mtrx)
+	     (setq tb-tag (concatenate 'string tb-tag " inference=\"true\"")))
+	   (when (find 'special mtrx)
+	     (setq tb-tag (concatenate 'string tb-tag " special=\"true\""))
+	     (when (find 'rownames mtrx)
+	       (setq tb-tag (concatenate 'string tb-tag " rownames=\"true\"")))
+	     (when (find 'colnames mtrx)
+	       (setq tb-tag (concatenate 'string tb-tag " colnames=\"true\""))))
+	   ;; wx_matrix()'s oversized option: how to show this matrix if it
+	   ;; is too large for the window, overriding the configuration.
+	   (cond
+	     ((find 'oversized_full mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " oversized=\"full\"")))
+	     ((find 'oversized_elide mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " oversized=\"elide\"")))
+	     ((find 'oversized_scroll mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " oversized=\"scroll\""))))
+	   ;; wx_matrix()'s banding option: tint every other row and column
+	   ;; whatever the matrix's size, or never.
+	   (cond
+	     ((find 'banding_on mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " banding=\"true\"")))
+	     ((find 'banding_off mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " banding=\"false\""))))
+	   (cond
+	     ((find 'paren_round mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " roundedParens=\"true\"")))
+	     ((find 'paren_square mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " bracketParens=\"true\"")))
+	     ((find 'paren_angled mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " angledParens=\"true\"")))
+	     ((find 'paren_straight mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " straightParens=\"true\"")))
+	     ((find 'paren_none mtrx)
+	      (setq tb-tag (concatenate 'string tb-tag " noneParens=\"true\"")))
+	     ((string= $lmxchar "(")
+	      (setq tb-tag (concatenate 'string tb-tag " roundedParens=\"true\"")))
+	     ((string= $lmxchar "[")
+	      (setq tb-tag (concatenate 'string tb-tag " bracketParens=\"true\"")))
+	     ((string= $lmxchar "<")
+	      (setq tb-tag (concatenate 'string tb-tag " angledParens=\"true\"")))
+	     ((string= $lmxchar "|")
+	      (setq tb-tag (concatenate 'string tb-tag " straightParens=\"true\"")))
+	     ((string= $lmxchar " ")
+	      (unless (find 'special mtrx)
+		(setq tb-tag (concatenate 'string tb-tag " special=\"true\""))))
+	     (t nil))
+	   (setq tb-tag (concatenate 'string tb-tag ">"))
+	   (append l (list tb-tag)
+		   (mapcan #'(lambda (y)
+			       (cond ((null (cdr y))
+				      (list "<mtr><mtd><mspace/></mtd></mtr>"))
+				     (t
+				      (wxxml-list (cdr y)
+						  (list "<mtr><mtd>")
+						  (list "</mtd></mtr>")
+						  "</mtd><mtd>"))))
+			   (cdr x))
+		   `("</tb>") r)))))
+
+;; macsyma sum or prod is over integer range, not  low <= index <= high
+;; wxxml is lots more flexible .. but
+
+(wx-defprop %sum wxxml-sum wxxml)
+(wx-defprop %lsum wxxml-lsum wxxml)
+(wx-defprop %lproduct wxxml-lproduct wxxml)
+(wx-defprop %product wxxml-sum wxxml)
+(wx-defprop $sum wxxml-sum wxxml)
+(wx-defprop $lsum wxxml-lsum wxxml)
+(wx-defprop $lproduct wxxml-lproduct wxxml)
+(wx-defprop $product wxxml-sum wxxml)
+
+;; easily extended to union, intersect, otherops
+
+;; GH #1536: a bare summand ("k") doesn't need visual disambiguation from
+;; whatever follows the whole sum/product, but a compound one ("k+k^2")
+;; could otherwise be misread as extending past the sum sign into it --
+;; e.g. "sum k + L" is genuinely ambiguous about whether L is part of the
+;; sum. Maxima's own printer has no lbp/rbp registered for %sum/%product at
+;; all (confirmed: (get '%sum 'lbp) is NIL), so it can't be using generic
+;; operator-precedence comparison for this either -- mplusp (a direct,
+;; already-existing Maxima predicate on the real expression, not an
+;; invented precedence value) is the same structural distinction Maxima's
+;; own 2D ASCII printer visibly makes for this exact construct. This is
+;; carried across the wire as the needsparen attribute since the decision
+;; of whether to show parens has to reach SumCell's 2D on-screen layout in
+;; wxWidgets/C++, which ParenCell's own "print" flag cannot do (it only
+;; suppresses parens in text/TeX/MathML export, not in Recalculate()/Draw()).
+(defun wxxml-sum-needsparen (x)
+  (if (mplusp (cadr x)) "true" "false"))
+
+(defun wxxml-lproduct(x l r)
+  (let* ((op (concatenate 'string "<sm type=\"lprod\" needsparen=\""
+			   (wxxml-sum-needsparen x) "\"><mrow>"))
+	;; gotta be one of those above
+	(s1 (wxxml (cadr x) nil nil 'mparen rop));; summand
+	(index ;; "index = lowerlimit"
+	 (wxxml `((min simp) , (caddr x), (cadddr x))
+		nil nil 'mparen 'mparen)))
+    (append l `(,op ,@index
+		    "</mrow><mrow><mn/></mrow><mrow>"
+		    ,@s1 "</mrow></sm>") r)))
+
+(defun wxxml-lsum(x l r)
+  (let* ((op (concatenate 'string "<sm type=\"lsum\" needsparen=\""
+			   (wxxml-sum-needsparen x) "\"><mrow>"))
+	;; gotta be one of those above
+	(s1 (wxxml (cadr x) nil nil 'mparen rop));; summand
+	(index ;; "index = lowerlimit"
+	 (wxxml `((min simp) , (caddr x), (cadddr x))
+		nil nil 'mparen 'mparen)))
+    (append l `(,op ,@index
+		    "</mrow><mrow><mn/></mrow><mrow>"
+		    ,@s1 "</mrow></sm>") r)))
+
+(defun wxxml-sum(x l r)
+  (let* ((prodp (not (or (eq (caar x) '%sum) (eq (caar x) '$sum))))
+	 (op (concatenate 'string "<sm"
+			   (if prodp " type=\"prod\"" "")
+			   " needsparen=\"" (wxxml-sum-needsparen x)
+			   "\"><mrow>"))
+	(s1 (wxxml (cadr x) nil nil 'mparen rop));; summand
+	(index ;; "index = lowerlimit"
+	 (wxxml `((mequal simp) ,(caddr x) ,(cadddr x))
+		nil nil 'mparen 'mparen))
+	(toplim (wxxml (car (cddddr x)) nil nil 'mparen 'mparen)))
+    (append l `( ,op ,@index "</mrow><mrow>" ,@toplim
+		 "</mrow><mrow>"
+		 ,@s1 "</mrow></sm>") r)))
+
+(wx-defprop %integrate wxxml-int wxxml)
+(wx-defprop $integrate wxxml-int wxxml)
+
+(defun wxxml-int (x l r)
+  (let ((s1 (wxxml (cadr x) nil nil 'mparen 'mparen));;integrand delims / & d
+	(var (wxxml (caddr x) nil nil 'mparen rop))) ;; variable
+    (cond ((= (length x) 3)
+	   (append l `("<in def=\"false\"><mrow>"
+		       ,@s1
+		       "</mrow><mrow><s>d</s>"
+		       ,@var
+		       "</mrow></in>") r))
+	  (t ;; presumably length 5
+	   (let ((low (wxxml (nth 3 x) nil nil 'mparen 'mparen))
+		 ;; 1st item is 0
+		 (hi (wxxml (nth 4 x) nil nil 'mparen 'mparen)))
+	     (append l `("<in><mrow>"
+			 ,@low
+			 "</mrow><mrow>"
+			 ,@hi
+			 "</mrow><mrow>"
+			 ,@s1
+			 "</mrow><mrow><s>d</s>"
+			 ,@var "</mrow></in>") r))))))
+
+(wx-defprop %limit wxxml-limit wxxml)
+
+(wx-defprop mrarr wxxml-infix wxxml)
+(wx-defprop mrarr ("<mo>-></mo>") wxxmlsym)
+(wx-defprop mrarr 80. wxxml-lbp)
+(wx-defprop mrarr 80. wxxml-rbp)
+
+(defun wxxml-limit (x l r) ;; ignoring direction, last optional arg to limit
+  (let ((s1 (wxxml (second x) nil nil 'mparen rop));; limitfunction
+	(subfun ;; the thing underneath "limit"
+	 (wxxml `((mrarr simp) ,(third x)
+		  ,(fourth x))
+		nil nil 'mparen 'mparen)))
+    (case (fifth x)
+      ($plus
+       (append l `("<lm><fnm>lim</fnm><mrow>"
+		   ,@subfun "<mo>+</mo></mrow><mrow>"
+		   ,@s1 "</mrow></lm>")
+	       r))
+      ($minus
+       (append l `("<lm><fnm>lim</fnm><mrow>"
+		   ,@subfun "<mo>-</mo></mrow><mrow>"
+		   ,@s1 "</mrow></lm>") r))
+      (otherwise
+       (append l `("<lm><fnm>lim</fnm><mrow>"
+		   ,@subfun "</mrow><mrow>"
+		   ,@s1 "</mrow></lm>") r)))))
+
+(wx-defprop %at wxxml-at wxxml)
+;; e.g.  at(diff(f(x)),x=a)
+(defun wxxml-at (x l r)
+  (let ((s1 (wxxml (cadr x) nil nil lop rop))
+	(sub (wxxml (caddr x) nil nil 'mparen 'mparen)))
+    (append l '("<at><mrow>") s1
+	    '("</mrow><mrow>") sub '("</mrow></at>") r)))
+
+;;binomial coefficients
+
+(wx-defprop %binomial wxxml-choose wxxml)
+
+
+(defun wxxml-choose (x l r)
+  `(,@l
+    "<p print=\"no\"><mfrac lisp=\"wxxml-choose\" line=\"no\"><mrow>"
+    ,@(wxxml (cadr x) nil nil 'mparen 'mparen)
+    "</mrow><mrow>"
+    ,@(wxxml (caddr x) nil nil 'mparen 'mparen)
+    "</mrow></mfrac></p>"
+    ,@r))
+
+
+(wx-defprop rat wxxml-rat wxxml)
+(wx-defprop rat 120. wxxml-lbp)
+(wx-defprop rat 121. wxxml-rbp)
+(defun wxxml-rat(x l r) (wxxml-mquotient x l r))
+
+(wx-defprop mplus wxxml-mplus wxxml)
+(wx-defprop mplus 100. wxxml-lbp)
+(wx-defprop mplus 100. wxxml-rbp)
+
+(defun wxxml-mplus (x l r)
+  (cond ((member 'trunc (car x) :test #'eq)
+	 (setq r (cons "<mo>+</mo><mo>...</mo>" r))))
+  (cond ((null (cddr x))
+	 (if (null (cdr x))
+	     (wxxml-function x l r)
+	     (wxxml (cadr x) l r 'mplus rop)))
+	(t (setq l (wxxml (cadr x) l nil lop 'mplus)
+		 x (cddr x))
+	   (do ((nl l)  (dissym))
+	       ((null (cdr x))
+		(if (mmminusp (car x)) (setq l (cadar x) dissym
+					     (list "<mo>-</mo>"))
+		    (setq l (car x) dissym (list "<mo>+</mo>")))
+		(setq r (wxxml l dissym r 'mplus rop))
+		(append nl r))
+	     (if (mmminusp (car x)) (setq l (cadar x) dissym
+					  (list "<mo>-</mo>"))
+		 (setq l (car x) dissym (list "<mo>+</mo>")))
+	     (setq nl (append nl (wxxml l dissym nil 'mplus 'mplus))
+		   x (cdr x))))))
+
+(wx-defprop mminus wxxml-prefix wxxml)
+(wx-defprop mminus ("<mo>-</mo>") wxxmlsym)
+(wx-defprop mminus "<mo>-</mo>" wxxmlword)
+(wx-defprop mminus 134. wxxml-rbp)
+(wx-defprop mminus 101. wxxml-lbp)
+
+(wx-defprop $~ wxxml-infix wxxml)
+(wx-defprop $~ ("<mo>~</mo>") wxxmlsym)
+(wx-defprop $~ "<mo>~</mo>" wxxmlword)
+(wx-defprop $~ 134. wxxml-lbp)
+(wx-defprop $~ 133. wxxml-rbp)
+
+(wx-defprop min wxxml-infix wxxml)
+(wx-defprop min ("<fnm>in</fnm>") wxxmlsym)
+(wx-defprop min "<fnm>in</fnm>" wxxmlword)
+(wx-defprop min 80. wxxml-lbp)
+(wx-defprop min 80. wxxml-rbp)
+
+(wx-defprop mequal wxxml-infix wxxml)
+(wx-defprop mequal ("<mo>=</mo>") wxxmlsym)
+(wx-defprop mequal "<mo>=</mo>" wxxmlword)
+(wx-defprop mequal 80. wxxml-lbp)
+(wx-defprop mequal 80. wxxml-rbp)
+
+(wx-defprop mnotequal wxxml-infix wxxml)
+(wx-defprop mnotequal ("<mo>#</mo>") wxxmlsym)
+(wx-defprop mnotequal 80. wxxml-lbp)
+(wx-defprop mnotequal 80. wxxml-rbp)
+
+(wx-defprop mgreaterp wxxml-infix wxxml)
+(wx-defprop mgreaterp ("<mo>&gt;</mo>") wxxmlsym)
+(wx-defprop mgreaterp "<mo>&gt;</mo>" wxxmlword)
+(wx-defprop mgreaterp 80. wxxml-lbp)
+(wx-defprop mgreaterp 80. wxxml-rbp)
+
+(wx-defprop mgeqp wxxml-infix wxxml)
+(wx-defprop mgeqp ("<mo>&gt;=</mo>") wxxmlsym)
+(wx-defprop mgeqp "<mo>&gt;=</mo>" wxxmlword)
+(wx-defprop mgeqp 80. wxxml-lbp)
+(wx-defprop mgeqp 80. wxxml-rbp)
+
+(wx-defprop mlessp wxxml-infix wxxml)
+(wx-defprop mlessp ("<mo>&lt;</mo>") wxxmlsym)
+(wx-defprop mlessp "<mo>&lt;</mo>" wxxmlword)
+(wx-defprop mlessp 80. wxxml-lbp)
+(wx-defprop mlessp 80. wxxml-rbp)
+
+(wx-defprop mleqp wxxml-infix wxxml)
+(wx-defprop mleqp ("<mo>&lt;=</mo>") wxxmlsym)
+(wx-defprop mleqp "<mo>&lt;=</mo>" wxxmlword)
+(wx-defprop mleqp 80. wxxml-lbp)
+(wx-defprop mleqp 80. wxxml-rbp)
+
+(wx-defprop mnot wxxml-prefix wxxml)
+(wx-defprop mnot ("<mo altCopy=\"not \">not</mo>") wxxmlsym)
+(wx-defprop mnot "<mo>not</mo>" wxxmlword)
+(wx-defprop mnot 70. wxxml-rbp)
+
+(wx-defprop mand wxxml-nary wxxml)
+(wx-defprop mand "<mspace/><fnm>and</fnm><mspace/>" wxxmlsym)
+(wx-defprop mand "<fnm>and</fnm>" wxxmlword)
+(wx-defprop mand 60. wxxml-lbp)
+(wx-defprop mand 60. wxxml-rbp)
+
+(wx-defprop mor wxxml-nary wxxml)
+(wx-defprop mor "<mspace/><mo>or</mo><mspace/>" wxxmlsym)
+(wx-defprop mor "<mo>or</mo>" wxxmlword)
+(wx-defprop mor 50. wxxml-lbp)
+(wx-defprop mor 50. wxxml-rbp)
+
+
+(wx-defprop mcond wxxml-mcond wxxml)
+(wx-defprop mcond 25. wxxml-lbp)
+(wx-defprop mcond 25. wxxml-rbp)
+
+(wx-defprop %derivative wxxml-derivative wxxml)
+(wx-defprop %derivative 120. wxxml-lbp)
+(wx-defprop %derivative 119. wxxml-rbp)
+
+(wx-defprop $diff wxxml-derivative wxxml)
+(wx-defprop $diff 120. wxxml-lbp)
+(wx-defprop $diff 119. wxxml-rbp)
+
+(defun wxxml-derivative (x l r)
+  (if (and $derivabbrev
+	   (every #'integerp (odds (cddr x) 0))
+	   (every #'atom (odds (cddr x) 1)))
+      (append l (wxxml-d-abbrev x) r)
+      (wxxml (wxxml-d x) (append l '("<d lisp=\"wxxml-derivative\">"))
+	     (append '("</d>") r) 'mparen 'mparen)))
+
+(defun $derivabbrev (a)
+  (if a
+      (progn
+	(wx-defprop %derivative 130. wxxml-lbp)
+	(wx-defprop %derivative 129. wxxml-rbp)
+	(setq $derivabbrev t))
+      (progn
+	(wx-defprop %derivative 120. wxxml-lbp)
+	(wx-defprop %derivative 119. wxxml-rbp)
+	(setq $derivabbrev nil))))
+
+(defun wxxml-d-abbrev-subscript (l_vars l_ords &aux var_xml)
+  (let ((sub ()))
+    (loop while l_vars do
+	  (setq var_xml (car (wxxml (car l_vars) nil nil 'mparen 'mparen)))
+	  (loop for i from 1 to (car l_ords) do
+		(setq sub (cons var_xml sub)))
+	  (setq l_vars (cdr l_vars)
+		l_ords (cdr l_ords)))
+    (reverse sub)))
+
+;; pretty-prints diff(f(x),x) without displaying it as diff(f(x),x,1).
+(defun wxxml-d-abbrev (x)
+  (let*
+      ((difflist (cddr x))
+       (ords (odds  difflist 0))
+       (ords (cond ((null ords) '(1))
+		   (t ords)))
+       (vars (odds difflist 1))
+       (fun (wxxml (cadr x) nil nil 'mparen 'mparen)))
+    (append '("<munder d=\"1\" altCopy=\"diff(")
+	    (mstring (cadr x))'(",") (mstring (car vars)) '(",") ords '(")\"><mrow>") fun '("</mrow>")
+	    '("<mrow>") (wxxml-d-abbrev-subscript vars ords) '("</mrow></munder>"))))
+
+;; pretty prints diff() commands
+(defun wxxml-d (x)
+  ;; format the macsyma derivative form so it looks
+  ;; sort of like a quotient times the deriva-dand.
+  (let*
+      (($simp t)
+       (arg (cadr x)) ;; the function being differentiated
+       (difflist (cddr x)) ;; list of derivs e.g. (x 1 y 2)
+       (ords (odds difflist 0)) ;; e.g. (1 2)
+       (ords (cond ((null ords) '(1))
+		   (t ords)))
+       (vars (odds difflist 1)) ;; e.g. (x y)
+       (dsym '((wxxmltag simp) "d" "s"))
+       (numer `((mexpt) ,dsym ((mplus) ,@ords))) ; d^n numerator
+       (denom (cons '(mtimes)
+		    (mapcan #'(lambda(b e)
+				`(,dsym ,(simplifya `((mexpt) ,b ,e) nil)))
+			    vars ords))))
+    `((wxtimes)
+      ((mquotient) ,(simplifya numer nil) ,denom)
+      ,arg)))
+
+;; Print if clauses in a nice way.
+(defun wxxml-mcond (x l r)
+  (let ((res ()))
+    (setq res (wxxml (cadr x) '("<fnm>if</fnm><mspace/>")
+		     '("<mspace/><fnm>then</fnm><mspace/>") 'mparen 'mparen))
+    (setq res (append res (wxxml (caddr x) nil
+				 '("<mspace/>") 'mparen 'mparen)))
+    (let ((args (cdddr x)))
+      (loop while (>= (length args) 2) do
+	    (cond
+	      ((and (= (length args) 2) (eql (car args) t))
+	       (unless (or (eql (cadr args) '$false) (null (cadr args)))
+		 (setq res (wxxml (cadr args)
+				  (append res '("<fnm>else</fnm><mspace/>"))
+				  nil 'mparen 'mparen))))
+	      (t
+	       (setq res (wxxml (car args)
+				(append res '("<fnm>elseif</fnm><mspace/>"))
+				(wxxml (cadr args)
+				       '("<mspace/><fnm>then</fnm><mspace/>")
+				       '("<mspace/>") 'mparen 'mparen)
+				'mparen 'mparen))))
+	    (setq args (cddr args)))
+      (append l res r))))
+
+(wx-defprop mdo wxxml-mdo wxxml)
+(wx-defprop mdo 30. wxxml-lbp)
+(wx-defprop mdo 30. wxxml-rbp)
+(wx-defprop mdoin wxxml-mdoin wxxml)
+(wx-defprop mdoin 30. wxxml-rbp)
+
+(defun wxxml-lbp (x)
+  (cond ((wxxml-get x 'wxxml-lbp))
+	(t(lbp x))))
+
+(defun wxxml-rbp (x)
+  (cond ((wxxml-get x 'wxxml-rbp))
+	(t(lbp x))))
+
+;; these aren't quite right
+
+(defun wxxml-mdo (x l r)
+  (wxxml-list (wxxmlmdo x) l r "<mspace/>"))
+
+(defun wxxml-mdoin (x l r)
+  (wxxml-list (wxxmlmdoin x) l r "<mspace/>"))
+
+(defun wxxmlmdo (x)
+  (nconc (cond ((second x) (list (make-tag "for" "fnm") (second x))))
+	 (cond ((equal 1 (third x)) nil)
+	       ((third x)  (list (make-tag "from" "fnm") (third x))))
+	 (cond ((equal 1 (fourth x)) nil)
+	       ((fourth x)
+		(list (make-tag "step" "fnm")  (fourth x)))
+	       ((fifth x)
+		(list (make-tag "next" "fnm") (fifth x))))
+	 (cond ((sixth x)
+		(list (make-tag "thru" "fnm") (sixth x))))
+	 (cond ((null (seventh x)) nil)
+	       ((eq 'mnot (caar (seventh x)))
+		(list (make-tag "while" "fnm") (cadr (seventh x))))
+	       (t (list (make-tag "unless" "fnm") (seventh x))))
+	 (list (make-tag "do" "fnm") (eighth x))))
+
+(defun wxxmlmdoin (x)
+  (nconc (list (make-tag "for" "fnm") (second x)
+	       (make-tag "in" "fnm") (third x))
+	 (cond ((sixth x)
+		(list (make-tag "thru" "fnm") (sixth x))))
+	 (cond ((null (seventh x)) nil)
+	       ((eq 'mnot (caar (seventh x)))
+		(list (make-tag "while" "fnm") (cadr (seventh x))))
+	       (t (list (make-tag "unless" "fnm") (seventh x))))
+	 (list (make-tag "do" "fnm") (eighth x))))
+
+(defun wxxml-matchfix-np (x l r)
+  (setq l (append l (car (wxxmlsym (caar x))))
+	;; car of wxxmlsym of a matchfix operator is the lead op
+	r (append (cdr (wxxmlsym (caar x))) r)
+	;; cdr is the trailing op
+	x (wxxml-list (cdr x) nil r ""))
+  (append l x))
+
+;; Text that is output by maxima. Strings are handled elsewhere, it seems
+(defun wxxml-text-string (x l r)
+  (append l (list (wxxml-fix-string (format nil "~{~a~}" (cdr x)))) r))
+;;(trace wxxml-text-string :methods t)
+
+(wx-defprop text-string wxxml-text-string wxxml)
+
+;; mtext are generated by maxima's print() command.
+;; mtext's arguments are strings that we equip with a <st> tag, already.
+;; => No need to equip them with their own tag.
+;; Additionally mtext is somehow involved in generating question prompts
+(wx-defprop mtext wxxml-matchfix-np wxxml)
+(wx-defprop mtext (("")"") wxxmlsym)
+
+(defvar *wxxml-mratp* nil)
+
+;; Converts an input prompt to XML
+(defun wxxml-mlable (x l r)
+  (wxxml (caddr x)
+	 (append l
+		 (if (cadr x)
+		     (list
+		      (format nil "<lbl altCopy=\"~A\">(~A)~A </lbl>"
+			      (wxxml-alt-copy-text (cadr x))
+			      (wxxml-fix-string (format nil "~A" (stripdollar (maybe-invert-string-case (symbol-name (cadr x))))))
+			      *wxxml-mratp*))
+		     nil))
+	 r 'mparen 'mparen))
+
+(wx-defprop mlable wxxml-mlable wxxml)
+(wx-defprop mlabel wxxml-mlable wxxml)
+
+;; Seems to be only used for indenting results function cally by the trace()
+;; command.
+(defun wxxml-spaceout (x l r)
+  (append l (list " " (make-string (cadr x) :initial-element #\.) "") r))
+
+(wx-defprop spaceout wxxml-spaceout wxxml)
+
+;; the actual function that converts equations from maxima's sexp to XML
+;;
+;; with all the other functions in this file this one has grown
+;; surprisingly small.
+(defun mydispla (x)
+  (finish-output)
+  (let ((*print-circle* nil)
+	(*wxxml-mratp* (format nil "~{~a~}" (cdr (checkrat x)))))
+    (mapc #'princ
+	  (wxxml x '("<math>") '("</math>") 'mparen 'mparen)))
+  (finish-output)
+  )
+
+;; Default to use wxMaxima's 2d XML display
+(setf *alt-display2d* 'mydispla)
+
+;; Wraps Maxima's own stock ASCII-art 2D display (the one *alt-display2d*
+;; would otherwise bypass) in <wxxml-asciimath>...</wxxml-asciimath>
+;; markers, without reimplementing any of its formatting. Maxima pads the
+;; lines above/below the label line assuming every line is later rendered
+;; in one uniform monospace font; wxMaxima used to guess which physical
+;; lines belonged to that same block from their *content* alone (whether a
+;; line of already-batched socket data happened to start with "(%") - since
+;; batching is timing-dependent, not tied to Maxima's actual block
+;; boundaries, a block's label line could land in a different socket read
+;; than its neighbors and get misclassified into a different (proportional)
+;; font, breaking the alignment Maxima's whitespace padding assumed. Explicit
+;; markers make the block boundaries unambiguous instead of guessed.
+;; Rebinding *alt-display2d* to nil for the (displa x) call - rather than
+;; calling some lower-level stock-printer function directly - re-enters
+;; Maxima's own dispatch and picks up its stock ASCII path, since nil is
+;; exactly what tells that dispatch not to redirect to an alternate printer;
+;; this also stays correct through any of Maxima's own recursive
+;; sub-expression displa calls (matrix rows, etc.), because they run inside
+;; the same dynamic extent.
+(defun wx-ascii-displa (x)
+  (format t "~%<wxxml-asciimath>")
+  (let ((*alt-display2d* nil))
+    (displa x))
+  (format t "</wxxml-asciimath>~%"))
+
+;; Allow the user to switch between display schemes.
+(defun $set_display (tp)
+  (cond
+    ((eq tp '$none)
+     (setq $display2d nil))
+    ((eq tp '$ascii)
+     (setq $display2d t)
+     (setf *alt-display2d* 'wx-ascii-displa))
+    ((eq tp '$xml)
+     (setq $display2d t)
+     (setf *alt-display2d* 'mydispla))
+    (t
+     (format t "Unknown display type")
+     (setq tp '$unknown)))
+  (wx-print-gui-variables)
+  tp)
+
+;;
+;; inference_result from the stats package
+;;
+(defun wxxml-inference (x l r)
+  (let ((name (cadr x))
+	(values (caddr x))
+	(dis (cadddr x))
+	(m ()))
+    (labels
+	((build-eq (e)
+	   `((mequal simp) ,(cadr e) ,(caddr e))))
+      (dolist (i (cdr dis))
+	(setq m (append m `(((mlist simp) ,(build-eq (nth i values)))))))
+      (setq m (cons `((mlist simp) ,name) m))
+      (setq m (cons '($matrix simp inference) m))
+      (wxxml m l r 'mparen 'mparen))))
+
+(wx-defprop $inference_result wxxml-inference wxxml)
+
+(defun wxxml-amatrix (x l r)
+  (let* ((nr ($@-function x '$nr))
+	 (nc ($@-function x '$nc))
+	 (M (if (or (= nr 0) (= nc 0))
+		'(($matrix))
+		(simplifya ($genmatrix
+			    `((lambda) ((mlist) i j) (mfuncall '$get_element ,x i j))
+			    nr nc)
+			   t))))
+    (wxxml-matrix M l r)))
+
+(wx-defprop $amatrix wxxml-amatrix wxxml)
+
+;;
+;; orthopoly functions
+;;
+
+(defun wxxml-pochhammer (x l r)
+  (let ((n (cadr x))
+	(k (caddr x)))
+    (append l
+	    (list (format nil "<munder altCopy=\"~a\"><p>" (wxxml-alt-copy-text x)))
+	    (wxxml n nil nil 'mparen 'mparen)
+	    (list "</p><mrow>")
+	    (wxxml k nil nil 'mparen 'mparen)
+	    (list "</mrow></munder>")
+	    r)))
+
+(wx-defprop $pochhammer wxxml-pochhammer wxxml)
+
+(defun wxxml-orthopoly (x l r)
+  (let* ((fun-name (caar x))
+	 (disp-name (get fun-name 'wxxml-orthopoly-disp))
+	 (args (cdr x)))
+    (append l
+	    (list (format nil "<fn altCopy=\"~a\">" (wxxml-alt-copy-text x)))
+	    (if (nth 2 disp-name)
+		(list (format nil "<ie><fnm>~a</fnm><mrow>" (car disp-name)))
+		(list (format nil "<munder><fnm>~a</fnm><mrow>" (car disp-name))))
+	    (wxxml (nth (nth 1 disp-name) args) nil nil 'mparen 'mparen)
+	    (when (nth 2 disp-name)
+	      (append (list "</mrow><mrow>")
+		      (when (nth 3 disp-name) (list "<p>"))
+		      (wxxml-list (or (nth 5 disp-name)
+				      (mapcar (lambda (i) (nth i args)) (nth 2 disp-name)))
+				  nil nil ",")
+		      (when (nth 3 disp-name) (list "</p>"))
+		      (list "</mrow>")))
+	    (if (nth 2 disp-name)
+		(list "</ie>")
+		(list "</mrow></munder>"))
+	    (list "<p>")
+	    (wxxml-list (mapcar (lambda (i) (nth i args)) (nth 4 disp-name)) nil nil ",")
+	    (list "</p></fn>")
+	    r)))
+
+(dolist (ortho-pair
+	  '(($laguerre "L" 0 nil nil (1))
+	    (%laguerre "L" 0 nil nil (1))
+	    ($legendre_p "P" 0 nil nil (1))
+	    (%legendre_p "P" 0 nil nil (1))
+	    ($legendre_q "Q" 0 nil nil (1))
+	    (%legendre_q "Q" 0 nil nil (1))
+	    ($chebyshev_t "T" 0 nil nil (1))
+	    (%chebyshev_t "T" 0 nil nil (1))
+	    ($chebyshev_u "U" 0 nil nil (1))
+	    (%chebyshev_u "U" 0 nil nil (1))
+	    ($hermite "H" 0 nil nil (1))
+	    (%hermite "H" 0 nil nil (1))
+	    ($spherical_bessel_j "J" 0 nil nil (1))
+	    (%spherical_bessel_j "J" 0 nil nil (1))
+	    ($spherical_bessel_y "Y" 0 nil nil (1))
+	    (%spherical_bessel_y "Y" 0 nil nil (1))
+	    ($assoc_legendre_p "P" 0 (1) nil (2))
+	    (%assoc_legendre_p "P" 0 (1) nil (2))
+	    ($assoc_legendre_q "Q" 0 (1) nil (2))
+	    (%assoc_legendre_q "Q" 0 (1) nil (2))
+	    ($jacobi_p "P" 0 (1 2) t (3))
+	    (%jacobi_p "P" 0 (1 2) t (3))
+	    ($gen_laguerre "L" 0 (1) t (2))
+	    (%gen_laguerre "L" 0 (1) t (2))
+	    ($spherical_harmonic "Y" 0 (1) nil (2 3))
+	    (%spherical_harmonic "Y" 0 (1) nil (2 3))
+	    ($ultraspherical "C" 0 (1) t (2))
+	    (%ultraspherical "C" 0 (1) t (2))
+	    ($spherical_hankel1 "H" 0 t t (1) (1))
+	    (%spherical_hankel1 "H" 0 t t (1) (1))
+	    ($spherical_hankel2 "H" 0 t t (1) (2))
+	    (%spherical_hankel2 "H" 0 t t (1) (2))))
+  (setf (get (car ortho-pair) 'wxxml) 'wxxml-orthopoly)
+  (setf (get (car ortho-pair) 'wxxml-orthopoly-disp) (cdr ortho-pair)))
+
+;;;
+;;; This is the display support only - copy/paste will not work
+;;;
+
+(defmvar $pdiff_uses_prime_for_derivatives nil)
+(defmvar $pdiff_prime_limit 3)
+(defmvar $pdiff_uses_named_subscripts_for_derivatives nil)
+(defmvar $pdiff_diff_var_names (list '(mlist) '|$x| '|$y| '|$z|))
+
+(setf (get '%pderivop 'wxxml) 'wxxml-pderivop)
+(setf (get '$pderivop 'wxxml) 'wxxml-pderivop)
+
+(defun wxxml-pderivop (x l r)
+  (cond ((and $pdiff_uses_prime_for_derivatives (eq 3 (length x)))
+	 (let* ((n (car (last x)))
+		(p))
+
+	   (cond ((<= n $pdiff_prime_limit)
+		  (setq p (make-list n :initial-element "'")))
+		 (t
+		  (setq p (list "(" n ")"))))
+	   (append (append l '("<mrow>"))
+		   (let ((*var-tag* (list "<fnm>" "</fnm>"))) (wxxml (cadr x) nil nil lop rop))
+		   p
+		   (list "</mrow>")  r)))
+
+	((and $pdiff_uses_named_subscripts_for_derivatives
+	      (< (apply #'+ (cddr x)) $pdiff_prime_limit))
+	 (let ((n (cddr x))
+	       (v (mapcar #'wxxml-stripdollar (cdr $pdiff_diff_var_names)))
+	       (p))
+	   (cond ((> (length n) (length v))
+		  (return-from wxxml-pderivop (wxxml-function x l r))))
+	   (dotimes (i (length n))
+	     (setq p (append p (make-list (nth i n)
+					  :initial-element (nth i v)))))
+	   (append (append l '("<munder><mrow>"))
+		   (wxxml (cadr x) nil nil lop rop)
+		   (list "</mrow><mrow>") p (list "</mrow></munder>") r)))
+	(t
+	 (append (append l '("<munder><mrow>"))
+		 (wxxml (cadr x) nil nil lop rop)
+		 (list "</mrow><mrow>(")
+		 (wxxml-list (cddr x) nil nil ",")
+		 (list ")</mrow></munder>") r))))
+
+;;
+;; Plotting support
+;;
+
+(wx-defprop wxxmltag wxxml-tag wxxml)
+
+(defun wxxml-tag (x l r)
+  (let ((name (cadr x))
+	(tag (caddr x))
+	(prop (cadddr x)))
+    (if prop
+	(append l (list (format nil "<~a ~a lisp=\"wxxml-tag\">~a</~a>" tag prop name tag)) r)
+	(append l (list (format nil "<~a lisp=\"wxxml-tag\">~a</~a>" tag name tag)) r))))
+
+
+(defvar *image-counter* 0)
+
+;; A suitable name for a .gnuplot file
+;; There is no standard function for creating temp file names, add a random number to make it not easily guessable.
+(defun wxplot-gnuplotfilename ()
+  (incf *wx-plot-num*)
+  (format nil "maxout_~d_~d_~d.gnuplot" (getpid) *wx-plot-num* (random 1000000)))
+
+;; A suitable name for a .data file
+(defun wxplot-datafilename ()
+  (incf *wx-plot-num*)
+  (format nil "maxout_~d_~d_~d.data" (getpid) *wx-plot-num* (random 1000000)))
+
+(defun wxplot-filename (&optional (suff t))
+  (incf *image-counter*)
+  (plot-temp-file (if suff
+		      (format nil (if
+				   $wxplot_usesvg "maxout_~d_~d_~d.svg" "maxout_~d_~d_~d.png")
+			      (getpid) *image-counter* (random 1000000))
+		      (format nil "maxout_~d_~d_~d" (getpid) *image-counter* (random 1000000)))))
+
+(defvar *wxplot-svg-font-size* 16
+  "Font size, in px, of the text in SVG plots.
+gnuplot's svg terminal defaults to 12px, which looks much smaller than the
+text of the png and pngcairo terminals at the same plot size. 16 makes them
+look alike in the worksheet.")
+
+(defun wxplot-gnuplot-term ()
+  "The gnuplot_term option wx* plot commands hand to plot2d and friends.
+For SVG it is a whole terminal specification rather than just svg: plot2d
+writes its own set term line after the preamble, and unlike png the svg
+terminal then falls back to its default size and font, so the size and
+font in $wxplot_preamble were silently lost (every SVG plot was 600x480)."
+  (cond
+    ($wxplot_usesvg
+     (format nil "svg size ~d,~d font \",~d\""
+	     ($first $wxplot_size) ($second $wxplot_size) *wxplot-svg-font-size*))
+    ($wxplot_pngcairo '$pngcairo)
+    (t '$png)))
+
+;; Defined by the draw package, which wx*draw commands load on demand.
+(defvar *user-gr-default-options* nil)
+
+(defun wx-draw-defaults ()
+  "The draw defaults (set_draw_defaults) wx*draw commands run with.
+draw's svg terminal only names a font if the font option is set, and its
+default text is as small as gnuplot's. So for SVG plots a font is added,
+unless the user's own defaults already choose one. Options the user gives
+in a scene still win, as draw applies these defaults first."
+  (if (and $wxplot_usesvg
+	   (notany #'(lambda (opt)
+		       (and (listp opt) (member (cadr opt) '($font $font_size))))
+		   *user-gr-default-options*))
+      (append `(((mequal simp) $font "Arial")
+		((mequal simp) $font_size ,*wxplot-svg-font-size*))
+	      *user-gr-default-options*)
+      *user-gr-default-options*))
+
+(defun $wxplot_preamble ()
+  (let ((frmt
+	 (cond
+	   ((and (not $wxplot_usesvg) $wxplot_pngcairo) "set terminal pngcairo dashed background \"white\" enhanced font \"arial,10\" fontscale 1.0 size ~d,~d; set zeroaxis;")
+	   ((and (not $wxplot_usesvg) (not $wxplot_pngcairo)) "set terminal png size ~d,~d; set zeroaxis;")
+	   (t "set terminal svg size ~d,~d; set zeroaxis;"))))
+    (format nil frmt
+	    ($first $wxplot_size)
+	    ($second $wxplot_size))))
+
+(defun $int_range (lo &optional hi (st 1))
+  (unless (integerp lo)
+    ($error "int_range: first argument is not an integer."))
+  (unless (or (null hi) (integerp hi))
+    ($error "int_range: second argument is not an integer."))
+  (when (null hi)
+    (setq hi lo)
+    (setq lo 1))
+  (cons '(mlist simp) (loop :for i :from lo :to hi :by st :collect i)))
+
+(defvar *default-framerate* 2)
+(defvar $wxanimate_framerate *default-framerate*)
+(defun slide-tag (images &optional gif-file)
+  ;; GIF-FILE, if given, asks wxMaxima to also save the animation as that gif
+  ;; file (with_slider_draw_bare's file_name, GH #2361).
+  (let ((attrs (format nil "~@[fr=\"~a\" ~]running=\"~a\" del=\"yes\"~@[ gifFile=\"~a\"~]"
+		       (unless (eql *default-framerate* $wxanimate_framerate)
+			 $wxanimate_framerate)
+		       (if (eql $wxanimate_autoplay 't) "true" "false")
+		       (and gif-file (wxxml-fix-string gif-file)))))
+    ($ldisp
+     (list '(wxxmltag simp)
+	   (wxxml-fix-string (format nil "~{~a;~}" images))
+	   "slide"
+	   attrs)
+     (format nil "~%"))))
+
+;; The absolute name of the gif file draw()'s file_name=NAME would make:
+;; NAME.gif, relative to Maxima's working directory. wxMaxima, which writes
+;; the file for with_slider_draw_bare, may be working in another directory.
+(defun wx-gif-file-name (name)
+  (let ((file (format nil "~a.gif" name)))
+    ;; (truename "./") rather than *default-pathname-defaults*, which some
+    ;; lisps (GCL) leave empty until wx-cd has run.
+    (or (ignore-errors (namestring (merge-pathnames file (truename "./"))))
+	file)))
+
+(defun wxanimate (scene)
+  (let* ((scene (cdr scene))
+	 (a (car scene))
+	 (a-range (meval (cadr scene)))
+	 (expr (caddr scene))
+	 (args (cdddr scene))
+	 (frameno 1)
+	 (images ()))
+    (when (integerp a-range)
+      (setq a-range (cons '(mlist simp) (loop for i from 1 to a-range collect i))))
+    (dolist (aval (reverse (cdr a-range)))
+      ($wxstatusbar (format nil "Preparing Frame #~d" frameno))
+      (setf frameno (+ 1 frameno))
+      (let ((preamble ($wxplot_preamble))
+	    (system-preamble (get-plot-option-string '$gnuplot_preamble 2))
+	    (filename (wxplot-filename))
+	    (expr (maxima-substitute aval a expr)))
+	(when (string= system-preamble "false")
+	  (setq system-preamble ""))
+	(setq preamble (format nil "~a; ~a" preamble system-preamble))
+	(dolist (arg args)
+	  (if (and (listp arg) (eql (cadr arg) '$gnuplot_preamble))
+	      (setq preamble (format nil "~a; ~a"
+				     preamble (meval (maxima-substitute aval a (caddr arg)))))))
+	(apply #'$plot2d `(,(meval expr) ,@(mapcar #'meval args)
+			    ((mlist simp) $plot_format $gnuplot)
+			    ((mlist simp) $gnuplot_term ,(wxplot-gnuplot-term))
+			    ((mlist simp) $gnuplot_preamble ,preamble)
+			    ((mlist simp) $gnuplot_out_file ,filename)))
+	(setq images (cons filename images))))
+    (when images
+      (slide-tag images)))
+  "")
+
+(defmspec $with_slider (scene)
+  (wxanimate scene))
+
+(defmspec $wxanimate (scene)
+  (wxanimate scene))
+
+(defun get-file-name-opt (scene)
+  (let (opts filename)
+    (loop for opt in scene do
+	  (if (and (not (atom opt))
+		   (eq (caar opt) 'mequal)
+		   (eq (cadr opt) '$file_name))
+	      (setq filename (caddr opt))
+	      (setq opts (cons opt opts))))
+    (values (reverse opts) filename)))
+
+(defun get-pic-size-opt ()
+  (cond
+    ((eq ($get '$draw '$version) 1)
+     `(((mequal simp) $pic_width ,($first $wxplot_size))
+       ((mequal simp) $pic_height ,($second $wxplot_size))))
+    (t
+     `(((mequal simp) $dimensions ,$wxplot_size)))))
+
+;; Shared by the with_slider_draw* / wxanimate_draw* family.
+;;
+;; SCENE-HEAD is the head (($gr2d) or ($gr3d)) that wraps a frame's
+;; arguments into a single scene, which is then passed to draw().
+;; SCENE-HEAD nil means "bare" (with_slider_draw_bare): the frame's
+;; arguments are handed to draw() as they are, so a frame can consist of
+;; several gr2d()/gr3d() scenes plus draw()'s global options.
+(defun wxanimate-draw (scenes scene-head)
+  (unless ($get '$draw '$version) ($load "draw"))
+  (multiple-value-bind (scene file-name) (get-file-name-opt (cdr scenes))
+    (let* ((a (meval (car scene)))
+	   (a-range (meval (cadr scene)))
+	   (args (cddr scene))
+	   (frameno 1)
+	   (images ()))
+      (when (integerp a-range)
+	(setq a-range (cons '(mlist simp) (loop for i from 1 to a-range collect i))))
+      ;; draw()'s animated_gif terminal makes one gif frame out of each
+      ;; scene, which cannot express a frame made of several scenes. So
+      ;; with_slider_draw_bare renders its frames as usual and has wxMaxima
+      ;; assemble them into the gif file (GH #2361).
+      (if (and file-name scene-head)
+	  ;; If file_name is set, draw the animation into gif using gnuplot
+	  (let (imgs)
+	    (dolist (aval (reverse (cdr a-range)))
+	      (setq imgs (cons
+			  (cons scene-head
+				(mapcar #'(lambda (arg) (meval (maxima-substitute aval a arg)))
+					args))
+			  imgs)))
+	    ($apply '$draw
+		    (append
+		     `((mlist simp)
+		       ((mequal simp) $terminal $animated_gif)
+		       ((mequal simp) $file_name ,file-name))
+		     (get-pic-size-opt)
+		     imgs))
+	    ;; del="no": this gif is the file the user asked for, not a
+	    ;; temporary one wxMaxima may delete once it has read it (GH #2389).
+	    (format t "<math><img del=\"no\">~a</img></math>"
+		    (wxxml-fix-string (format nil "~a.gif" file-name))))
+	  ;; If file_name is not set, show the animation in wxMaxima
+	  (progn
+	    (dolist (aval (reverse (cdr a-range)))
+	      ($wxstatusbar (format nil "Preparing Frame #~d" frameno))
+	      (setf frameno (+ 1 frameno))
+	      (let* ((filename (wxplot-filename nil))
+		     (gnuplotfilename (wxplot-gnuplotfilename))
+		     (datafilename (wxplot-datafilename))
+		     (frame-args (mapcar #'(lambda (arg) (meval (maxima-substitute aval a arg)))
+					 args))
+		     (draw-args (if scene-head
+				    (list (cons scene-head frame-args))
+				    frame-args)))
+		(setq images (cons (format nil
+					   (if $wxplot_usesvg "~a.svg" "~a.png")
+					   filename)
+				   images))
+ 		(setq images
+		      (cons
+		       (format nil "~a/~a" $maxima_tempdir gnuplotfilename)
+		       images))
+ 		(setq images
+		      (cons
+		       (format nil "~a/~a" $maxima_tempdir datafilename)
+		       images))
+		(let ((*user-gr-default-options* (wx-draw-defaults)))
+		 ($apply '$draw
+			(append
+			 `((mlist simp)
+			   ((mequal simp) $terminal ,(if $wxplot_usesvg '$svg
+							 (if $wxplot_pngcairo '$pngcairo '$png)))
+			   ((mequal simp) $gnuplot_file_name ,gnuplotfilename)
+			   ((mequal simp) $data_file_name ,datafilename)
+			   ((mequal simp) $file_name ,filename))
+			 (get-pic-size-opt)
+			 draw-args)))))
+	    (when images
+	      (slide-tag images
+			 (and file-name (wx-gif-file-name (meval file-name)))))))
+      "")))
+
+(defmspec $wxanimate_draw (scene)
+  (wxanimate-draw scene '($gr2d)))
+
+(defmspec $with_slider_draw (scene)
+  (wxanimate-draw scene '($gr2d)))
+
+(defmspec $with_slider_draw2d (scene)
+  (wxanimate-draw scene '($gr2d)))
+
+(defmspec $with_slider_draw3d (scene)
+  (wxanimate-draw scene '($gr3d)))
+
+;; Like with_slider_draw, but each frame is a plain draw() call rather than
+;; a draw2d() one: the arguments may be several gr2d()/gr3d() scenes and
+;; draw()'s global options (columns, dimensions, ...).
+(defmspec $with_slider_draw_bare (scene)
+  (wxanimate-draw scene nil))
+
+(defmspec $wxanimate_draw3d (scene)
+  (wxanimate-draw scene '($gr3d)))
+
+(defun $wxplot2d (&rest args)
+  (let ((preamble ($wxplot_preamble))
+	(system-preamble (get-plot-option-string '$gnuplot_preamble 2))
+	(filename (wxplot-filename)))
+    (when (string= system-preamble "false")
+      (setq system-preamble ""))
+    (setq preamble (format nil "~a; ~a" preamble system-preamble))
+    (dolist (arg args)
+      (if (and (listp arg) (eql (cadr arg) '$gnuplot_preamble))
+	  (setq preamble (format nil "~a; ~a" preamble (caddr arg)))))
+    (apply #'$plot2d `(,@args
+		       ((mlist simp) $plot_format $gnuplot)
+		       ((mlist simp) $gnuplot_term ,(wxplot-gnuplot-term))
+		       ((mlist simp) $gnuplot_preamble ,preamble)
+		       ((mlist simp) $gnuplot_out_file ,filename)))
+    ($ldisp `((wxxmltag simp) ,(wxxml-fix-string filename) "img")))
+  "")
+
+(defun $wxplot3d (&rest args)
+  (let ((preamble ($wxplot_preamble))
+	(system-preamble (get-plot-option-string '$gnuplot_preamble 2))
+	(filename (wxplot-filename)))
+    (when (string= system-preamble "false")
+      (setq system-preamble ""))
+    (setq preamble (format nil "~a; ~a" preamble system-preamble))
+    (dolist (arg args)
+      (if (and (listp arg) (eql (cadr arg) '$gnuplot_preamble))
+	  (setq preamble (format nil "~a; ~a"
+				 preamble (caddr arg)))))
+    (apply #'$plot3d `(,@args
+		       ((mlist simp) $plot_format $gnuplot)
+		       ((mlist simp) $gnuplot_term ,(wxplot-gnuplot-term))
+		       ((mlist simp) $gnuplot_preamble ,preamble)
+		       ((mlist simp) $gnuplot_out_file ,filename)))
+    ($ldisp `((wxxmltag simp) ,(wxxml-fix-string filename) "img")))
+  "")
+
+
+(defun $wxdraw2d (&rest args)
+  (apply #'$wxdraw
+	 (list (cons '($gr2d) args))))
+
+(defun $wxdraw3d (&rest args)
+  (apply #'$wxdraw
+	 (list (cons '($gr3d) args))))
+
+(defvar $display_graphics t)
+
+(defun option-sublist (lst)
+  (cons '(mlist simp)
+	(loop for l in lst
+	      when (and (listp l) (= ($length l) 2))
+	      collect l)))
+
+(defun $wxdraw (&rest args)
+  (unless ($get '$draw '$version) ($load "draw"))
+  (let* ((file_name_spec ($assoc '$file_name
+				 (option-sublist (append (cdar args)
+							 (cdr args)))))
+	 (gnuplotfilename (wxplot-gnuplotfilename))
+	 (datafilename (wxplot-datafilename))
+	 (filename (or file_name_spec (wxplot-filename nil)))
+	 res)
+    (setq res (let ((*user-gr-default-options* (wx-draw-defaults)))
+		($apply '$draw
+		      (append
+		       '((mlist simp))
+		       args
+		       `(((mequal simp) $terminal ,(if $wxplot_usesvg '$svg
+						       (if $wxplot_pngcairo '$pngcairo '$png)))
+			 ((mequal simp) $gnuplot_file_name ,gnuplotfilename)
+			 ((mequal simp) $data_file_name ,datafilename)
+			 ((mequal simp) $file_name ,filename))
+		       (cond
+			 ((eq ($get '$draw '$version) 1)
+			  `(((mequal simp) $pic_width ,($first $wxplot_size))
+			    ((mequal simp) $pic_height ,($second $wxplot_size))))
+			 (t
+			  `(((mequal simp) $dimensions ,$wxplot_size))))))))
+    (if $display_graphics
+	(progn
+	  ($ldisp `((wxxmltag simp) ,(wxxml-fix-string (format nil
+							       (if $wxplot_usesvg "~a.svg" "~a.png")
+							       filename)) "img"
+		    ,(if file_name_spec
+			 (format nil "del=\"no\" gnuplotsource=\"~a/~a\" gnuplotdata=\"~a/~a\"" $maxima_tempdir gnuplotfilename $maxima_tempdir datafilename)
+			 (format nil "del=\"yes\" gnuplotsource=\"~a/~a\" gnuplotdata=\"~a/~a\"" $maxima_tempdir gnuplotfilename $maxima_tempdir datafilename)
+			 )
+		    ))
+	  (setq res ""))
+	(setf res `((wxxmltag simp) ,(wxxml-fix-string (format nil
+							       (if $wxplot_usesvg "svg" "png")
+							       filename)) "img")))
+    res))
+
+(defmspec $wxdraw_list (args)
+  (unless ($get '$draw '$version) ($load "draw"))
+  (let (($display_graphics nil))
+    ($ldisp (cons '(mlist simp) (mapcar #'meval (cdr args)))))
+  '$done)
+
+(defun $wximplicit_plot (&rest args)
+  ;; implicit_plot lives in a share package that isn't autoloaded. Without
+  ;; it, $implicit_plot stays an unevaluated noun, no image gets written and
+  ;; wxMaxima reports a missing file instead of a plot (GH #1106).
+  (unless (fboundp '$implicit_plot) ($load "implicit_plot"))
+  (let ((preamble ($wxplot_preamble))
+	(system-preamble (get-plot-option-string '$gnuplot_preamble 2))
+	(filename (wxplot-filename)))
+    (when (string= system-preamble "false")
+      (setq system-preamble ""))
+    (setq preamble (format nil "~a; ~a" preamble system-preamble))
+    (dolist (arg args)
+      (if (and (listp arg) (eql (cadr arg) '$gnuplot_preamble))
+	  (setq preamble (format nil "~a; ~a"
+				 preamble (caddr arg)))))
+    ($apply '$implicit_plot `((mlist simp) ,@args
+			      ((mlist simp) $plot_format $gnuplot)
+			      ((mlist simp) $gnuplot_term ,(wxplot-gnuplot-term))
+			      ((mlist simp) $gnuplot_preamble ,preamble)
+			      ((mlist simp) $gnuplot_out_file ,filename)))
+    ($ldisp `((wxxmltag simp) ,(wxxml-fix-string filename) "img")))
+  "")
+
+
+(defun $wxcontour_plot (&rest args)
+  (let ((preamble ($wxplot_preamble))
+	($plot_options $plot_options)
+	(system-preamble (get-plot-option-string '$gnuplot_preamble 2))
+	(filename (wxplot-filename)))
+    (when (string= system-preamble "false")
+      (setq system-preamble ""))
+    (setq preamble (format nil "~a; ~a" preamble system-preamble))
+    (dolist (arg args)
+      (if (and (listp arg) (eql (cadr arg) '$gnuplot_preamble))
+	  (setq preamble (format nil "~a; ~a" preamble (caddr arg)))))
+    (apply #'$contour_plot `(,@args
+			     ((mlist simp) $gnuplot_term ,(wxplot-gnuplot-term))
+			     ((mlist simp) $plot_format $gnuplot)
+			     ((mlist simp) $gnuplot_preamble ,preamble)
+			     ((mlist simp) $gnuplot_out_file ,filename)))
+
+    ($ldisp `((wxxmltag simp) ,(wxxml-fix-string filename) "img")))
+  "")
+
+(defmfun $show_image (file)
+  ($ldisp `((wxxmltag simp) ,(wxxml-fix-string file) "img" "del=\"no\""))
+  "")
+
+;;
+;; Port of Barton Willis's texput function.
+;;
+;; Converts maximal internal representation of maths as a sexp to xml.
+(defun $wxxmlput (e s &optional tx lbp rbp)
+
+  (when (stringp e)
+    (setf e (define-symbol e)))
+
+  (cond (($listp s)
+	 (setq s (margs s)))
+	((stringp s)
+	 (setq s (list s)))
+	((atom s)
+	 (setq s (list (wxxml-stripdollar ($sconcat s))))))
+
+  (when (or (null lbp) (not (integerp lbp)))
+    (setq lbp 180))
+  (when (or (null rbp) (not (integerp rbp)))
+    (setq rbp 180))
+  (cond ((null tx)
+	 (if (stringp (nth 0 s))
+	     (putprop e (nth 0 s) 'wxxmlword)
+             (let ((fun-name (gensym))
+                   (fun-body
+                    `(append l
+                             (list
+                              (let ((f-x (mfuncall ',s x)))
+                                (if (stringp f-x)
+                                    f-x
+				    (merror "wxxml: function ~s did not return a string.~%"
+					    ($sconcat ',(nth 0 s))))))
+                             r)))
+               (setf (symbol-function fun-name) (coerce `(lambda (x l r) ,fun-body) 'function))
+               (setf (get e 'wxxml) fun-name))))
+	((eq tx '$matchfix)
+	 (putprop e 'wxxml-matchfix 'wxxml)
+	 (cond ((< (length s) 2)
+		(merror
+		 "Improper 2nd argument to `wxxmlput' for matchfix operator."))
+	       ((eq (length s) 2)
+		(putprop e (list (list (nth 0 s)) (nth 1 s)) 'wxxmlsym))
+	       (t
+		(putprop
+		 e (list (list (nth 0 s)) (nth 1 s) (nth 2 s)) 'wxxmlsym))))
+	((eq tx '$prefix)
+	 (putprop e 'wxxml-prefix 'wxxml)
+	 (putprop e s 'wxxmlsym)
+	 (putprop e lbp 'wxxml-lbp)
+	 (putprop e rbp 'wxxml-rbp))
+	((eq tx '$infix)
+	 (putprop e 'wxxml-infix 'wxxml)
+	 (putprop e  s 'wxxmlsym)
+	 (putprop e lbp 'wxxml-lbp)
+	 (putprop e rbp 'wxxml-rbp))
+	((eq tx '$postfix)
+	 (putprop e 'wxxml-postfix 'wxxml)
+	 (putprop e  s 'wxxmlsym)
+	 (putprop e lbp 'wxxml-lbp))
+	(t (merror "Improper arguments to `wxxmlput'."))))
+
+;;;;;;;;;;;;;
+;; Auto-loaded functions
+;;;;
+
+(setf (get '$lbfgs 'autoload) "lbfgs")
+(setf (get '$lcm 'autoload) "functs")
+
+;;;;;;;;;;;;;
+;; Statistics functions
+;;;;
+
+(defvar $draw_compound t)
+
+(defmacro create-statistics-wrapper (fun wxfun)
+  `(defun ,wxfun (&rest args)
+     (let (($draw_compound nil) res)
+       (declare (special $draw_compound))
+       (setq res ($apply ',fun (cons '(mlist simp) args)))
+       ($apply '$wxdraw2d res))))
+
+(create-statistics-wrapper $histogram_description $wxhistogram)
+(create-statistics-wrapper $scatterplot_description $wxscatterplot)
+(create-statistics-wrapper $barsplot_description $wxbarsplot)
+(create-statistics-wrapper $piechart_description $wxpiechart)
+(create-statistics-wrapper $boxplot_description $wxboxplot)
+
+(dolist (fun '($histogram
+	       $scatterplot
+	       $barsplot
+	       $piechart
+	       $boxplot))
+  (setf (get fun 'autoload) "descriptive"))
+
+(dolist (fun '($mean
+	       $median
+	       $var
+	       $std
+	       $test_mean
+	       $test_means_difference
+	       $test_normality
+	       $simple_linear_regression
+	       $subsample))
+  (setf (get fun 'autoload) "stats"))
+
+(setf (get '$lsquares_estimates 'autoload) "lsquares")
+
+(setf (get '$to_poly_solve 'autoload) "to_poly_solve")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Redefine load so that it prints the list of functions
+;; used for autocompletion.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Convert a symbol to a properly xml-escaped string.
+;;
+;; The name "a\<b" is converted to "a\&lt;b".
+;; If s is a list of symbols in the result between them
+;; there are spaces
+(defun symbol-to-xml (s)
+  (wxxml-fix-string (format nil "~a" (maybe-invert-string-case (symbol-name (stripdollar s))))))
+
+(defun print_unit (unit)
+  (format nil "<unit>~a</unit>" (symbol-to-xml unit)))
+
+(defun $print_function (fun)
+  (let ((fun-name (symbol-to-xml (caar fun)))
+	(*print-circle* nil)
+	(args (mapcar (lambda (u)
+			(cond ((atom u) (symbol-to-xml u))
+			      ((eq (caar u) 'mlist)
+			       ($concat "[" (symbol-to-xml
+					     (if (atom (cadr u)) (cadr u) (cadadr u))) "]"))
+			      (t (symbol-to-xml (cadr u)))))
+		      (cdr fun))))
+    (format nil "<function>~a</function><template>~a(~{&lt;~a&gt;~^, ~})</template>" fun-name fun-name args)))
+
+;; Add the variable val to the watch list
+(defun wx-add-variable-name (val)
+  (format t "<variable>~a</variable>~%" (symbol-to-xml val)))
+;; Add all currently defined variables to the watch list
+(defun wx-add-all-variables ()
+  (format t "<watch_variables_add>~%")
+  (mapcar #'wx-add-variable-name (cdr $values))
+  (format t "</watch_variables_add>~%"))
+
+(defun print_value (val)
+  (format nil "<value>~a</value>" (symbol-to-xml val)))
+
+(defun $add_function_template (&rest functs)
+  (let ((*print-circle* nil))
+    (format t "<wxxml-symbols>~{~a~^$~}</wxxml-symbols>" (mapcar #'$print_function functs))
+    (cons '(mlist simp) functs)))
+
+
+;; A function that determines all symbols for autocompletion
+(defun wxPrint_autocompletesymbols ()
+  (format t "<wxxml-symbols>")
+  (do-symbols
+      (s (find-package 'maxima))
+    (let ((str (format nil "~a" s)))
+      (if (< 1 (length str))
+          (if (string= (subseq str 0 1) "$")
+              (format t "<value>~a</value>"
+                      (wxxml-fix-string (format nil "~a"
+                                                (stripdollar (maybe-invert-string-case str))))
+                      )))))
+  ;;ezunits publishes all known units in a function.
+  (if (boundp '$known_units)
+      (no-warning
+       (format t "~{~a~^$~}"
+    	       (mapcar #'print_unit (cdr ($known_units))))))
+  (format t "</wxxml-symbols>")
+  (finish-output)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Communication between wxMaxima and wxMaxima about variables and directories
+;;;
+
+;;; Communicate the contents of variables to wxMaxima
+;;; linel is bound high because mtell wraps its output at linel columns:
+;;; a value longer than a terminal line (a maxima_userdir path, say) got a
+;;; newline plus continuation indentation inserted - and wxMaxima then
+;;; created a user directory whose name ended in that newline.
+(defun wx-print-variable (var)
+  (format t "<variable>~%<name>~a</name>" (symbol-to-xml var))
+  (ignore-errors
+    (let (($display2d nil) (linel 1000000) ($linel 1000000))
+      (mtell "<value>~M</value>" (wxxml-fix-string ($sconcat (eval var))))))
+  (format t "</variable>"))
+
+(defun wx-print-display2d ()
+  (format t "<variable><name>display2d</name><value>")
+  (if (eq $display2d nil)
+      (format t "false")
+      (format t "true"))
+  (format t "</value></variable>"))
+
+(defun wx-query-variable (var)
+  (format t "<variables><variable><name>~a</name>" (wxxml-fix-string (maybe-invert-string-case var)))
+  (ignore-errors
+    (let (($display2d nil) (linel 1000000) ($linel 1000000))
+      (mtell "<value>~M</value>" (wxxml-fix-string ($sconcat (meval (intern var)))))))
+  (format t "</variable></variables>~%"))
+
+(defun wx-print-variables ()
+  (finish-output)
+  (format t "<variables>")
+					;  (wx-print-variable '*maxima-topdir*)
+  (wx-print-variable '$gnuplot_command)
+  (wx-print-variable '$gentranlang)
+  (wx-print-variable '*maxima-demodir*)
+  (wx-print-variable '*autoconf-version*) ; Must be queried before maxima-sharedir is
+  (wx-print-variable '$maxima_userdir)
+  (wx-print-variable '$maxima_tempdir)
+  (wx-print-variable '*maxima-sharedir*)
+  (wx-print-variable '*maxima-infodir*)
+  (wx-print-variable '*maxima-htmldir*)
+  (wx-print-variable '*autoconf-host*)
+  (format t "<variable><name>*lisp-name*</name><value>~a</value></variable>"
+	  #+sbcl (ensure-readably-printable-string (lisp-implementation-type))
+	  #-sbcl (lisp-implementation-type))
+  (format t "<variable><name>*lisp-version*</name><value>~a</value></variable>"
+	  #+sbcl (ensure-readably-printable-string (lisp-implementation-version))
+	  #-sbcl (lisp-implementation-version))
+  ;; Whether wxMaxima can interrupt this Lisp through its own channel, see
+  ;; wx-open-interrupt-channel below. Tells a user who cannot interrupt a
+  ;; computation why, in the log.
+  (format t "<variable><name>*wx-interrupt-channel-available*</name><value>~a</value></variable>"
+	  (if (wx-interrupt-channel-available-p) "true" "false"))
+  (format t "</variables>~%")
+  (finish-output)
+  )
+					;
+
+
+;; WxMaxima reads these variables and sets several checkboxes in the Menu according to these
+;; variables. E.g. if the $numer variable is true, the checkbox for the Menu Numeric -> Numeric output
+;; is set checked.
+;; The state of this checkbox can either be changed using the wxMaxima menu (which would emit the
+;; command numer:true$ or numer:false$) - or by setting the variable as a Maxima command.
+(defun wx-print-gui-variables ()
+  (finish-output)
+  (format t "<variables>")
+  (wx-print-variable '$output_format_for_help)
+  (wx-print-variable '$wxsubscripts)
+  (wx-print-variable '$opsubst)
+  (wx-print-variable '$logexpand)
+  (wx-print-variable '$sinnpiflag)
+  (wx-print-variable '$lmxchar)
+  (wx-print-variable '$numer)
+  (wx-print-variable '$stringdisp)
+  (wx-print-variable '$domain)
+  (wx-print-variable '$showtime)
+  (wx-print-variable '$algebraic)
+  (wx-print-variable '$debugmode)
+  (wx-print-variable '$engineering_format_floats)
+  (wx-print-variable '$wxanimate_autoplay)
+  (wx-print-variable '$display2d_unicode)
+  (wx-print-display2d)
+  (wx-print-variable '*alt-display2d*)
+  (format t "<variable><name>*maxima-operators*</name><value>&lt;operators&gt;")
+  (do-symbols
+      (s :maxima)
+    (if (wxxml-get s 'op)
+	(format t "&lt;operator&gt;~a&lt;/operator&gt;~%" (wxxml-fix-string( wxxml-fix-string (format nil "~A" (get s 'op)))))))
+  (format t "&lt;/operators&gt;</value></variable>")
+  (format t "</variables>~%")
+  (finish-output)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; A function that allows wxMaxima to set maxima's current directory to that
+;; of the worksheet.
+
+;; GH #1672: on Windows, sb-posix:chdir and sb-posix:getcwd go through the C
+;; runtime's ANSI-only _chdir/_getcwd, which encode/decode the path using
+;; the system's legacy codepage instead of Unicode (this is a confirmed,
+;; still-open upstream SBCL bug: launchpad #2100706). A directory name
+;; containing a character outside that codepage -- e.g. Cyrillic or CJK on
+;; a Western-European Windows install -- turns into an unrepresentable or
+;; mangled ANSI path, so chdir fails even though the directory genuinely
+;; exists. Call the Win32 wide-character APIs directly instead, so
+;; non-ASCII directory names work regardless of the active codepage.
+;;
+;; This is Windows-only code that cannot be exercised on the non-Windows
+;; systems it was developed and tested on, so it is purely additive: every
+;; call site falls back to the previous sb-posix-based behavior if the
+;; wide-API call is unavailable or signals an error, meaning a mistake here
+;; can make GH #1672 persist but must not stop Maxima from starting.
+#+(and sbcl win32)
+(sb-alien:define-alien-routine ("SetCurrentDirectoryW" wx--set-current-directory-w)
+    sb-alien:int
+  (path (* (sb-alien:unsigned 16))))
+
+#+(and sbcl win32)
+(defun wx-cd-win32-unicode (dir-string)
+  (ignore-errors
+    (let* ((octets (sb-ext:string-to-octets dir-string :external-format :utf-16le))
+	   (n (length octets))
+	   (buf (sb-alien:make-alien (sb-alien:unsigned 8) (+ n 2))))
+      (unwind-protect
+	  (progn
+	    (dotimes (i n) (setf (sb-alien:deref buf i) (aref octets i)))
+	    (setf (sb-alien:deref buf n) 0)
+	    (setf (sb-alien:deref buf (1+ n)) 0)
+	    (/= 0 (wx--set-current-directory-w
+		   (sb-alien:cast buf (* (sb-alien:unsigned 16))))))
+	(sb-alien:free-alien buf)))))
+
+#+(and sbcl win32)
+(defun wx-getcwd-win32-unicode ()
+  ;; sb-unix:posix-getcwd (part of sbcl's core, not the sb-posix contrib) is
+  ;; implemented on top of the wide GetCurrentDirectory Win32 API, unlike
+  ;; sb-posix:getcwd's ANSI-only C runtime call.
+  (ignore-errors (sb-unix:posix-getcwd)))
+
+;; GH #1672: the last directory string wx-cd failed to cd into, so a
+;; persistently-broken path doesn't keep reprinting the same warning once
+;; per session -- users have reported documents accumulating hundreds of
+;; copies of this warning, one per session in which the file was opened
+;; and re-saved without the underlying path ever getting fixed. Reset on
+;; success so a later, genuinely new failure (a different directory, or the
+;; same one breaking again after briefly working) still gets reported.
+(defvar *wx-cd-last-failed-dir* nil)
+
+(defun wx-cd (dir)
+  (handler-case
+      (progn
+        (let ((dir (cond ((pathnamep dir) dir)
+	  		 #+sbcl
+	  		 ((stringp dir)
+	  		  ;; GH #1672: pathname-directory (used below for every
+	  		  ;; other lisp) parses the string using Common Lisp's
+	  		  ;; portable pathname syntax, which treats "*", "?", "["
+	  		  ;; and "]" as wildcard markers rather than literal
+	  		  ;; characters -- a directory legitimately named e.g.
+	  		  ;; "Draft [v2]" turns into an actual wildcard pattern
+	  		  ;; instead of a literal path component, and chdir-ing
+	  		  ;; to a wildcard pattern fails. sb-ext:native-pathname
+	  		  ;; parses the OS's own native path syntax instead, with
+	  		  ;; no such wildcard reinterpretation (confirmed: "*",
+	  		  ;; "?", "[", "]" all round-trip as literal characters),
+	  		  ;; so build the directory-only pathname from its result
+	  		  ;; instead of re-parsing the string through the
+	  		  ;; portable, wildcard-sensitive parser.
+	  		  (make-pathname :name nil :type nil
+	  				 :defaults (sb-ext:native-pathname dir)))
+	  		 #-sbcl
+	  		 ((stringp dir)
+	  		  (make-pathname :directory (pathname-directory dir)
+	    				 :host (pathname-host dir)
+	  				 :device (pathname-device dir)))
+	  		 (t (error "cd(dir): dir must be a string or pathname.")))))
+	  #+allegro (excl:chdir dir)
+	  #+clisp (ext:cd dir)
+	  #+cmu (setf (ext:default-directory) dir)
+	  #+cormanlisp (ccl:set-current-directory dir)
+	  #+gcl (si::chdir dir)
+	  #+lispworks (hcl:change-directory dir)
+	  #+lucid (lcl:working-directory dir)
+	  #+(and sbcl win32)
+	  (unless (wx-cd-win32-unicode (sb-ext:native-namestring dir))
+	    (sb-posix:chdir (sb-ext:native-pathname dir)))
+	  #+(and sbcl (not win32)) (sb-posix:chdir (sb-ext:native-pathname dir))
+	  #+(and sbcl win32)
+	  (setf *default-pathname-defaults*
+		(sb-ext:native-pathname
+		 (format nil "~A~A" (or (wx-getcwd-win32-unicode) (sb-posix:getcwd)) "/")))
+	  #+(and sbcl (not win32))
+	  (setf *default-pathname-defaults* (sb-ext:native-pathname (format nil "~A~A" (sb-posix:getcwd) "/")))
+	  #+ccl (ccl:cwd dir)
+	  #+ecl (si::chdir dir)
+         ;;; Officially gcl supports (si:chdir dir), too. But the version
+         ;;; shipped with debian and ubuntu (at least in Feb 2017) doesn't.
+	  #+gcl (xchdir dir)
+	  #+gcl (setf *default-pathname-defaults* dir)
+	  #+abcl (setf *default-pathname-defaults* (truename dir))
+
+	  (ignore-errors (setf *default-pathname-defaults* dir))
+	  #-(or allegro clisp cmu cormanlisp gcl lispworks lucid sbcl ccl ecl abcl) (format t
+										       "Info: wxMathml.cpp: Changing the working dir during a maxima session isn't implemented for this lisp.")
+  	  (namestring dir)
+	  (wx-print-variables)
+	  (wx-print-gui-variables)
+	  (setf *wx-cd-last-failed-dir* nil)))
+    (error (c)
+      (let ((dir-string (if (stringp dir) dir (ignore-errors (namestring dir)))))
+	(unless (equal dir-string *wx-cd-last-failed-dir*)
+	  (setf *wx-cd-last-failed-dir* dir-string)
+	  (format t "Warning: Can set maxima's working directory but cannot change it during the maxima session :~%~&~%")))
+      (values 0 c))))
+
+;;;;;;;;;;;;;;;;;;;;;
+;; table_form implementation
+
+(defun make-zeros (n)
+  (cons '(mlist simp) (loop for i from 1 to n collect "")))
+(defun take-first (l n)
+  (if (= n 0) nil (cons (first l) (take-first (rest l) (- n 1)))))
+
+(defun $table_form (mat &rest opts)
+  (when (mapatom mat)
+    ($error "table_form: the argument should not be an atom."))
+  (setq mat ($args mat))
+  (unless (every #'$listp (cdr mat))
+    (setq mat (cons '(mlist simp)
+		    (mapcar (lambda (e) (list '(mlist simp) e))
+			    (cdr mat)))))
+  (setq opts (cons '(mlist simp) opts))
+  (let ((row-names ($assoc '$row_names opts))
+	(col-names ($assoc '$column_names opts))
+	(m (apply #'max (mapcar '$length (cdr mat))))
+	(n (length (cdr mat)))
+	(mtrx '(special)))
+    (when ($assoc '$transpose opts)
+      (rotatef m n))
+    (when (eq row-names '$auto)
+      (setq row-names (cons '(mlist simp) (loop for i from 1 to n collect i))))
+    (when (eq col-names '$auto)
+      (setq col-names (cons '(mlist simp) (loop for i from 1 to m collect i))))
+    (when row-names
+      (setq row-names ($append row-names (make-zeros (- n ($length row-names)))))
+      (setq row-names (cons '(mlist simp) (take-first (cdr row-names) n))))
+    (when col-names
+      (setq col-names ($append col-names (make-zeros (- m ($length col-names)))))
+      (setq col-names (cons '(mlist simp) (take-first (cdr col-names) m))))
+    (when (and row-names col-names)
+      (setq col-names ($cons "" col-names)))
+    (setq mat (cons '(mlist simp) (mapcar
+				   (lambda (r) ($append r (make-zeros (- m ($length r)))))
+				   (cdr mat))))
+    (setq mat ($apply '$matrix mat))
+    (when ($assoc '$transpose opts)
+      (setq mat ($transpose mat)))
+    (when row-names
+      (setq mat (cons '($matrix simp)
+		      (mapcar #'$append (cdr ($transpose row-names)) (cdr mat))))
+      (setq mtrx (cons 'rownames mtrx)))
+    (when col-names
+      (setq mat (cons '(matrix simp)
+		      (cons col-names (cdr mat))))
+      (setq mtrx (cons 'colnames mtrx)))
+    ($ldisp (cons (append '($matrix simp) mtrx) (cdr mat)))
+    '$done))
+
+(putprop '$table_form t 'evfun)
+
+(no-warning
+ (defun $wx_matrix (mat &rest opts)
+   (unless ($matrixp mat)
+     (merror "wx_matrix: first argument must be a matrix."))
+   (let ((opts-list (cons '(mlist simp) opts))
+         (mtrx '(special)))
+     (when (eq ($assoc '$lines opts-list) t)
+       (setq mtrx (append mtrx '(special))))
+     (when (eq ($assoc '$rownames opts-list) t)
+       (setq mtrx (append mtrx '(rownames))))
+     (when (eq ($assoc '$colnames opts-list) t)
+       (setq mtrx (append mtrx '(colnames))))
+     (let ((paren ($assoc '$parenstyle opts-list)))
+       (cond
+         ((eq paren '$round) (setq mtrx (append mtrx '(paren_round))))
+         ((eq paren '$square) (setq mtrx (append mtrx '(paren_square))))
+         ((eq paren '$angled) (setq mtrx (append mtrx '(paren_angled))))
+         ((eq paren '$straight) (setq mtrx (append mtrx '(paren_straight))))
+         ((eq paren '$none) (setq mtrx (append mtrx '(paren_none)))))
+       ;; How to show the matrix if it is too large for the window; without
+       ;; this option the configuration decides.
+       (let ((oversized ($assoc '$oversized opts-list)))
+         (cond
+           ((null oversized))
+           ((eq oversized '$full) (setq mtrx (append mtrx '(oversized_full))))
+           ((eq oversized '$elide) (setq mtrx (append mtrx '(oversized_elide))))
+           ((eq oversized '$scroll) (setq mtrx (append mtrx '(oversized_scroll))))
+           (t (merror "wx_matrix: oversized must be full, elide or scroll, not ~M"
+                      oversized))))
+       ;; Alternating row/column bands: true and false force them on or
+       ;; off, auto (the default) bands only a matrix too large for the
+       ;; window. The default argument tells a missing option from false.
+       (let ((banding ($assoc '$banding opts-list '$auto)))
+         (cond
+           ((eq banding '$auto))
+           ((eq banding t) (setq mtrx (append mtrx '(banding_on))))
+           ((null banding) (setq mtrx (append mtrx '(banding_off))))
+           (t (merror "wx_matrix: banding must be true, false or auto, not ~M"
+                      banding))))
+       ;; Only return the matrix, don't display it: the options travel in
+       ;; the matrix's own header, which wxxml-matrix reads when the result
+       ;; is displayed. They stay with this value (assigning it, %, putting
+       ;; it in a list, copymatrix, subst, ...), while a calculation that
+       ;; builds a new matrix (m+1, transpose(m), m.m, ...) drops them, so
+       ;; its result is shown the normal way.
+       (cons (append '($matrix simp) mtrx) (cdr mat))))))
+
+(no-warning
+ (defun mredef-check (fnname)
+   (declare (ignore fnname))
+   t))
+
+  ;;; A function that loads bitmaps from files as a slideshow.
+  ;;; Todo: Replace this function by at least half-way-optimized LISP code.
+(defun $wxanimate_from_imgfiles (&rest names)
+  (progn
+    (format t "<mth>~%<slide ")
+    (if (eql $wxanimate_autoplay 't)
+	(format t " running=\"false\""))
+    (format t " fr=\"~d\"" $wxanimate_framerate)
+    (format t ">")
+    (mapcar (lambda (x)
+	      (if
+	       (listp x)
+	       (mapcar (lambda (x2)
+			 (format t "~a;" x2))
+		       (cdr x))
+	       (format t "~a;" x)))
+	    names)
+    (format t "</slide>~%</mth>~%")
+    ))
+
+(when ($file_search "wxmaxima-init")
+  ($load "wxmaxima-init"))
+
+  ;;; From Elias: Code that extracts the name of our function's parameters
+(defun arglist-from-function (name)
+  (ignore-errors (cadr (function-lambda-expression name))
+		 ))
+
+(defun arglist-from-maxima-function (name)
+  (labels ((format-list-entry (v)
+	     (etypecase v
+	       (symbol (format-sym-name v :any-sym t))
+	       (list (progn
+		       (assert (eq (caar v) 'maxima::mlist))
+		       (format nil "[~{~a~^, ~}]" (mapcar #'format-list-entry (cdr v))))))))
+    (let ((mexpr (or (maxima::mget name 'maxima::mexpr)
+		     (maxima::mget name 'maxima::mmacro))))
+      (cond (mexpr
+	     ;; I'm not entirely certain about how the content of the
+	     ;; function definition can vary, so let's add some assertions
+	     ;; that encodes the current understanding of the situation.
+	     (assert (eq (caar mexpr) 'lambda))
+	     (let ((arglist (second mexpr)))
+	       (assert (eq (caar arglist) 'maxima::mlist))
+	       (format nil "(~{~a~^, ~})" (mapcar #'format-list-entry (cdr arglist)))))
+	    (t
+	     "variable")))))
+
+(defun function-signature (name)
+  (check-type name symbol)
+  (if (fboundp name)
+      (arglist-from-function name)
+      ;; ELSE: Possibly a Maxima function?
+      (arglist-from-maxima-function name)))
+
+;;;
+;;; Now that we have loaded the init file we can rewrite of the function load
+;;; (maxima/src/mload.lisp) to displays functions and variable names after
+;;; loading a Maxima package so the autocomplete functionality knows which
+;;; function and variable names exists.
+;;;
+;;; We also inform wxMaxima about the name of the package and about the fact
+;;; if it was loaded by another package.
+;;;
+
+(defvar *wxmaxima-nested-loads* 0 "How many load commands are nested, currently?")
+;(declare (special *wxmaxima-nested-loads*))
+(setf (symbol-function 'load_original_wxmaxima) (symbol-function '$load))
+
+(no-warning
+ (defun $load (filename)
+
+   ;; Inform wxMaxima that we load a file.
+   (if (< *wxmaxima-nested-loads* 1)
+       (progn
+	 (format t "<variables>")
+	 (format t "<variable><name>*wx-load-file-name*</name><value>~a</value></variable>"
+		 (wxxml-fix-string ($sconcat filename)))
+	 (format t "</variables>~%")))
+   (incf *wxmaxima-nested-loads*)
+   ;; Load the file
+   (unwind-protect
+	(load_original_wxmaxima filename)
+     (progn
+       ;; After loading the file: Tell wxMaxima we have finished loading the file
+       ;; and what autocompletable symbols we know about.
+       (progn
+	 (decf *wxmaxima-nested-loads* )
+	 (if (< *wxmaxima-nested-loads* 1)
+	     (unless *wx-defer-queries*
+	       (wxPrint_autocompletesymbols))))))))
+;;; ------------------------------------------------------------------
+;;; Asynchronous ("background job") output.
+;;;
+;;; Maxima is single-threaded today, so nothing below is exercised in a
+;;; normal session -- it is the Maxima half of a protocol wxMaxima already
+;;; speaks, so that a future Maxima that *can* run a command in the
+;;; background has a correct way of saying which cell its eventual output
+;;; belongs to.
+;;;
+;;; The problem it solves: wxMaxima has no identifier for a cell anywhere
+;;; in this protocol. It decides which cell an output belongs to purely by
+;;; *when* the output arrives -- whatever cell is being evaluated at that
+;;; moment. A background job's output arrives long after its cell stopped
+;;; being the current one, so it would land on a completely unrelated cell.
+;;;
+;;; The fix is one variable and one tag. wxMaxima sets *wx-cell-id* ahead
+;;; of each cell (a :lisp-quiet form, so it costs no prompt and no output).
+;;; A background job captures that value AT SPAWN TIME and wraps its
+;;; eventual output in <wxasync><id>...</id>...</wxasync>, which wxMaxima
+;;; routes back to the cell that id names.
+;;;
+;;; See Doxygen/AsyncMaximaOutput.md for the measurements behind each of
+;;; the decisions below.
+
+;; The cell wxMaxima is currently feeding us commands from. Set per cell by
+;; wxMaxima itself; nothing in Maxima should assign it.
+(defvar *wx-cell-id* nil
+  "UUID of the worksheet cell whose commands are currently being evaluated.")
+
+;; Every writer to Maxima's output stream has to take this, because the
+;; stream is genuinely not safe to share. Three threads writing without it
+;; do not merely interleave: the shared FD-stream buffer gets flushed
+;; concurrently and *replays* content -- measured, one thread's whole
+;; output block appeared twice and the command's own result echo three
+;; times. NIL on a Lisp without threads, where there is nothing to serialize.
+(defvar *wx-output-lock*
+  #+sb-thread (sb-thread:make-mutex :name "wxMaxima output")
+  #-sb-thread nil
+  "Serializes writes to the stream wxMaxima reads, or NIL if this Lisp has no threads.")
+
+(defmacro wx-with-output-lock (&body body)
+  "Runs BODY with exclusive access to Maxima's output stream."
+  #+sb-thread `(sb-thread:with-mutex (*wx-output-lock*) ,@body)
+  #-sb-thread `(progn ,@body))
+
+(defun wx-async-available-p ()
+  "True if this Lisp can actually run a Maxima command in the background."
+  #+sb-thread t
+  #-sb-thread nil)
+
+(defun wx-emit-async (id thunk)
+  "Emits whatever THUNK prints as output belonging to the cell named by ID.
+
+Takes the output lock for the whole block, so a concurrently-running job
+cannot interleave its own output into the middle of this one and produce
+XML neither side can parse."
+  (when id
+    (wx-with-output-lock
+      (format t "~%<wxasync><id>~a</id>" (wxxml-fix-string (format nil "~a" id)))
+      (funcall thunk)
+      (format t "</wxasync>~%")
+      (finish-output))))
+
+(defun wx-async-text (text &optional (id *wx-cell-id*))
+  "Sends TEXT to the cell named by ID as plain text output.
+
+ID defaults to *wx-cell-id*, which inside wx-spawn-async is rebound to the
+cell that started the job -- so the obvious call, (wx-async-text \"...\"),
+is also the correct one."
+  (wx-emit-async id (lambda ()
+                      (format t "<mth><t>~a</t></mth>"
+                              (wxxml-fix-string (format nil "~a" text))))))
+
+(defun wx-async-display (expr &optional (id *wx-cell-id*))
+  "Sends EXPR to the cell named by ID, rendered the same way a normal
+result of that cell would have been. ID defaults as wx-async-text's does."
+  (wx-emit-async id (lambda () (mydispla expr))))
+
+(defun wx-async-error (text &optional (id *wx-cell-id*))
+  "Reports a background job's failure on the cell that started it."
+  (wx-emit-async id (lambda ()
+                      (format t "<mth><t breakline=\"true\">~a</t></mth>"
+                              (wxxml-fix-string (format nil "~a" text))))))
+
+;; A background job must never be able to ask the user a question, and
+;; simply leaving it to ask is not a survivable option -- this was measured,
+;; not assumed. A thread running (asksign '$zzz) with *standard-input* left
+;; alone prints "Is zzz positive, negative or zero?" straight into the
+;; shared stream, which wxMaxima can only read as a question from the cell
+;; it is currently evaluating; it then loops, re-asking forever, and the
+;; session stops answering ordinary commands altogether. Binding
+;; *standard-input* to an empty stream is NOT enough: the read returns EOF,
+;; the ask machinery loops, and the session wedges exactly the same way.
+;;
+;; A *closed* stream is what actually works. The ask fails immediately with
+;; a stream error, before the question is printed at all, and the session
+;; carries on normally -- verified live in all three variants.
+(defun wx-closed-input-stream ()
+  "An input stream that signals rather than being read from."
+  (let ((stream (make-string-input-stream "")))
+    (close stream)
+    stream))
+
+;; True only inside a wx-spawn-async body. A thread-local dynamic binding,
+;; so the main thread keeps asking questions normally even while a
+;; background job is running.
+(defvar *wx-in-async-job* nil
+  "True while the current thread is running a background job for a cell.")
+
+(define-condition wx-async-input-error (error) ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "A background computation cannot ask questions."))))
+
+;; Closing the thread's *standard-input* is NOT sufficient on its own, and
+;; this was established the hard way -- it looked sufficient in isolation
+;; and then leaked in a real session. Maxima's retrieve (src/macsys.lisp)
+;; PRINTS the question first and reads afterwards:
+;;
+;;     (format-prompt t "~M" msg) (mterpri)
+;;     (mread-noprompt *standard-input* nil)
+;;
+;; so by the time the read fails, "Is zzz positive, negative or zero?" is
+;; already on the wire -- and wxMaxima, which has no way of knowing which
+;; thread wrote it, can only read it as a question from whatever cell is
+;; being evaluated at that moment. Observed exactly that: a background job
+;; asking asksign() put its question on an unrelated cell and left that
+;; cell waiting for an answer that would have gone to the wrong place.
+;;
+;; So the ask has to be refused before it prints anything, which means
+;; intercepting retrieve itself. Wrapped rather than replaced, and gated on
+;; *wx-in-async-job*, so ordinary synchronous questions are completely
+;; unaffected -- this is the same wrap-and-delegate shape $load already
+;; uses further down this file.
+(unless (fboundp 'wx-retrieve-original)
+  (setf (symbol-function 'wx-retrieve-original) (symbol-function 'retrieve)))
+
+(no-warning
+ (defun retrieve (msg flag)
+   (if *wx-in-async-job*
+       (error 'wx-async-input-error)
+       (wx-retrieve-original msg flag))))
+
+(defmacro wx-spawn-async (&body body)
+  "Runs BODY in a background thread on behalf of the cell being evaluated now.
+
+Handles by construction the two things that are otherwise silently wrong:
+
+  * The cell id is captured HERE, not read inside the thread. Reading
+    *wx-cell-id* from inside the thread body yields whatever cell is
+    current when the thread finally runs -- i.e. reliably the wrong one,
+    with no error (measured: a job started under cell A reported cell B).
+
+  * Input is made impossible rather than left to chance, see
+    wx-closed-input-stream above. A job that tries to ask fails with a
+    message on its own cell instead of hijacking another cell's prompt.
+
+Any error escaping BODY is reported on the originating cell too, rather
+than disappearing with the thread."
+  (let ((id (gensym "CELLID")) (err (gensym "ERR")))
+    `(let ((,id *wx-cell-id*))
+       (if (wx-async-available-p)
+           (progn
+             #+sb-thread
+             (sb-thread:make-thread
+              (lambda ()
+                ;; *wx-cell-id* is REBOUND here, not merely captured into
+                ;; a variable the body cannot see. That distinction is the
+                ;; whole usability of this macro: the obvious thing to
+                ;; write inside a job is (wx-async-text "..."), which
+                ;; consults *wx-cell-id* -- and without this rebinding that
+                ;; would read the global value, i.e. whatever cell happens
+                ;; to be current when the job finally finishes. Caught by
+                ;; testing rather than by reading: a job started under one
+                ;; cell delivered its output to a completely different one,
+                ;; silently and with no error.
+                (let ((*wx-cell-id* ,id)
+                      (*wx-in-async-job* t)
+                      ;; Defence in depth behind the retrieve wrapper above:
+                      ;; anything that reads input without going through
+                      ;; retrieve fails here instead of quietly eating bytes
+                      ;; out of the command stream wxMaxima is writing to --
+                      ;; Maxima's input and output are the same socket, so an
+                      ;; unguarded read really would consume the next command.
+                      (*standard-input* (wx-closed-input-stream)))
+                  (handler-case (progn ,@body)
+                    (wx-async-input-error ()
+                      (wx-async-error
+                       "This background computation tried to ask a question, which a background computation cannot do -- give it everything it needs up front (for example with assume())."))
+                    (stream-error ()
+                      (wx-async-error
+                       "This background computation tried to read input. A background computation cannot ask questions -- give it everything it needs up front (for example with assume())."))
+                    (error (,err)
+                      (wx-async-error
+                       (format nil "Background computation failed: ~a" ,err)))))))
+             t)
+           (progn
+             (wx-async-error
+              "This Maxima was built on a Lisp without thread support, so it cannot run anything in the background."
+              ,id)
+             nil)))))
+
+;;; ---------------------------------------------------------------------
+;;; The interrupt channel
+;;;
+;;; How wxMaxima interrupts a computation without depending on signals.
+;;; POSIX has kill(SIGINT), but MS Windows has nothing like it: there the
+;;; only ways in were a shared-memory segment named after the Lisp's pid
+;;; (which needs the pid, and a signal thread Maxima only starts if the
+;;; MAXIMA_SIGNALS_THREAD environment variable survived maxima.bat) and a
+;;; console Ctrl+C (which needs a console, and which a new process group
+;;; ignores). Either one failing leaves the user no way to stop a
+;;; computation but to restart Maxima and lose the session (GH #2289).
+;;;
+;;; So wxMaxima tells a Lisp that has threads to open a second connection
+;;; to wxMaxima's own server. A thread waits on it; when wxMaxima writes
+;;; "interrupt" there, the thread interrupts the thread that evaluates
+;;; Maxima's commands. No pid, no named objects, no console, the same on
+;;; every operating system. A Lisp without threads (GCL, a clisp built
+;;; without them) simply doesn't open the channel, and wxMaxima falls back
+;;; to what it did before.
+;;;
+;;; Is interrupting a thread this way safe, e.g. in the middle of a hash
+;;; table operation? It is exactly what SBCL itself does on Ctrl+C: its
+;;; SIGINT handler (sigint-handler in SBCL's src/code/target-signal.lisp)
+;;; just calls interrupt-thread on the foreground thread. The interrupt runs
+;;; in the interrupted thread itself, so nothing is accessed concurrently, and
+;;; SBCL wraps its own critical sections, hash table rehashing included, in
+;;; without-interrupts, which defers the interrupt until they are done.
+;;;
+;;; The first line sent is the token wxMaxima passed to Maxima in
+;;; MAXIMA_AUTH_CODE, so that nothing else on this machine can connect to
+;;; wxMaxima's server and pose as the channel.
+;;; ---------------------------------------------------------------------
+
+(define-condition wx-user-interrupt (condition) ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "User interrupt"))))
+
+(defvar *wx-interrupt-channel-thread* nil
+  "The thread waiting for wxMaxima's interrupt requests, if any.")
+
+(defun wx-interrupt-channel-available-p ()
+  "True if this Lisp can run the interrupt channel's thread."
+  #+(or sb-thread (and ecl threads) (and clisp mt) openmcl ccl) t
+  #-(or sb-thread (and ecl threads) (and clisp mt) openmcl ccl) nil)
+
+(defun wx-current-thread ()
+  #+sb-thread sb-thread:*current-thread*
+  #+(and ecl threads) mp:*current-process*
+  #+(and clisp mt) (mt:current-thread)
+  #+(or openmcl ccl) ccl:*current-process*
+  #-(or sb-thread (and ecl threads) (and clisp mt) openmcl ccl) nil)
+
+(defun wx-thread-alive-p (thread)
+  (and thread
+       #+sb-thread (sb-thread:thread-alive-p thread)
+       #+(and ecl threads) (mp:process-active-p thread)
+       #+(and clisp mt) (mt:thread-active-p thread)
+       #+(or openmcl ccl) (not (ccl:process-exhausted-p thread))
+       #-(or sb-thread (and ecl threads) (and clisp mt) openmcl ccl) nil))
+
+(defun wx-make-thread (name function)
+  #+sb-thread (sb-thread:make-thread function :name name)
+  #+(and ecl threads) (mp:process-run-function name function)
+  #+(and clisp mt) (mt:make-thread function :name name)
+  #+(or openmcl ccl) (ccl:process-run-function name function)
+  #-(or sb-thread (and ecl threads) (and clisp mt) openmcl ccl)
+  (declare (ignore name function)))
+
+(defun wx-interrupt-thread (thread function)
+  "Makes THREAD run FUNCTION, interrupting whatever it is doing."
+  #+sb-thread (sb-thread:interrupt-thread thread function)
+  #+(and ecl threads) (mp:interrupt-process thread function)
+  #+(and clisp mt) (mt:thread-interrupt thread :function function)
+  #+(or openmcl ccl) (ccl:process-interrupt thread function)
+  #-(or sb-thread (and ecl threads) (and clisp mt) openmcl ccl)
+  (declare (ignore thread function)))
+
+(defun wx-open-channel-socket (host port)
+  "A bidirectional character stream connected to HOST:PORT."
+  #+(or sbcl ecl)
+  (let ((socket (make-instance 'sb-bsd-sockets:inet-socket
+                               :type :stream :protocol :tcp)))
+    (sb-bsd-sockets:socket-connect
+     socket (sb-bsd-sockets:make-inet-address host) port)
+    (sb-bsd-sockets:socket-make-stream
+     socket :input t :output t :buffering :full :element-type 'character))
+  #+clisp (socket:socket-connect port host)
+  #+(or openmcl ccl) (ccl:make-socket :remote-host host :remote-port port)
+  #-(or sbcl ecl clisp openmcl ccl)
+  (error "No sockets in this Lisp: ~a ~a" host port))
+
+(defun wx-interrupt-main-thread (main)
+  "Makes the thread MAIN abandon its computation the way a Ctrl+C would.
+
+The interrupt goes through INVOKE-DEBUGGER, not ERROR: Maxima's *debugger-hook*
+reports it and returns to Maxima's top level, exactly as it does for a
+SIGINT. ERROR would first look for handlers, and a computation running inside
+errcatch() or ignore-errors would catch the interrupt and carry on."
+  (wx-interrupt-thread
+   main
+   (lambda ()
+     ;; SBCL runs an interrupt with further interrupts disabled. The debugger
+     ;; hook prints and unwinds, both of which want them back on.
+     #+sb-thread (sb-sys:with-interrupts
+                   (invoke-debugger (make-condition 'wx-user-interrupt)))
+     #-sb-thread (invoke-debugger (make-condition 'wx-user-interrupt)))))
+
+(defun wx-interrupt-channel-loop (stream main)
+  "Interrupts MAIN each time wxMaxima writes \"interrupt\" to STREAM."
+  (unwind-protect
+       ;; Nothing that goes wrong in here may reach the debugger hook: it
+       ;; would print on the shared output stream and then throw to a catch
+       ;; tag that only exists in the main thread. Losing the channel just
+       ;; means wxMaxima falls back to its other ways of interrupting.
+       (ignore-errors
+        (loop for line = (read-line stream nil nil)
+              while line
+              when (string= (string-trim '(#\Space #\Return) line) "interrupt")
+                do (wx-interrupt-main-thread main)))
+    (ignore-errors (close stream))))
+
+(defun wx-open-interrupt-channel (host port token)
+  "Connects to wxMaxima's server at HOST:PORT as the interrupt channel.
+
+Called by wxMaxima once per Maxima process, from the thread that evaluates
+Maxima's commands -- which is therefore the one that gets interrupted. Does
+nothing if the Lisp has no threads, if the channel is already open, or if the
+connection fails. Returns T if a channel thread is running afterwards."
+  (when (wx-interrupt-channel-available-p)
+    (unless (wx-thread-alive-p *wx-interrupt-channel-thread*)
+      (let ((main (wx-current-thread))
+            (stream (ignore-errors (wx-open-channel-socket host port))))
+        (when stream
+          (write-line token stream)
+          (finish-output stream)
+          (setq *wx-interrupt-channel-thread*
+                (wx-make-thread "wxMaxima interrupt channel"
+                                (lambda ()
+                                  (wx-interrupt-channel-loop stream main)))))))
+    (and (wx-thread-alive-p *wx-interrupt-channel-thread*) t)))
+
+;;; ------------------------------------------------------------------
+;;; Unicode symbols as Maxima aliases
+;;;
+;;; wxMaxima's editor offers a few unicode symbols that stand for a Maxima
+;;; name: the greek letter pi for %pi, the sum sign for sum, the logical
+;;; "and" sign for and, and so on. Defining them as aliases here (instead of
+;;; wxMaxima replacing them before sending a command) makes them work in
+;;; files loaded via batch() or load(), too, and makes Maxima's aliases
+;;; variable list the names they stand for.
+;;;
+;;; What alias() does is deliberately not copied in full: it also gives the
+;;; old name a "reversealias" property, which makes Maxima *print* the old
+;;; name as the unicode symbol. With that string(%pi) returns the greek letter and
+;;; stringout() writes files a Maxima without wxMaxima cannot read, and
+;;; kill(all) removes the aliases again (it only finds an alias via the
+;;; reversealias of the old name). Without it both output and kill(all)
+;;; leave the aliases alone.
+;;;
+;;; This file is kept ASCII-only, so the symbols are built from their code
+;;; points. A Lisp whose characters are Unicode (SBCL, ECL, CLISP, CCL...)
+;;; reads them as one character each; one whose characters are bytes (GCL)
+;;; reads the UTF-8 bytes wxMaxima sends, so there the symbol is spelled as
+;;; those bytes.
+;;;
+;;; Worksheet::UnicodeToMaxima() in wxMaxima has a matching list: it
+;;; surrounds these symbols with spaces, since Maxima reads them as letters.
+(defun wx-unicode-string (codepoint)
+  (if (> char-code-limit #xFFFF)
+      (string (code-char codepoint))
+      (map 'string #'code-char
+	   (cond ((< codepoint #x80) (list codepoint))
+		 ((< codepoint #x800)
+		  (list (logior #xC0 (ash codepoint -6))
+			(logior #x80 (logand codepoint #x3F))))
+		 (t
+		  (list (logior #xE0 (ash codepoint -12))
+			(logior #x80 (logand (ash codepoint -6) #x3F))
+			(logior #x80 (logand codepoint #x3F))))))))
+
+(defun wx-define-unicode-alias (codepoint old)
+  (ignore-errors
+    (let ((name (wx-unicode-string codepoint)))
+      ;; Most of these symbols aren't letters to Maxima, which means it would
+      ;; not read them as a name.
+      (meval `(($declare) ,name $alphabetic))
+      ;; implode spells the name as a symbol the way Maxima's reader does:
+      ;; it inverts the case of an all-lowercase name, for example, which
+      ;; for the greek letter pi means the symbol is named "$" + capital pi.
+      ;; Reading the name with mread instead would print input prompts,
+      ;; which wxMaxima would mistake for the end of a command.
+      (let ((new (implode (coerce (concatenate 'string "$" name) 'list))))
+	(putprop new old 'alias)
+	(unless (member old (cdr $aliases))
+	  (setq $aliases (append $aliases (list old))))))))
+
+(defun wx-define-unicode-aliases ()
+  (loop for (codepoint old) in
+	'((#x03C0 $%pi)       ; greek small letter pi
+	  (#x2148 $%i)        ; double-struck italic small i
+	  (#x2147 $%e)        ; double-struck italic small e
+	  (#x221E $inf)       ; infinity
+	  (#x2211 $sum)       ; n-ary summation
+	  (#x220F $product)   ; n-ary product
+	  (#x222B $integrate) ; integral
+	  (#x221A $sqrt)      ; square root
+	  (#x22C0 $and)       ; n-ary logical and
+	  (#x22C1 $or)        ; n-ary logical or
+	  (#x22BB $xor)       ; xor
+	  (#x22BC $nand)      ; nand
+	  (#x22BD $nor)       ; nor
+	  (#x21D2 $implies)   ; rightwards double arrow
+	  (#x21D4 $equiv)     ; left right double arrow
+	  (#x00AC $not))      ; not sign
+	do (wx-define-unicode-alias codepoint old)))
+
+(wx-define-unicode-aliases)
+
+(format t "</suppressOutput>~%")
+;; Publish all new global variables maxima might contain to wxMaxima's
+;; autocompletion feature.
+(unless *wx-defer-queries*
+  (wxPrint_autocompletesymbols)
+  (wx-print-variables)
+  (wx-print-gui-variables))
+;; Declare that we want all builtins with underscore not to be printed with subscript
+(maphash (lambda (key val)
+	   (declare (ignore val))
+	   ;; key is the symbol itself. print_value would return it wrapped
+	   ;; in XML, which declared a string nobody ever displays instead.
+	   (if
+	    (and (symbolp key) (search "_" (symbol-name key)))
+	    ($wxdeclare_subscripted key nil))) *variable-initial-values*)
+(finish-output)
