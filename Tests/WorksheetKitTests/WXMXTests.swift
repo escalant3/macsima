@@ -217,3 +217,45 @@ struct WXMXSampleTests {
         #expect(r.warnings.contains { $0.contains("image") })
     }
 }
+
+/// Files Macsima wrote, evaluated and re-saved by the installed wxMaxima
+/// 26.09.0 in batch mode (Phase 2, step 6; 03-errors and 04-question are not
+/// here: batch mode stops at errors and questions without saving, and 07
+/// lost its :lisp-quiet cell, on which wxMaxima's batch mode hangs).
+struct WXMXResavedByWxMaximaTests {
+    static let names = ["01-cell-kinds", "02-plots", "05-long-output", "06-display-forms", "07-multi-statement",
+                        "08-text-unicode", "09-pagebreak-empty", "10-display2d-tex"]
+
+    static func collapse(_ kinds: [String]) -> [String] {
+        kinds.reduce(into: []) { out, k in if !(k == "text" && out.last == "text") { out.append(k) } }
+    }
+
+    static func kind(_ output: Output) -> String {
+        switch output {
+        case .math: "math"
+        case .text: "text"
+        case .error: "error"
+        case .image: "image"
+        case .question: "question"
+        }
+    }
+
+    @Test(arguments: names)
+    func macsimaReadsWxMaximasResave(_ name: String) throws {
+        let ours = try WXMXReader.read(try WXMXFixtures.data("macsima-written/\(name).wxmx")).worksheet
+        let theirs = try WXMXReader.read(try WXMXFixtures.data("wxmaxima-written/\(name)-resaved.wxmx"))
+        #expect(theirs.warnings.isEmpty, "\(theirs.warnings)")
+        var mine = ours.cells
+        if name == "07-multi-statement" { mine.removeAll { $0.input.hasPrefix(":lisp-quiet") } }
+        #expect(mine.map(\.kind) == theirs.worksheet.cells.map(\.kind))
+        for (a, b) in zip(mine, theirs.worksheet.cells) {
+            // wxMaxima gives an empty code cell a ";" when it evaluates it.
+            #expect(a.input == b.input || (a.input.isEmpty && b.input == ";"), "\(a.input) vs \(b.input)")
+            // wxMaxima writes plain text one line per element; Macsima one element per output.
+            #expect(Self.collapse(a.outputs.map(Self.kind)) == Self.collapse(b.outputs.map(Self.kind)), "\(name): \(a.input)")
+        }
+        // And Macsima saves wxMaxima's version back without losing anything.
+        let again = try WXMXReader.read(try WXMXWriter.write(theirs.worksheet)).worksheet
+        #expect(again == theirs.worksheet)
+    }
+}
