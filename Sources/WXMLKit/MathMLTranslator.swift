@@ -73,6 +73,12 @@ private struct Context {
         }
         let kids = node.elementChildren
         switch name {
+        case "mrow" where attrs["list"] == "true" || attrs["set"] == "true":
+            // List and set brackets arrive as <t listdelim="true">; size them like parens.
+            let outer = fencesStretch
+            fencesStretch = Self.isTall(node)
+            defer { fencesStretch = outer }
+            return row(children)
         case "math", "mth", "mrow", "d":
             return row(children)
         case "lbl":
@@ -88,7 +94,7 @@ private struct Context {
         case "st":
             return "<mtext>\(esc(node.textContent))</mtext>"
         case "t":
-            if attrs["listdelim"] == "true" { return "<mo>\(esc(node.textContent))</mo>" }
+            if attrs["listdelim"] == "true" { return Self.fence(node.textContent, stretchy: fencesStretch) }
             return "<mtext>\(esc(node.textContent))</mtext>"
         case "fnm":
             return "<mi>\(esc(node.textContent))</mi>"
@@ -97,11 +103,15 @@ private struct Context {
             let name = head.name == "g" ? greek(head.textContent, asFunction: true) : emit(head)
             return "<mrow>\(name)<mo>&#x2061;</mo>\(kids.dropFirst().map { emit($0) }.joined())</mrow>"
         case "p":
-            let inner = row(children)
-            if attrs["print"] == "no" { return inner }
-            return "<mrow><mo>(</mo>\(inner)<mo>)</mo></mrow>"
+            // print="no" only drops the parens from text exports (wxMaxima's
+            // ParenCell::ToString); they are always drawn, e.g. around binomials.
+            let tall = Self.isTall(node)
+            return "<mrow>\(Self.fence("(", stretchy: tall))\(row(children))\(Self.fence(")", stretchy: tall))</mrow>"
         case "q":
-            return "<msqrt>\(row(children))</msqrt>"
+            // The invisible strut gives every radical the same minimum height,
+            // so √a clears the bar and √2·√π line up (WebKit sizes each
+            // radical to its own content).
+            return "<msqrt>\(Self.radicalStrut)\(row(children))</msqrt>"
         case "mfrac":
             guard kids.count == 2 else { return unknownElement(node) }
             let line = attrs["line"] == "no" ? " linethickness=\"0\"" : ""
@@ -157,9 +167,11 @@ private struct Context {
         case "hl":
             return "<menclose notation=\"box\">\(row(children))</menclose>"
         case "cj":
-            return "<mover accent=\"true\">\(row(children))<mo>&#x00AF;</mo></mover>"
+            // WebKit draws mover accents (U+00AF, U+203E, U+0305) misplaced; menclose is clean.
+            return "<menclose notation=\"top\">\(row(children))</menclose>"
         case "a":
-            return "<mrow><mo>|</mo>\(row(children))<mo>|</mo></mrow>"
+            let tall = Self.isTall(node)
+            return "<mrow>\(Self.fence("|", stretchy: tall))\(row(children))\(Self.fence("|", stretchy: tall))</mrow>"
         case "g":
             return greek(node.textContent, asFunction: false)
         case "s":
@@ -177,6 +189,24 @@ private struct Context {
     }
 
     static let thinSpace = "<mspace width=\"0.17em\"/>"
+    static let radicalStrut = "<mpadded width=\"0\"><mphantom><mo stretchy=\"false\">(</mo></mphantom></mpadded>"
+
+    /// Whether list and set brackets in the current list may stretch.
+    var fencesStretch = true
+
+    /// A bracket. WebKit draws stretchy fences around short content raised
+    /// above the baseline, so they stretch only around tall content.
+    static func fence(_ text: String, stretchy: Bool) -> String {
+        stretchy ? "<mo>\(MathMLTranslator.escape(text))</mo>"
+            : "<mo stretchy=\"false\">\(MathMLTranslator.escape(text))</mo>"
+    }
+
+    /// Content taller than a line of text: fractions, matrices, sums,
+    /// integrals and limits, at any depth.
+    static func isTall(_ node: MathNode) -> Bool {
+        if let name = node.name, ["mfrac", "tb", "sm", "in", "lm", "at"].contains(name) { return true }
+        return node.elementChildren.contains(where: isTall)
+    }
 
     /// Children in an `mrow`. Hidden multiplication (`h`) is a thin space, as
     /// with wxMaxima's default "hide multiplication sign", except between two
@@ -281,6 +311,8 @@ enum PlainText {
         case "lbl", "img": return ""
         case "h": return "*"
         case "mspace": return " "
+        case "mfrac" where kids.count == 2 && attrs["line"] == "no":
+            return "binomial(\(of(kids[0])),\(of(kids[1])))"
         case "mfrac" where kids.count == 2: return "(\(of(kids[0])))/(\(of(kids[1])))"
         case "msup" where kids.count == 2: return "\(of(kids[0]))^(\(of(kids[1])))"
         case "munder" where kids.count == 2: return "\(of(kids[0]))[\(of(kids[1]))]"

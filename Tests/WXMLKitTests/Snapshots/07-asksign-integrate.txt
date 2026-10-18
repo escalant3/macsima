@@ -10,7 +10,7 @@ in:    <math><lbl altCopy="%o1">(%o1) </lbl><mfrac lisp="wxxml-mquotient"><mrow>
 label: %o1
 image: -
 text:  (atan((x)/(sqrt(a))))/(sqrt(a))
-out:   <math display="block"><mfrac><mrow><mi>atan</mi><mo>&#x2061;</mo><mrow><mo>(</mo><mfrac><mi>x</mi><msqrt><mi>a</mi></msqrt></mfrac><mo>)</mo></mrow></mrow><msqrt><mi>a</mi></msqrt></mfrac></math>
+out:   <math display="block"><mfrac><mrow><mi>atan</mi><mo>&#x2061;</mo><mrow><mo>(</mo><mfrac><mi>x</mi><msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mi>a</mi></msqrt></mfrac><mo>)</mo></mrow></mrow><msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mi>a</mi></msqrt></mfrac></math>
 
 ### 3
 in:    <math><lbl altCopy="%o2">(%o2) </lbl><mn>4</mn></math>

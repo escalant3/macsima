@@ -110,7 +110,7 @@ struct MathMLTranslatorTests {
     @Test func constructs() {
         #expect(ml("<math><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac></math>")
                 == #"<math display="block"><mfrac><mn>1</mn><mn>2</mn></mfrac></math>"#)
-        #expect(ml("<math><q><mi>x</mi></q></math>").contains("<msqrt><mi>x</mi></msqrt>"))
+        #expect(ml("<math><q><mi>x</mi></q></math>").contains("<mi>x</mi></msqrt>"))
         #expect(ml(#"<math><munder lisp="wxxml-array-no-display-properties"><mrow><mi>x</mi></mrow><mrow><mn>1</mn></mrow></munder></math>"#)
                 .contains("<msub><mi>x</mi><mn>1</mn></msub>"))
         #expect(ml(#"<math><sm type="prod"><mrow><mi>k</mi></mrow><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></sm></math>"#)
@@ -121,6 +121,30 @@ struct MathMLTranslatorTests {
         #expect(ml("<math><mo>-&gt;</mo></math>").contains("<mo>\u{2192}</mo>"))
         #expect(ml("<math><s>%pi</s></math>").contains("&#x03C0;"))
         #expect(ml("<math><g>%alpha</g></math>").contains("<mi>α</mi>"))
+    }
+
+    /// Fixes for WebKit's MathML layout, chosen with `macsima-render lab` (Phase 2, step 3b).
+    @Test func webKitLayoutWorkarounds() {
+        // Parens around short content do not stretch (WebKit raises them); around fractions they do.
+        #expect(ml("<math><fn><fnm>cos</fnm><mrow><p><mi>x</mi></p></mrow></fn></math>")
+                .contains(#"<mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo>"#))
+        #expect(ml("<math><p><mfrac><mrow><mi>x</mi></mrow><mrow><mn>2</mn></mrow></mfrac></p></math>")
+                .contains("<mo>(</mo><mfrac>"))
+        // Lists follow the same rule, and abs too.
+        #expect(ml(#"<math><mrow list="true"><t listdelim="true">[</t><mn>1</mn><t listdelim="true">]</t></mrow></math>"#)
+                .contains(#"<mo stretchy="false">[</mo>"#))
+        #expect(ml("<math><a><mi>x</mi></a></math>").contains(#"<mo stretchy="false">|</mo>"#))
+        // Every radical gets the same invisible strut.
+        #expect(ml("<math><q><mi>a</mi></q></math>")
+                .contains(#"<msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mi>a</mi></msqrt>"#))
+        // Conjugate is an overline drawn by menclose.
+        #expect(ml("<math><cj><mi>z</mi></cj></math>").contains(#"<menclose notation="top"><mi>z</mi></menclose>"#))
+    }
+
+    @Test func binomialKeepsItsParens() {
+        let out = MathMLTranslator.translate(#"<math><p print="no"><mfrac line="no"><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></mfrac></p></math>"#)
+        #expect(out.mathML.contains(#"<mo>(</mo><mfrac linethickness="0"><mi>n</mi><mi>k</mi></mfrac><mo>)</mo>"#))
+        #expect(out.plainText == "binomial(n,k)")
     }
 
     @Test func hiddenMultiplication() {

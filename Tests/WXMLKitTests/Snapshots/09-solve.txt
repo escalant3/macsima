@@ -3,4 +3,4 @@ in:    <math><lbl altCopy="%o1">(%o1) </lbl><mrow list="true"><t lisp="mlist" li
 label: %o1
 image: -
 text:  [x=-sqrt(2),x=sqrt(2)]
-out:   <math display="block"><mrow><mo>[</mo><mrow><mi>x</mi><mo>=</mo><mo>−</mo><msqrt><mn>2</mn></msqrt></mrow><mo>,</mo><mrow><mi>x</mi><mo>=</mo><msqrt><mn>2</mn></msqrt></mrow><mo>]</mo></mrow></math>
+out:   <math display="block"><mrow><mo stretchy="false">[</mo><mrow><mi>x</mi><mo>=</mo><mo>−</mo><msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mn>2</mn></msqrt></mrow><mo>,</mo><mrow><mi>x</mi><mo>=</mo><msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mn>2</mn></msqrt></mrow><mo stretchy="false">]</mo></mrow></math>

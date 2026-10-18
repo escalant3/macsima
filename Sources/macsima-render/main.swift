@@ -3,6 +3,7 @@
 // Renders math outputs with the app's own web views.
 //
 //   macsima-render snapshots <out-dir>      PNGs of representative fixture outputs
+//   macsima-render lab <page.html> <out.png>  snapshot of any HTML page (rendering experiments)
 //   macsima-render bench <out-dir> [count] [images]
 //       scroll and memory measurements (default 200 outputs); "images" uses
 //       one shared web view rendering to images instead of one web view per output
@@ -22,11 +23,11 @@ func fail(_ message: String) -> Never {
 }
 
 let args = Array(CommandLine.arguments.dropFirst())
-guard args.count >= 2, ["snapshots", "bench"].contains(args[0]) else {
-    fail("usage: macsima-render snapshots|bench <out-dir> [count]")
+guard args.count >= 2, ["snapshots", "bench", "lab"].contains(args[0]) else {
+    fail("usage: macsima-render snapshots|bench <out-dir> [count] | lab <page.html> <out.png>")
 }
 let outDir = URL(filePath: args[1])
-try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+if args[0] != "lab" { try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true) }
 
 /// Math chunks of one glue fixture, in order.
 func chunks(_ name: String) -> [String] {
@@ -42,6 +43,7 @@ app.setActivationPolicy(.regular)
 Task { @MainActor in
     switch args[0] {
     case "snapshots": await Snapshots.run(to: outDir)
+    case "lab": await Lab.run(page: URL(filePath: args[1]), out: URL(filePath: args[2]))
     default: await Bench.run(to: outDir, count: args.count > 2 ? Int(args[2]) ?? 200 : 200, images: args.contains("images"))
     }
     exit(0)

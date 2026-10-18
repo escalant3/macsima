@@ -3,4 +3,4 @@ in:    <math><lbl altCopy="%o1">(%o1) </lbl><mo>-</mo><fn lisp="wxxml-function">
 label: %o1
 image: -
 text:  -cos(x)
-out:   <math display="block"><mrow><mo>−</mo><mrow><mi>cos</mi><mo>&#x2061;</mo><mrow><mo>(</mo><mi>x</mi><mo>)</mo></mrow></mrow></mrow></math>
+out:   <math display="block"><mrow><mo>−</mo><mrow><mi>cos</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow></mrow></math>
