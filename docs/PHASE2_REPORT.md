@@ -86,6 +86,12 @@ Batch mode can't check these two. Please open them in wxMaxima and see that they
 - `Tests/Fixtures/wxmx/macsima-written/03-errors.wxmx`: batch mode stops at the first error without saving.
 - `Tests/Fixtures/wxmx/macsima-written/04-question.wxmx`: batch mode stops at questions.
 
+**Checked by you (2026-10-18):** both files open in wxMaxima and show the expected content. You saw four differences, all recorded in PARITY.md for Phase 3:
+- the answer sits on the same line as the question in wxMaxima;
+- wxMaxima marks the first error line in yellow;
+- Macsima shows a guessed `(%i5)` where wxMaxima shows no input labels after opening;
+- Macsima has no syntax highlighting.
+
 `07-multi-statement.wxmx` loads too, but wxMaxima's batch mode hangs on its `:lisp-quiet` cell. It waits for a prompt that never comes, the same hang Macsima fixed (`3287f93`). Opening it by hand should work.
 
 Never touching your wxMaxima settings:

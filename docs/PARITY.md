@@ -37,6 +37,10 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18). The first tab
 | Cursor position (`activecell`) | Saved and restored | Kept from the file, not updated | partial | 3 |
 | Real keystrokes | | The editor is tested with key events synthesized inside the app. The physical Delete key for Cmd+Shift+Delete and real typing are unverified, because Terminal has no Accessibility permission here. | partial | 2 (check by hand) |
 | `.wxmx` timestamps | Local time | ZIPFoundation writes them two hours off here; harmless | partial | later |
+| Answer layout | The answer follows the question on the same line | The answer is on its own line below the question (seen by opening 04-question in both apps) | partial | 3 |
+| Error marker | Marks an error line in yellow (seen on the first error of 03-errors; the cause is not yet traced in wxMaxima's source) | Error text in red, no marker | partial | 3 |
+| Input labels after opening a file | No `(%iN)` until the cell is evaluated again | Guesses `(%iN)` from the first output label; can be wrong after a syntax error. Should match wxMaxima | partial | 3 |
+| Syntax highlighting in code cells | Yes | none | missing | 3 |
 
 ## Math XML translator (WXMLKit)
 
