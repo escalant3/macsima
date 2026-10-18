@@ -58,4 +58,13 @@ struct SessionIntegrationTests {
         #expect(plot.contains { if case .math(let m) = $0 { m.contains(".png</img>") } else { false } })
         await session.shutdown()
     }
+
+    @Test func lispQuietLineInACell() async throws {
+        let session = MaximaSession()
+        try await session.start()
+        let events = await drain(try await session.evaluate(cellID: "a", text: ":lisp-quiet (setq $zz 5)\nzz;"))
+        #expect(events.last == .finished(.completed))
+        #expect(events.contains { if case .math(let m) = $0 { m.contains("<mn>5</mn>") } else { false } })
+        await session.shutdown()
+    }
 }

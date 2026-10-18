@@ -259,6 +259,28 @@ struct SessionReplayTests {
         await session.shutdown()
     }
 
+    /// A :lisp-quiet line gets no prompt back (fixture 26), so the session
+    /// must not wait for one before the next statement.
+    @Test func lispQuietLineInACellDoesNotHang() async throws {
+        let transport = try ReplayTransport.fixture("26-prelude")
+        let session = makeSession(transport)
+        try await session.start()
+        let stream = try await session.evaluate(cellID: "a", text: ":lisp-quiet (setq a 1)\n2+2;")
+        let events = await withTaskGroup(of: [CellEvent]?.self) { group in
+            group.addTask { await drain(stream) }
+            group.addTask { try? await Task.sleep(for: .seconds(3)); return nil }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+        await session.shutdown()
+        let got = try #require(events, "the cell never finished")
+        #expect(got.contains(.started(index: 0, Statement(text: ":lisp-quiet (setq a 1)", terminator: .line))))
+        #expect(got.contains(.started(index: 1, Statement(text: "2+2;", terminator: .show))))
+        #expect(got.last == .finished(.completed))
+        #expect(transport.sent.contains(":lisp-quiet (setq a 1)\n"))
+    }
+
     @Test func asyncOutputIsRouted() async throws {
         // cell-A has finished: the output goes to the session's events.
         let run = try await runScenario("27-async")

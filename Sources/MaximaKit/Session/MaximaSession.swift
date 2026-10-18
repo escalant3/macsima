@@ -43,6 +43,8 @@ public actor MaximaSession {
     private var token = ""
     private var authWaiter: OneShot<Result<Void, MaximaError>>?
     private var lispMode = false
+    /// The label of the last main prompt (the next statement's input label).
+    private var lastLabel = 1
     private var lastCellID: String?
 
     private final class CellJob {
@@ -100,6 +102,7 @@ public actor MaximaSession {
         self.transport = transport
         scanner = TagScanner()
         lispMode = false
+        lastLabel = 1
         lastCellID = nil
         interruptChannelReady = false
         interruptChannelPromised = nil
@@ -265,6 +268,11 @@ public actor MaximaSession {
         job.sink.yield(.started(index: job.next, statement))
         setState(.busy)
         transport.send(statement.text + "\n")
+        // Maxima answers a :lisp-quiet line with no prompt (fixture 26), so
+        // waiting for one would hang the cell: the statement ends here.
+        if statement.terminator == .line && statement.text.hasPrefix(":lisp-quiet") {
+            statementEnded(label: lastLabel)
+        }
     }
 
     /// Ends the running statement at a main prompt.
@@ -398,6 +406,7 @@ public actor MaximaSession {
         switch kind {
         case .main(let label):
             lispMode = false
+            lastLabel = label
             if current != nil { statementEnded(label: label) } else { setState(.idle) }
         case .lisp:
             lispMode = true
