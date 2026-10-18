@@ -48,7 +48,7 @@ struct CellView: View {
                     .frame(width: 3)
             }
             ForEach(Array(cell.outputs.enumerated()), id: \.offset) { _, output in
-                OutputView(output: output)
+                OutputView(output: output, cellID: cell.id)
             }
         }
     }

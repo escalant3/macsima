@@ -8,11 +8,14 @@ import WXMLKit
 /// One output of a code cell.
 struct OutputView: View {
     let output: Output
+    var cellID: UUID?
 
     var body: some View {
         switch output {
         case .math(let xml):
             MathOutputItem(xml: xml)
+        case .text(let text) where text.isEmpty:
+            EmptyView()   // a statement's text run with nothing in it yet
         case .text(let text):
             Text(text)
                 .font(.system(size: 13, design: .monospaced))
@@ -37,6 +40,8 @@ struct OutputView: View {
                     Text(answer)
                         .font(.system(size: 14, design: .monospaced))
                         .padding(.leading, outputIndent)
+                } else if let cellID {
+                    AnswerField(cellID: cellID)
                 }
             }
         }
@@ -87,5 +92,26 @@ final class TranslationCache {
         if cache.count > 5000 { cache.removeAll() }
         cache[xml] = out
         return out
+    }
+}
+
+/// The inline answer to a question Maxima is asking.
+struct AnswerField: View {
+    let cellID: UUID
+    @Environment(WorksheetController.self) private var controller
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        if controller.asking == cellID {
+            TextField("Answer", text: $text)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 14, design: .monospaced))
+                .frame(maxWidth: 320)
+                .padding(.leading, outputIndent)
+                .focused($focused)
+                .onSubmit { controller.answer(text, for: cellID) }
+                .onAppear { focused = true }
+        }
     }
 }

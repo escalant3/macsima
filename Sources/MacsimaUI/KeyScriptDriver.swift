@@ -82,7 +82,9 @@ enum KeyScriptDriver {
         case "quit":
             // Discard changes, so no "save changes?" sheet stops the quit.
             NSDocumentController.shared.documents.forEach { $0.updateChangeCount(.changeCleared) }
-            NSApp.terminate(nil)
+            // From the run loop, as a real quit arrives: terminating inside this
+            // main-actor task would block the delegate's shutdown task.
+            NSApp.perform(#selector(NSApplication.terminate(_:)), with: nil, afterDelay: 0)
         default:
             log("unknown line: \(line)")
         }
@@ -144,11 +146,27 @@ enum KeyScriptDriver {
     private static func dump(to path: String) {
         guard let controller = WorksheetController.keyController else { log("no controller"); return }
         let cells = controller.document.worksheet.cells.map { cell -> [String: Any] in
-            ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.count,
+            ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.map(describe),
              "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell]
         }
-        let data = try? JSONSerialization.data(withJSONObject: ["cells": cells], options: [.prettyPrinted, .sortedKeys])
+        let info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
+                                   "status": controller.statusMessage ?? "", "running": controller.running.count]
+        let data = try? JSONSerialization.data(withJSONObject: info, options: [.prettyPrinted, .sortedKeys])
         try? data?.write(to: URL(filePath: path))
+    }
+
+    /// A short description of an output for dumps: kind, then the gist.
+    private static func describe(_ output: Output) -> String {
+        switch output {
+        case .math(let xml):
+            let out = TranslationCache.shared.translate(xml)
+            return "math \(out.label ?? "-") \(out.plainText)"
+        case .text(let t): return "text \(t)"
+        case .error(let kind, let message): return "error \(kind ?? "-") \(message)"
+        case .image(let data, let format, let label): return "image \(label ?? "-") \(format) \(data.count) bytes"
+        case .question(let prompt, let answer):
+            return "question \(TranslationCache.shared.translate(prompt).plainText) answer=\(answer ?? "nil")"
+        }
     }
 
     private static func split(_ line: String) -> (String, String) {

@@ -5,6 +5,8 @@ import SwiftUI
 
 @main
 struct MacsimaApp: App {
+    @NSApplicationDelegateAdaptor(MacsimaAppDelegate.self) private var delegate
+
     var body: some Scene {
         MacsimaScenes()
     }

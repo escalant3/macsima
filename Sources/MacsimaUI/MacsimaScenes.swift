@@ -23,5 +23,6 @@ public struct MacsimaScenes: Scene {
         }
         .defaultSize(width: 900, height: 980)
         .commands { WorksheetCommands() }
+        Settings { SettingsView() }
     }
 }

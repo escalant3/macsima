@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+import MaximaKit
 import SwiftUI
 import WorksheetKit
 
@@ -39,6 +40,22 @@ struct WorksheetWindow: View {
             }
         }
         .frame(minWidth: 560, minHeight: 360)
+        .safeAreaInset(edge: .bottom) {
+            if let message = controller.statusMessage {
+                Text(message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.bar)
+            }
+        }
+        .toolbar { WorksheetToolbar(controller: controller) }
+        .environment(controller)
+        .task { await controller.start() }
+        .onDisappear { Task { await controller.shutdown() } }
         .focusedSceneValue(controller)
         .onChange(of: focus) { _, id in
             if let id {
@@ -57,6 +74,45 @@ struct WorksheetWindow: View {
             guard let id = controller.focusedCell, !new.contains(id) else { return }
             let index = old.firstIndex(of: id) ?? new.count
             controller.focusedCell = new.isEmpty ? nil : new[min(max(0, index - 1), new.count - 1)]
+        }
+    }
+}
+
+/// Session state, a busy indicator, Interrupt and Restart.
+struct WorksheetToolbar: ToolbarContent {
+    let controller: WorksheetController
+
+    var body: some ToolbarContent {
+        ToolbarItem(placement: .status) {
+            HStack(spacing: 6) {
+                if controller.sessionState == .busy || controller.sessionState == .starting {
+                    ProgressView().controlSize(.small)
+                }
+                Text(Self.label(controller.sessionState))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        ToolbarItem {
+            Button("Interrupt", systemImage: "stop.fill") { controller.interrupt() }
+                .help("Interrupt (⌘.)")
+                .disabled(![.busy, .question, .debugger].contains(controller.sessionState))
+        }
+        ToolbarItem {
+            Button("Restart Maxima", systemImage: "arrow.clockwise") { controller.restart() }
+                .help("Restart Maxima")
+        }
+    }
+
+    static func label(_ state: SessionState) -> String {
+        switch state {
+        case .starting, .authenticating, .configuring: "Starting Maxima…"
+        case .idle: "Ready"
+        case .busy: "Evaluating…"
+        case .question: "Waiting for an answer"
+        case .debugger: "In the debugger"
+        case .lisp: "Lisp mode"
+        case .dead: "Maxima not running"
         }
     }
 }
