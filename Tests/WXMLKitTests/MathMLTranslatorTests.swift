@@ -141,6 +141,11 @@ struct MathMLTranslatorTests {
         #expect(ml("<math><cj><mi>z</mi></cj></math>").contains(#"<menclose notation="top"><mi>z</mi></menclose>"#))
     }
 
+    @Test func stringSpacesSurvive() {
+        let q = ml(#"<math><st>Is </st><mi>y</mi><st> positive?</st></math>"#)
+        #expect(q.contains("<mtext>Is&#xA0;</mtext><mi>y</mi><mtext>&#xA0;positive?</mtext>"))
+    }
+
     @Test func binomialKeepsItsParens() {
         let out = MathMLTranslator.translate(#"<math><p print="no"><mfrac line="no"><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></mfrac></p></math>"#)
         #expect(out.mathML.contains(#"<mo>(</mo><mfrac linethickness="0"><mi>n</mi><mi>k</mi></mfrac><mo>)</mo>"#))

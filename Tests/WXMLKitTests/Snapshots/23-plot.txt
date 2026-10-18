@@ -10,4 +10,4 @@ in:    <math><lbl altCopy="%o1">(%o1) </lbl><st></st></math>
 label: %o1
 image: -
 text:  
-out:   <math display="block"><mtext></mtext></math>
+out:   

@@ -69,7 +69,7 @@ private struct Context {
     mutating func emit(_ node: MathNode) -> String {
         guard case .element(let name, let attrs, let children) = node else {
             let text = node.textContent
-            return text.trimmingCharacters(in: .whitespaces).isEmpty ? "" : "<mtext>\(esc(text))</mtext>"
+            return text.trimmingCharacters(in: .whitespaces).isEmpty ? "" : Self.mtext(text)
         }
         let kids = node.elementChildren
         switch name {
@@ -92,10 +92,10 @@ private struct Context {
         case "mo":
             return "<mo>\(esc(Self.operatorText(node.textContent)))</mo>"
         case "st":
-            return "<mtext>\(esc(node.textContent))</mtext>"
+            return Self.mtext(node.textContent)
         case "t":
             if attrs["listdelim"] == "true" { return Self.fence(node.textContent, stretchy: fencesStretch) }
-            return "<mtext>\(esc(node.textContent))</mtext>"
+            return Self.mtext(node.textContent)
         case "fnm":
             return "<mi>\(esc(node.textContent))</mi>"
         case "fn":
@@ -278,6 +278,18 @@ private struct Context {
         case "d": "<mi mathvariant=\"normal\">d</mi>"
         default: "<mi>\(MathMLTranslator.escape(raw.hasPrefix("%") ? String(raw.dropFirst()) : raw))</mi>"
         }
+    }
+
+    /// MathML drops leading and trailing spaces in mtext ("Is " + y would
+    /// read "Isy"); keep them as no-break spaces.
+    static func mtext(_ text: String) -> String {
+        var t = MathMLTranslator.escape(text)
+        let lead = t.prefix { $0 == " " }.count
+        let trail = t.reversed().prefix { $0 == " " }.count
+        if lead == t.count { return lead == 0 ? "" : "<mspace width=\"\(Double(lead) * 0.25)em\"/>" }
+        t = String(repeating: "&#xA0;", count: lead) + t.dropFirst(lead).dropLast(trail)
+            + String(repeating: "&#xA0;", count: trail)
+        return "<mtext>\(t)</mtext>"
     }
 
     static func operatorText(_ s: String) -> String {

@@ -3,7 +3,7 @@ in:    <math><st>Is </st><mi lisp="*var-tag*">y</mi><st> positive, negative or z
 label: -
 image: -
 text:  Is y positive, negative or zero?
-out:   <math display="block"><mrow><mtext>Is </mtext><mi>y</mi><mtext> positive, negative or zero?</mtext></mrow></math>
+out:   <math display="block"><mrow><mtext>Is&#xA0;</mtext><mi>y</mi><mtext>&#xA0;positive, negative or zero?</mtext></mrow></math>
 
 ### 2
 in:    <math><lbl altCopy="%o1">(%o1) </lbl><mi lisp="*var-tag*">pos</mi></math>

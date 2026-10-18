@@ -3,7 +3,7 @@ in:    <math><st>Is </st><mi lisp="*var-tag*">a</mi><st> positive or negative?</
 label: -
 image: -
 text:  Is a positive or negative?
-out:   <math display="block"><mrow><mtext>Is </mtext><mi>a</mi><mtext> positive or negative?</mtext></mrow></math>
+out:   <math display="block"><mrow><mtext>Is&#xA0;</mtext><mi>a</mi><mtext>&#xA0;positive or negative?</mtext></mrow></math>
 
 ### 2
 in:    <math><lbl altCopy="%o1">(%o1) </lbl><mfrac lisp="wxxml-mquotient"><mrow><fn lisp="wxxml-function"><fnm lisp="wxxml-function">atan</fnm><mrow><p><mrow><mfrac lisp="wxxml-mquotient"><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><q><mi lisp="*var-tag*">a</mi></q></mrow></mfrac></mrow></p></mrow></fn></mrow><mrow><q><mi lisp="*var-tag*">a</mi></q></mrow></mfrac></math>

@@ -3,7 +3,7 @@ in:    <math>value is <msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></
 label: -
 image: -
 text:  value is x^(2)
-out:   <math display="block"><mrow><mtext>value is </mtext><msup><mi>x</mi><mn>2</mn></msup></mrow></math>
+out:   <math display="block"><mrow><mtext>value is&#xA0;</mtext><msup><mi>x</mi><mn>2</mn></msup></mrow></math>
 
 ### 2
 in:    <math><lbl altCopy="%o3">(%o3) </lbl><mn>4</mn></math>
