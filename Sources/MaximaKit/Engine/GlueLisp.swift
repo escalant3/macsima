@@ -10,11 +10,12 @@ import Foundation
 /// The glue Lisp (`wxMathML.lisp`) and the lines sent around it.
 public enum GlueLisp {
     /// `wxMathML.lisp` as shipped in this package, unmodified from wxMaxima.
-    public static func bundledSource() throws -> String {
-        guard let url = Bundle.module.url(forResource: "wxMathML", withExtension: "lisp") else {
-            throw MaximaError.glueMissing
+    public static func bundledSource() throws(MaximaError) -> String {
+        guard let url = Bundle.module.url(forResource: "wxMathML", withExtension: "lisp"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else {
+            throw .glueMissing
         }
-        return try String(contentsOf: url, encoding: .utf8)
+        return text
     }
 
     /// Builds the one-line `:lisp-quiet` command: strip leading indentation
