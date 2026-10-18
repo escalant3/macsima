@@ -1,4 +1,9 @@
-# Maxima transcripts (Phase 0)
+# Maxima transcripts
+
+Phase 0 recorded 01 to 25; Phase 1 added the scenarios numbered 26 and up, glue mode only,
+by running `maxima-spike record` for just those scenarios so the older files stay unchanged.
+
+## Phase 0
 
 Recorded 2026-10-18 on macOS 26.5.1 (arm64) with Homebrew Maxima 5.50.0 (revision 2) on SBCL 2.6.9
 (threads: yes), using `maxima-spike record` (`Sources/maxima-spike`). Re-record with
@@ -59,3 +64,5 @@ Things to know when using these as test fixtures:
 | 23 | plot | raw `plot2d(...,[png_file,...])`; glue `wxplot2d(sin(x),[x,0,%pi]);` |
 | 24 | tex | `tex(x^2/2);` |
 | 25 | quit | `quit();` (socket closes, no output) |
+| 29 | Lisp mode (glue only, Phase 1) | `to_lisp();`, `(+ 1 2)`, `(to-maxima)`, `2+2;` |
+| 30 | debugger (glue only, Phase 1) | `debugmode(true)$`, `error("x");`, `:top`, `2+2;` |

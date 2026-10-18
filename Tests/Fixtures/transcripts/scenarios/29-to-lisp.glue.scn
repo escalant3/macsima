@@ -1,0 +1,5 @@
+# Lisp mode: to_lisp() switches to the MAXIMA> prompt, (to-maxima) leaves it.
+to_lisp();
+(+ 1 2)
+(to-maxima)
+2+2;

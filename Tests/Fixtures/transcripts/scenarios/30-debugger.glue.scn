@@ -1,0 +1,5 @@
+# Maxima debugger: an error with debugmode(true) enters (dbm:1); :top leaves it.
+debugmode(true)$
+error("x");
+:top
+2+2;
