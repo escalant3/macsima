@@ -57,7 +57,13 @@ struct MathOutputItem: View {
     var body: some View {
         let out = TranslationCache.shared.translate(xml)
         Group {
-            if out.mathML.isEmpty {
+            if out.mathML.isEmpty, let label = out.label {
+                // An empty result: just its label, like wxMaxima shows it.
+                Text("(\(label))")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(Color(white: 0.54))
+                    .frame(width: gutterWidth, alignment: .trailing)
+            } else if out.mathML.isEmpty {
                 EmptyView()
             } else if live {
                 MathOutputView(mathML: out.mathML, label: out.label)

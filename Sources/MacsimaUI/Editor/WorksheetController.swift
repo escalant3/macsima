@@ -225,7 +225,10 @@ public final class WorksheetController {
                     enqueue(id, .append(.error(kind: nil, message: "The plot file \(path) was gone before it could be read.")))
                 }
             }
-            if !out.mathML.isEmpty { enqueue(id, .append(.math(xml: Self.storedMath(xml)))) }
+            // A label with nothing after it (the empty result of a plot) is kept, as wxMaxima keeps it.
+            if !out.mathML.isEmpty || (out.imagePaths.isEmpty && out.label != nil) {
+                enqueue(id, .append(.math(xml: Self.storedMath(xml))))
+            }
         case .text(let line):
             enqueue(id, .appendText(line))
         case .question(let prompt):

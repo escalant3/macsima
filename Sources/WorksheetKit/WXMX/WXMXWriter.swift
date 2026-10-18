@@ -141,7 +141,8 @@ public enum WXMXWriter {
                 return Self.startLine(prompt) + "<editor type=\"input\">\n<line>" + text + "</line>\n</editor>\n"
             case .text(let text):
                 guard !text.isEmpty else { return "" }
-                return "<t breakline=\"true\">" + XMLTreeNode.escapeText(text).replacingOccurrences(of: "\n", with: "&#x0A;") + "</t>"
+                // wxMaxima's style for Maxima's plain-text output (monospaced).
+                return "<t breakline=\"true\" type=\"ASCII-Art\">" + XMLTreeNode.escapeText(text).replacingOccurrences(of: "\n", with: "&#x0A;") + "</t>"
             case .error(let kind, let message):
                 var a = "breakline=\"true\""
                 if let kind { a += " errorkind=\"\(XMLTreeNode.escapeAttribute(kind))\"" }

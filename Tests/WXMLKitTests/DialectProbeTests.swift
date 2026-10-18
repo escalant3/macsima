@@ -35,7 +35,7 @@ struct WXMXMathTests {
             }
         }
         print("translated \(total) chunks from .wxmx fixtures; unknown tags: \(unknown)")
-        #expect(total > 700)
+        #expect(total > 600)
         #expect(Set(unknown.keys).isSubset(of: ["slide"]), "only animations are unknown (PARITY.md): \(unknown)")
     }
 

@@ -229,7 +229,8 @@ private struct Reader {
                 a["type"] = nil
                 let kind = a.removeValue(forKey: "errorkind")
                 if a.isEmpty { return [.error(kind: kind, message: chunk[0].textContent)] }
-            } else if a.isEmpty {
+            } else if a == ["type": "ASCII-Art"] {
+                // Maxima's plain-text output (display2d:false, tex(), print in 1D), monospaced.
                 return [.text(chunk[0].textContent)]
             }
         }
