@@ -42,13 +42,12 @@ Everything below comes from wxMaxima's own sources (`MaximaProcessManager.cpp`, 
 1. **Listen first.** Bind a TCP server on localhost. wxMaxima starts at a configured default port and increments until a bind succeeds; a native app can bind port 0 and read the port the OS picked.
 2. **Set the environment.** `MAXIMA_INITIAL_FOLDER` is the worksheet's folder (Maxima reads it once at startup, so a different folder needs a restart). `MAXIMA_AUTH_CODE` is a random token (512 random bytes, base64). `LANG` is set when configured. On macOS wxMaxima also sets `DISPLAY=:0.0`, with a TODO asking whether gnuplot still needs it.
 3. **Spawn.** Run `<maxima command> -s <port>` asynchronously, console hidden, as a process-group leader so the wrapper script and the Lisp child can be killed together.
-4. **Accept.** Maxima connects to the server; wxMaxima accepts and sends setup commands. A later second connection is treated as the interrupt channel.
-5. **Expect noise first.** Observed with 5.50.0: the first bytes on the socket are `pid=N` (the Lisp's PID) and a newline, then the banner and ` (%i1) `. Maxima also prints `Connecting Maxima to server on port N` to its own stdout, not to the socket. The banner includes `Loading .../maxima-init.mac` when the user has one.
-6. **Watch for failure.** If the child is alive but has not connected within 5 seconds, warn the user. If it exits, retry a limited number of times, then ask the user to restart manually.
+4. **Accept.** Maxima connects to the server; wxMaxima accepts and sends setup commands. The socket begins with pid=N before the banner. A later second connection is treated as the interrupt channel.
+5. **Watch for failure.** If the child is alive but has not connected within 5 seconds, warn the user. If it exits, retry a limited number of times, then ask the user to restart manually.
 
 ### Setup commands after connect
 
-All are plain lines on the same socket. The first one sends the whole glue Lisp as a single `:lisp-quiet` line: wxMaxima (`wxMathML::GetCmd`) strips leading indentation and `;` comments outside strings, then joins the lines with spaces (about 88 KB for the current file). None of the setup lines is answered with a prompt (checked against 5.50.0), so do not wait for one; the first `<PROMPT>` comes after the first real command.
+All are plain lines on the same socket, and none of them gets a prompt back, so do not wait for one during setup. wxMaxima strips comments and indentation and joins the Lisp file into one line of about 88 KB. The first one sends the whole glue Lisp as a `:lisp-quiet` command.
 
 - the glue Lisp (`wxMathML.lisp`), which sets the prompt prefix and suffix to `<PROMPT>` and `</PROMPT>`, installs the XML display function and defines helper functions;
 - on macOS, `:lisp-quiet (setf $gnuplot_command "<path>")`;
@@ -56,7 +55,7 @@ All are plain lines on the same socket. The first one sends the whole glue Lisp 
 - `:lisp-quiet (when (fboundp 'wx-open-interrupt-channel) (wx-open-interrupt-channel "127.0.0.1" <port> "<token>"))`;
 - the front-end version into Maxima variables (`$wxmaximaversion` and friends), and the prompt prefix and suffix again so the first prompt is wrapped too.
 
-The glue Lisp prints `<wxxml-key>TOKEN</wxxml-key>` with the value of `MAXIMA_AUTH_CODE` right after its opening `<suppressOutput>` tag (checked: it echoes the token unchanged). The key is therefore nested inside `suppressOutput`, not at the top level: a scanner that reads `suppressOutput` as one tag must look for the key inside its content (Phase 1). wxMaxima starts each session as unauthenticated and discards all data from a Maxima it does not trust. I did not read the comparison code itself.
+The glue Lisp's first line prints `<wxxml-key>TOKEN</wxxml-key>` with the value of `MAXIMA_AUTH_CODE`. wxMaxima starts each session as unauthenticated and discards all data from a Maxima it does not trust. I did not read the comparison code itself. Phase 1 found that in 5.50.0 the key arrives nested inside suppressOutput, so look inside that tag's content.
 
 ### Sending a command
 
@@ -68,12 +67,12 @@ The glue Lisp prints `<wxxml-key>TOKEN</wxxml-key>` with the value of `MAXIMA_AU
 
 ### Tags Maxima sends
 
-The stream is plain text with known tags mixed in. The scanner looks for a bare `<tag>` at the start of its buffer, takes everything through `</tag>`, and treats text in between as miscellaneous output (errors, `print()` output, the startup banner). The top-level tags carry no attributes on purpose, so the scanner stays trivial. The math tags inside them do carry attributes: observed `altCopy` on `lbl`, `lisp="..."` (the name of the Lisp function that printed the tag) on most tags, `bracketParens` on `tb`, `list` on `mrow`, `listdelim` on `t`.
+The stream is plain text with known tags mixed in. The scanner looks for a bare `<tag>` at the start of its buffer, takes everything through `</tag>`, and treats text in between as miscellaneous output (errors, `print()` output, the startup banner). Top-level tags carry no attributes, so the scanner stays trivial; the tags inside math do carry attributes (see Math XML). Phase 0 on Maxima 5.50.0 showed that errors, print() output, tex() output and everything under display2d:false arrive as plain text between tags, so the miscellaneous-output path is a main path, not an edge case.
 
 | Tag | Carries | The app's job |
 | --- | --- | --- |
-| `PROMPT` | Input label such as `(%i3) `, a question (observed as `<PROMPT><math><st>Is </st><mi>y</mi>...</math></PROMPT>` for `asksign`), a debugger prompt `(dbm:1)` or a Lisp prompt ` MAXIMA>  `. After a `:lisp` line the prompt is `(%i1)` without the trailing space | Classify it; advance the queue or open an answer cell |
-| `mth`, `math` | One chunk of output (Maxima 5.50.0 with the current glue sends `math`; `mth` was not seen): an optional `lbl` label plus 2D math XML | Parse into output cells |
+| `PROMPT` | Input label such as ` (%i3)  `, a question, a debugger prompt `(dbm:1)` or a Lisp prompt ` MAXIMA>  ` | Classify it; advance the queue or open an answer cell |
+| `math` (the glue also knows `mth`; 5.50.0 sent only `math`) | One chunk of output: an optional `lbl` label plus 2D math XML | Parse into output cells |
 | `suppressOutput` | Output the user asked to hide | Handled by its own reader |
 | `variables` | Values of GUI-relevant variables (`numer`, `display2d`, paths, Lisp version) | Update menus and state |
 | `watch_variables_add` | Variable names for a watch panel | Add to the panel |
@@ -83,36 +82,28 @@ The stream is plain text with known tags mixed in. The scanner looks for a bare 
 | `html-manual-keywords` | Help topic names | Feed help |
 | `wxxml-key` | The echoed auth token | Authenticate the session |
 | `wxxml-asciimath` | Maxima's own ASCII-art display block | Show in a monospace font |
-| `wxasync` | Background-job output: `<wxasync><id>CELL</id><mth>…</mth></wxasync>`. The cell ID is a child element (the top-level tag has no attributes), captured when the job was spawned with the Lisp macro `wx-spawn-async`; no Maxima-level function starts one (fixture 27) | Route to that cell |
+| `wxasync` | Background-job output with the originating cell's `id`, carried as an id child element (only wx-spawn-async produces it) | Route to that cell |
 
 The worker side reads with a one-second socket timeout, strips carriage returns, and processes its buffer at least every 100 ms or when it exceeds 10,000 characters, so the UI is not flooded.
 
 ### Math XML inside `mth`
 
-The dialect follows MathML in spirit (the Lisp file credits David Drysdale's MathML printer) but uses short custom tags. Seen in `wxMathML.lisp`: `mrow`, `mn`, `mi`, `mo`, `fn`/`fnm` (functions), `msup`, `mfrac`, `q` (square root), `tb`/`mtr`/`mtd` (matrices), `sm` (sums and products), `in` (integrals), `lm` (limits), `d` (derivatives), `at`, `p` (parentheses), `st` (strings), `t`, `g` (Greek), `s`, `h`, `a`, `cj`, `ie`, `munder`, `mmultiscripts`, `hl` (boxes), `lbl` (output label), `img` (plot file) and `slide` (animation). Many tags carry an `altCopy` attribute with the plain-text form for copy and paste. All text is XML-escaped. Not everything is XML: with `display2d:false` results arrive as plain text lines (`(%o2) (x+1)^2/y`) between prompts, and `tex()`, `print` side output and error messages are plain text too.
+The dialect follows MathML in spirit (the Lisp file credits David Drysdale's MathML printer) but uses short custom tags. Seen in `wxMathML.lisp`: `mrow`, `mn`, `mi`, `mo`, `fn`/`fnm` (functions), `msup`, `mfrac`, `q` (square root), `tb`/`mtr`/`mtd` (matrices), `sm` (sums and products), `in` (integrals), `lm` (limits), `d` (derivatives), `at`, `p` (parentheses), `st` (strings), `t`, `g` (Greek), `s`, `h`, `a`, `cj`, `ie`, `munder`, `mmultiscripts`, `hl` (boxes), `lbl` (output label), `img` (plot file) and `slide` (animation). Many tags carry an `altCopy` attribute with the plain-text form for copy and paste. All text is XML-escaped. Phase 0 on 5.50.0 also saw a lisp attribute on most inner tags, plus bracketParens, list and listdelim.
 
 ### Prompt classes
 
-`MaximaProtocol.h` defines three prompt kinds that count as the main prompt: a numbered input label such as ` (%i3)  `, a Lisp REPL prompt ` MAXIMA>  `, and anything while the app is already in Lisp mode. The debugger prompt `(dbm:N)` is always a question, never a main prompt. Observed in Phase 1 (fixtures 29, 30): inside `<PROMPT>` the Lisp and debugger prompts start with a newline (`<PROMPT>\nMAXIMA> </PROMPT>`, `<PROMPT>\n(dbm:1) </PROMPT>`), so trim before matching; `to_lisp()` prints no `%o` result; `(to-maxima)` prints `Returning to Maxima` and `true` before the next `(%iN)`; an error under `debugmode(true)` prints ` -- an error.  Entering the Maxima debugger.` and `:top` leaves the debugger.
-
-### Error text
-
-Errors come only as plain text between tags (Maxima 5.50.0 on SBCL, fixtures 04, 05, 06, 21, 22, 28, 30). MaximaKit relies on exactly these:
-
-- A line containing `-- an error.`: merror and `error()`. The message is on the lines before it, or in a `math` chunk when it holds an expression (`error("value is", x^2)`).
-- A line starting `incorrect syntax:`, then an echo of the input and a caret line. The input label does not advance.
-- `Maxima encountered a Lisp error:`, the message, then `Automatically continuing.` and the debugger-hook line. The message ` User interrupt` comes from the interrupt channel, ` Interactive interrupt at #x…` from SIGINT; both mean "interrupted", not an error. Every other prompt is a question Maxima is asking the user (for example from `asksign`), and the app must show an answer cell instead of advancing its queue.
+`MaximaProtocol.h` defines three prompt kinds that count as the main prompt: a numbered input label such as ` (%i3)  `, a Lisp REPL prompt ` MAXIMA>  `, and anything while the app is already in Lisp mode. The debugger prompt `(dbm:N)` is always a question, never a main prompt. Every other prompt is a question Maxima is asking the user (for example from `asksign`), and the app must show an answer cell instead of advancing its queue. Phase 0 refinement: in glue mode a question arrives as a PROMPT that contains math, while a main prompt holds a bare (%iN) label with or without a trailing space; in raw mode a question has no marker at all, so only silence tells you it is waiting. A syntax error or a :lisp line does not advance the label.
 
 ### Interrupt and kill
 
-- **Interrupt, preferred:** Maxima's Lisp opens a second connection to the same server and sends the token; after that the app writes `interrupt` plus a newline on it. This needs a Lisp with threads, and `wxMathML.lisp` reports whether the channel is available (`*wx-interrupt-channel-available*` in the startup `variables`). The channel connects a moment after the setup lines, so MaximaKit's `start()` waits up to 3 s for it when the glue says one is coming.
+- **Interrupt, preferred:** Maxima's Lisp opens a second connection to the same server and sends the token; after that the app writes `interrupt` plus a newline on it. This needs a Lisp with threads, and `wxMathML.lisp` reports whether the channel is available. Confirmed in Phase 0 on Homebrew's SBCL 2.6.9: threads are on, the glue reports the channel available, and an interrupt through it stopped a long integrate; SIGINT to the process group also worked.
 - **Interrupt, fallback on POSIX:** send SIGINT to the child.
-- **Kill:** close the socket and Maxima's stdin, send SIGTERM then SIGKILL to the process and its children, wait up to two seconds, then delete leftover `maxout*` gnuplot and PNG files in Maxima's temp folder. MaximaKit differs: each Maxima gets a private temp folder (`TMPDIR` and `maxima_tempdir`), and the kill deletes the whole folder. Name patterns are not enough: besides `maxout_<pid>_*.png`, gnuplot scripts get random names such as `2s7glnregj0fo42t.gnuplot` (seen in Phase 1).
+- **Kill:** close the socket and Maxima's stdin, send SIGTERM then SIGKILL to the process and its children, wait up to two seconds, then delete leftover `maxout*` gnuplot and PNG files in Maxima's temp folder.
 - **Orphan guard:** wxMaxima keeps a signal-safe list of child process IDs and kills them from SIGTERM, SIGINT and SIGHUP handlers, because a Maxima busy computing only notices a closed socket when it next reads.
 
 ### Plots
 
-`wxplot2d`, `wxdraw2d` and relatives write a PNG (or SVG when `$wxplot_usesvg` is set) into Maxima's temp folder, then print an `img` tag naming the file inside `mth`. A `del="yes"` attribute tells the app it may delete the file after loading it (not present in the 5.50.0 `wxplot2d` transcript: the tag was `<img lisp="wxxml-tag">/var/folders/.../maxout_N_1_M.png</img>` inside a `math` with a `%t1` label). The default plot size is 800 by 600. wxMaxima probes gnuplot's terminal list and, if `pngcairo` exists, sends `(setq $wxplot_pngcairo t)`.
+`wxplot2d`, `wxdraw2d` and relatives write a PNG (or SVG when `$wxplot_usesvg` is set) into Maxima's temp folder, then print an `img` tag naming the file inside `mth`. A `del="yes"` attribute tells the app it may delete the file after loading it. In the Phase 0 run on 5.50.0 the wxplot2d image arrived without del, as an img tag with a lisp attribute holding the PNG path, inside a math chunk labelled %t1, so do not rely on del. The default plot size is 800 by 600. wxMaxima probes gnuplot's terminal list and, if `pngcairo` exists, sends `(setq $wxplot_pngcairo t)`.
 
 ## What the GUI owns
 
@@ -174,9 +165,9 @@ Split the engine from the UI so the whole Maxima link can be tested without a wi
 
 ### Decisions
 
-- **Process spawning.** Foundation's `Process` has no public way to make the child a process-group leader, as far as I know. Use `posix_spawn` with `POSIX_SPAWN_SETPGROUP` so you can signal the launcher script and the Lisp together. Also reset the child's signal mask and handlers (`POSIX_SPAWN_SETSIGMASK`, `POSIX_SPAWN_SETSIGDEF`): a child inherits both, and under the Swift test runner Maxima started with SIGTERM blocked and ignored the kill until SIGKILL (Phase 1). Add `POSIX_SPAWN_CLOEXEC_DEFAULT` so the listening socket does not leak into Maxima.
+- **Process spawning.** Foundation's `Process` has no public way to make the child a process-group leader, as far as I know. Use `posix_spawn` with `POSIX_SPAWN_SETPGROUP` so you can signal the launcher script and the Lisp together.
 - **Socket.** `NWListener` from Network.framework restricted to the loopback interface, port 0, then read the assigned port before spawning. Accept exactly one control connection; treat a second as the interrupt channel after the token handshake.
-- **Concurrency.** An `actor MaximaSession` owns the connection and state machine and publishes an `AsyncStream` of events. Run the tag scanner off the main thread and coalesce updates, mirroring wxMaxima's worker thread that flushes at most every 100 ms. Phase 1 status: the actor exists and talks to a `MaximaTransport` protocol (the real `ProcessTransport`, or a replay of recorded transcripts in tests). The scanner runs inside the actor; the 100 ms coalescing is left to the UI side in Phase 2.
+- **Concurrency.** An `actor MaximaSession` owns the connection and state machine and publishes an `AsyncStream` of events. Run the tag scanner off the main thread and coalesce updates, mirroring wxMaxima's worker thread that flushes at most every 100 ms.
 - **State machine.** `starting`, `authenticating`, `configuring`, `idle`, `busy`, `question`, `debugger`, `lisp` and `dead`, with transitions driven by the prompt classes above. Copy this from wxMaxima rather than inventing it.
 - **Worksheet view.** Prototype in AppKit (`NSTextView` on TextKit 2, one per editable cell, inside a lazily loaded stack) hosted in SwiftUI via `NSViewRepresentable`. SwiftUI's own text editor has gained rich-text editing (AttributedString, macOS 26, as far as I know), which is now worth trying first since Tahoe is the minimum. Keep the AppKit route for cross-cell selection and caret movement, which I would not bet on without a prototype.
 - **Security.** Reuse wxMaxima's design: a long random token in `MAXIMA_AUTH_CODE`, drop all data until the echoed token matches, and require the token again on the interrupt channel. Any local process can connect to a loopback port, so the token is the only gate.
@@ -217,7 +208,7 @@ Decision (2026-10-18): take the first path, GPL-2.0-or-later, because it is the 
 | Risk | Why it matters | Test it by |
 | --- | --- | --- |
 | SBCL under hardened runtime | Notarization or startup could fail without the right entitlements | Deferred until you decide to share (a Homebrew Maxima is unaffected): sign and notarize a bundled Maxima and run `maxima -s` from the signed app on a clean Apple Silicon Mac |
-| Interrupt reliability | The preferred interrupt channel needs a Lisp with threads; the fallback is SIGINT | Checked 2026-10-18: Homebrew SBCL 2.6.9 has threads; both the interrupt channel and SIGINT stopped a long `integrate` and returned to the prompt |
+| Interrupt reliability | The preferred interrupt channel needs a Lisp with threads; the fallback is SIGINT | Checked in Phase 0: both paths work on Homebrew's SBCL 2.6.9; keep both as fixtures |
 | Protocol drift | The glue Lisp tracks Maxima internals; a 2012 rename of `MLABLE` to `MLABEL` broke output in older wxMaxima until it was updated | Pin a Maxima version; run transcript tests against two releases |
 | Math layout correctness | wxMaxima needs a fuzzer and idempotency tests for its layout code | Build a corpus of captured `mth` chunks and snapshot-test the renderer |
 | Relocation | Past Mac bundles broke on path handling | Install under a path with spaces and non-ASCII characters |
@@ -231,17 +222,58 @@ Decision (2026-10-18): take the first path, GPL-2.0-or-later, because it is the 
 - Resolved: arm64 only, macOS 26 (Tahoe) minimum.
 - Resolved: GPL-2.0-or-later (see Licensing).
 - Resolved: full wxMaxima compatibility is the long-term goal; first the app only has to open `.wxmx` files it wrote itself, with every gap tracked in the ledger.
-- Resolved: SBCL only. Phase 0 check: Homebrew SBCL 2.6.9 has threads (`threads: yes`), and the interrupt channel works. SIGINT also works and stays the fallback.
+- Resolved: SBCL only. To check in Phase 0: whether your SBCL was built with threads, using the one-line test in CLAUDE.md. No custom Maxima is needed either way: without threads, interrupts use SIGINT, the same fallback wxMaxima has.
 
 ## Roadmap
 
 Durations are my estimates for one experienced Mac developer, not sourced figures. Each phase ends with a check that decides whether to continue.
 
-1. **Phase 0, feasibility spike (1 to 2 weeks).** Use your Homebrew Maxima 5.50.0. Listen, spawn, connect, send `integrate(sin(x), x);`, print the raw bytes. *Exit:* the tagged XML for a result appears in your log, and you know whether the interrupt channel works on your SBCL build (otherwise interrupts fall back to SIGINT).
-2. **Phase 1, engine kit (3 to 4 weeks).** Tag scanner, session state machine, evaluation queue, restart, kill, interrupt, token handshake, all tested against recorded transcripts. *Exit:* a scripted session of 50 commands that includes an error, a question, an interrupt and a kill. Done 2026-10-18: see `docs/PHASE1_REPORT.md`.
+1. **Phase 0, feasibility spike (done 2026-10-18).** Use your Homebrew Maxima 5.50.0. Listen, spawn, connect, send `integrate(sin(x), x);`, print the raw bytes. *Exit:* the tagged XML for a result appears in your log, and you know whether the interrupt channel works on your SBCL build (otherwise interrupts fall back to SIGINT).
+2. **Phase 1, engine kit (done 2026-10-18).** Tag scanner, session state machine, evaluation queue, restart, kill, interrupt, token handshake, all tested against recorded transcripts. *Exit:* a scripted session of 50 commands that includes an error, a question, an interrupt and a kill.
 3. **Phase 2, minimal worksheet (6 to 8 weeks).** Cell editing, evaluate, MathML rendering, inline plots, open and save `.wxmx`. *Exit:* save a worksheet, reopen it and re-evaluate it; then try real `.wxmx` files from wxMaxima, and record every element the app cannot handle in the ledger.
 4. **Phase 3, daily driver (8 to 12 weeks).** Autocomplete, variables panel, help, export, undo, search, debugger and Lisp modes, dark mode. *Exit:* one week of real work with no fallback to wxMaxima.
 5. **Phase 4, sharing (optional).** Only if the app proves worth sharing: a README with install steps and the compatibility ledger first; a notarized DMG with a bundled Maxima only if people ask (see Shipping later).
+
+### Phase 0 results (2026-10-18)
+
+Run on macOS 26.5.1 (arm64), Swift 6.3.3 with the Command Line Tools only, Homebrew Maxima 5.50.0 (revision 2) on SBCL 2.6.9. The exit criterion is met: the spike gets `- cos(x)` from `integrate(sin(x), x);`, and with the glue loaded the same result arrives as tagged XML with the token echoed.
+
+| Check | Result |
+| --- | --- |
+| SBCL threads | yes |
+| Interrupt channel | stopped a long `integrate`; Maxima printed `User interrupt` |
+| SIGINT to the process group | stopped the same `integrate` |
+| `float(%pi)`, `float(x)`, `float(1/3)` | correct on ARM64 |
+| Cleanup with `killpg` and SIGTERM | no leftover Maxima, gnuplot or `maxout*` files |
+
+What changes for Phase 1:
+
+- **Interrupt.** Use the second socket as the primary path, SIGINT to the group as the fallback.
+- **Prompts.** Classify by content: a PROMPT holding a bare `(%iN)` label is a main prompt, any PROMPT containing math is a question.
+- **Scanner.** Startup output is about 75 KB: SBCL compiler notes inside `suppressOutput`, a 60 KB `wxxml-symbols` block and two `variables` blocks, repeated when `integrate` autoloads a package. Handle large tags and split reads.
+- **Process.** Homebrew's `maxima` script `exec`s SBCL, so the spawned PID is the Lisp itself. Your `~/.maxima/maxima-init.mac` is loaded and announced in the banner, so tests must not depend on a clean banner.
+- **Fixtures.** They contain machine-specific text (home path, temp names, ports, PIDs, memory addresses); the fixtures README lists them so tests do not compare them literally.
+
+Not tested yet: restart, the 5-second connect watchdog, kill while busy, orphan cleanup, the `(dbm:N)` debugger, LDB, `to_lisp()` mode, SVG plots, animations (`slide`), `wxdraw`, the help-format and version setup commands, paths with spaces or non-ASCII characters, a second Maxima release, and whether gnuplot needs `DISPLAY` (both plots went to PNG with none set).
+
+Tooling note (fixed by installing Xcode): with only the Command Line Tools installed, plain `swift test` builds, runs zero tests and exits 0, which looks like a pass. Tests need `swift test -Xswiftc -F/Library/Developer/CommandLineTools/Library/Developer/Frameworks` until Xcode is installed.
+
+### Phase 1 results (2026-10-18)
+
+The engine kit (`MaximaKit`) is done, and the exit test passes. A 50-command script ran against the real Maxima in 6.3 s: four kinds of error, two questions, both interrupt paths, and a kill while busy followed by a restart. Afterwards no Maxima, SBCL or gnuplot process and no temp files remained. 49 Swift Testing tests pass; most replay the transcripts, and 8 use the real Maxima.
+
+Corrections to the sections above, found in Phase 1:
+
+- **Temp files.** gnuplot scripts get random names, so cleaning up `maxout*` by pattern leaves files behind. Each Maxima gets a private temp folder (`TMPDIR` and `maxima_tempdir`) that a kill deletes; folders left by a crashed host are swept on the next start.
+- **Signal mask.** posix\_spawn passes the parent's blocked and ignored signals to the child, so Maxima can start with SIGTERM blocked. Reset both when spawning.
+- **Interrupt channel timing.** The second connection arrives after the first idle prompt; `start()` waits up to 3 s for it when the glue says one is coming.
+- **Prompts.** Lisp and debugger prompts start with a newline inside PROMPT, and `to_lisp()` prints no result.
+- **Errors.** Maxima 5.50.0 on SBCL signals errors as plain text: a line containing `-- an error.`, a line starting `incorrect syntax:`, or `Maxima encountered a Lisp error:` up to `Automatically continuing.` A Lisp error saying `User interrupt` or `Interactive interrupt at` is an interrupt, not an error. When `error()` gets an expression, the message is in the preceding math chunk.
+- **Authentication.** A connection that arrives before Maxima's and does not echo the token makes `start()` fail; it receives the glue but never the token.
+
+What Phase 2 inherits: plot files vanish on kill, restart and shutdown, so the worksheet must read image data as soon as the img event arrives. The event streams are unbounded, so the UI must batch updates (about every 100 ms). Cells need stable UUIDs for `wxasync` routing, and a question's prompt is math XML that needs the same renderer as results.
+
+Still untested: LDB, paths with spaces or non-ASCII characters, a second Maxima release, SVG plots, `slide`, `wxdraw`, a Lisp without threads, the orphan guard on SIGINT and SIGHUP, interrupting while a question is waiting, and an impostor connection.
 
 ## Bootstrap kit
 
@@ -255,40 +287,88 @@ Macsima/
   CLAUDE.md              project rules and pointers for Claude Code
   Sources/
     MaximaKit/           engine: process, socket, scanner, session
-      Resources/         wxMathML.lisp copied unmodified from wxMaxima (GPL), a SwiftPM resource
-    maxima-session/      Phase 1 command-line runner for session scripts
     WXMLKit/             math XML to MathML (later a layout tree)
     WorksheetKit/        cells, .wxm and .wxmx read/write
-    maxima-spike/        Phase 0 spike (command-line tool)
+    maxima-spike/        Phase 0 command-line spike
   App/Macsima/           SwiftUI shell + worksheet view
+  Resources/lisp/        wxMathML.lisp, unmodified, notices kept (GPL)
   docs/
     BOOTSTRAP.md         this document
     WXMX_COMPAT.md       compatibility ledger
-    PHASE0_REPORT.md     what the spike found
+    PHASE0_REPORT.md     what the real Maxima showed
   Tests/
-    MaximaKitTests/
-    Fixtures/transcripts/   captured Maxima output, one file per scenario
+    Fixtures/transcripts/   49 captured sessions, README, record.sh
     Fixtures/wxmx/          sample .wxmx files, including your own
   Scripts/               packaging scripts, added only if you share the app
 ```
 
-### Phase 0 spike (built and run 2026-10-18)
+### Phase 0 spike (first sketch, superseded)
 
-The untested sketch that stood here is replaced by `Sources/maxima-spike/main.swift`, which builds in Swift 6 language mode and was run against Homebrew Maxima 5.50.0 (see `docs/PHASE0_REPORT.md`). Changes from the sketch:
+This first sketch did not survive Swift 6 strict concurrency. The working spike is Sources/maxima-spike in the repo: one serial queue, an explicit 127.0.0.1 bind, and posix\_spawn with POSIX\_SPAWN\_SETPGROUP. The sketch is kept for reference only. It listens on loopback, spawns Maxima with `-s`, accepts the control connection and prints whatever arrives. Without the glue Lisp, Maxima answers in plain text, which is exactly what you want to record first. Point it at /opt/homebrew/bin/maxima.
 
-- **Concurrency.** The sketch's mutable class, captured in `@Sendable` callbacks on `.global()`, does not fit strict concurrency. The spike keeps all state on one serial queue (`@unchecked Sendable`, documented). Phase 1 still uses an `actor`.
-- **Binding.** `requiredLocalEndpoint = 127.0.0.1:0` instead of only `requiredInterfaceType = .loopback`. Maxima's `-s` dials `localhost` and connected over IPv4; the interrupt channel dials the literal `127.0.0.1` it is given.
-- **Spawning.** `posix_spawn` with `POSIX_SPAWN_SETPGROUP`, stdin from `/dev/null`, stdout and stderr to a log. The Homebrew `maxima` script `exec`s SBCL, so the spawned PID is the Lisp, and `killpg` reaches it and any gnuplot.
-- **Waiting.** It waits for the first prompt before sending, and accepts a second connection as the interrupt channel after checking its token line.
+```swift
+import Foundation
+import Network
+
+final class MaximaSpike {
+    private var listener: NWListener!
+    private var conn: NWConnection?
+    // MAXIMA_AUTH_CODE: a long random token, checked later against the echoed <wxxml-key>.
+    let token = (0..<64).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
+
+    func run(maxima: URL) throws {
+        let params = NWParameters.tcp
+        params.requiredInterfaceType = .loopback
+        listener = try NWListener(using: params, on: .any)      // port chosen by the OS
+        listener.newConnectionHandler = { [weak self] c in self?.accept(c) }
+        listener.stateUpdateHandler = { [weak self] state in
+            guard case .ready = state, let self,
+                  let port = self.listener.port?.rawValue else { return }
+            self.launch(maxima: maxima, port: port)
+        }
+        listener.start(queue: .global())
+    }
+
+    private func launch(maxima: URL, port: UInt16) {
+        let p = Process()
+        p.executableURL = maxima
+        p.arguments = ["-s", String(port)]              // Maxima is the client of this socket
+        var env = ProcessInfo.processInfo.environment
+        env["MAXIMA_AUTH_CODE"] = token
+        p.environment = env
+        // Production: posix_spawn with POSIX_SPAWN_SETPGROUP so the whole group can be killed.
+        try? p.run()
+    }
+
+    private func accept(_ c: NWConnection) {
+        guard conn == nil else { c.cancel(); return }   // a second connection would be the interrupt channel
+        conn = c
+        c.start(queue: .global())
+        receive(c)
+        send("integrate(sin(x), x);\n")
+    }
+
+    private func send(_ s: String) {
+        conn?.send(content: s.data(using: .utf8), completion: .contentProcessed { _ in })
+    }
+
+    private func receive(_ c: NWConnection) {
+        c.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, done, err in
+            if let data { print(String(decoding: data, as: UTF8.self), terminator: "") }
+            if !done && err == nil { self?.receive(c) }
+        }
+    }
+}
+```
 
 ### First-week checklist
 
-- [x] Confirm your Homebrew Maxima (5.50.0, SBCL) runs: `maxima --version`
-- [x] Run the spike and record raw transcripts for about 20 representative commands (plain result, `$`-terminated, error, `asksign` question, long `integrate` with interrupt, a `plot2d`)
-- [x] Send the glue Lisp with `:lisp-quiet` and record the tagged XML for the same commands
-- [x] Write the tag scanner against those fixtures, feeding it random chunk boundaries (Phase 1)
-- [x] Check that wx-open-interrupt-channel works with Homebrew's SBCL by interrupting a long integrate
-- [x] Add the GPL-2.0-or-later LICENSE file and a docs/WXMX\_COMPAT.md stub
+- [ ] Confirm your Homebrew Maxima (5.50.0, SBCL) runs: `maxima --version`
+- [ ] Run the spike and record raw transcripts for about 20 representative commands (plain result, `$`-terminated, error, `asksign` question, long `integrate` with interrupt, a `plot2d`)
+- [ ] Send the glue Lisp with `:lisp-quiet` and record the tagged XML for the same commands
+- [ ] Write the tag scanner against those fixtures, feeding it random chunk boundaries
+- [ ] Check that wx-open-interrupt-channel works with Homebrew's SBCL by interrupting a long integrate
+- [ ] Add the GPL-2.0-or-later LICENSE file and a docs/WXMX\_COMPAT.md stub
 
 ## Sources
 
@@ -296,7 +376,7 @@ Read in full (as of 2026-10-14):
 
 - [wxMaxima repository README](https://github.com/wxMaxima-developers/wxmaxima)
 - [Maxima.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/Maxima.cpp), [MaximaProcessManager.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaProcessManager.cpp), [MaximaEvaluator.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaEvaluator.cpp), [MaximaInterruptChannel.cpp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaInterruptChannel.cpp), [MaximaProtocol.h](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/MaximaProtocol.h)
-- [wxMathML.lisp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/wxMathML.lisp) (the first read was cut off near its end; in Phase 0 the whole file at commit 13e4aee was copied into `Resources/lisp/`, moved in Phase 1 to `Sources/MaximaKit/Resources/`)
+- [wxMathML.lisp](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/src/wxMathML.lisp) (the file was cut off near its end; the asynchronous-output section was the last part I saw)
 - [Compiling.md](https://raw.githubusercontent.com/wxMaxima-developers/wxmaxima/main/Compiling.md)
 - [wxMaxima release Version-26.07.1](https://github.com/wxMaxima-developers/wxmaxima/releases/tag/Version-26.07.1)
 - [Maxima installation page](https://maxima.sourceforge.io/download.html) and [Maxima versions page](https://maxima.sourceforge.io/versions.html)
