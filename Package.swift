@@ -23,6 +23,7 @@ let package = Package(
         .library(name: "MacsimaUI", targets: ["MacsimaUI"]),
         .executable(name: "maxima-spike", targets: ["maxima-spike"]),
         .executable(name: "maxima-session", targets: ["maxima-session"]),
+        .executable(name: "macsima-render", targets: ["macsima-render"]),
     ],
     targets: [
         .target(
@@ -39,6 +40,8 @@ let package = Package(
         .executableTarget(name: "maxima-spike"),
         // Phase 1 exit test: runs a session script through MaximaSession.
         .executableTarget(name: "maxima-session", dependencies: ["MaximaKit"]),
+        // Phase 2: renders math snapshots and measures the web-view rendering.
+        .executableTarget(name: "macsima-render", dependencies: ["MacsimaUI", "WXMLKit", "MaximaKit"]),
         .testTarget(
             name: "MaximaKitTests",
             dependencies: ["MaximaKit"],

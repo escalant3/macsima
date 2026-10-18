@@ -1,0 +1,29 @@
+{
+  "appFootprintMB" : 29.5,
+  "appFootprintTotalMB" : 37.5,
+  "documentHeight" : 8551,
+  "firstScreenMs" : 319,
+  "firstScreenWebViews" : 21,
+  "imagesRendered" : 0,
+  "mode" : "one web view per output",
+  "outputs" : 200,
+  "scrollDown" : {
+    "frames" : 326,
+    "hitches" : 148,
+    "targetFrameMs" : 16.699999999999999,
+    "totalMs" : 8599,
+    "worstFrameMs" : 266.10000000000002
+  },
+  "scrollUp" : {
+    "frames" : 324,
+    "hitches" : 129,
+    "targetFrameMs" : 16.699999999999999,
+    "totalMs" : 8016,
+    "worstFrameMs" : 59
+  },
+  "webContentProcesses" : 38,
+  "webContentRSSMB" : 1195.9000000000001,
+  "webViewsAliveAfterScroll" : 31,
+  "webViewsAliveAtEnd" : 39,
+  "webViewsCreated" : 200
+}
