@@ -45,4 +45,17 @@ struct SessionIntegrationTests {
         #expect(!Integration.groupAlive(group))
         #expect(!FileManager.default.fileExists(atPath: dir))
     }
+
+    @Test func pngcairoThroughAdditionalSetupLines() async throws {
+        var config = MaximaConfiguration()
+        config.additionalSetupLines = [":lisp-quiet (setq $wxplot_pngcairo t)\n"]
+        let session = MaximaSession(configuration: config)
+        try await session.start()
+        let flag = await drain(try await session.evaluate(cellID: "a", text: "wxplot_pngcairo;"))
+        #expect(flag.contains { if case .math(let m) = $0 { m.contains(">true<") } else { false } })
+        let plot = await drain(try await session.evaluate(cellID: "b", text: "wxplot2d(sin(x), [x, 0, %pi]);"))
+        #expect(plot.last == .finished(.completed))
+        #expect(plot.contains { if case .math(let m) = $0 { m.contains(".png</img>") } else { false } })
+        await session.shutdown()
+    }
 }

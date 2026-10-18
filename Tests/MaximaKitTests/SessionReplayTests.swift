@@ -245,6 +245,20 @@ struct SessionReplayTests {
         await session.shutdown()
     }
 
+    @Test func additionalSetupLinesFollowTheStandardOnes() async throws {
+        let transport = try ReplayTransport.fixture("01-integrate")
+        let line = ":lisp-quiet (setq $wxplot_pngcairo t)\n"
+        let session = makeSession(transport) { $0.additionalSetupLines = [line] }
+        try await session.start()
+        #expect(transport.sent.count == 7)
+        #expect(transport.sent[6] == line, "after the glue and the five standard lines")
+        var it = try await session.evaluate(cellID: "a", text: "integrate(sin(x), x);").makeAsyncIterator()
+        var events: [CellEvent] = []
+        await collect(&it, into: &events)
+        #expect(events.last == .finished(.completed))
+        await session.shutdown()
+    }
+
     @Test func asyncOutputIsRouted() async throws {
         // cell-A has finished: the output goes to the session's events.
         let run = try await runScenario("27-async")

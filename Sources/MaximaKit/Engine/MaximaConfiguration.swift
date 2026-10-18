@@ -24,6 +24,10 @@ public struct MaximaConfiguration: Sendable {
     public var killGrace: Duration = .seconds(2)
     /// Replaces the bundled `wxMathML.lisp` (tests).
     public var glueSource: String?
+    /// Lines sent after the standard setup lines, without waiting for a
+    /// prompt; each should be a `:lisp-quiet` line ending in a newline. The
+    /// app uses it for `(setq $wxplot_pngcairo t)` when gnuplot has pngcairo.
+    public var additionalSetupLines: [String] = []
 
     public init() {}
 }

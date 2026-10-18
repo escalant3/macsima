@@ -389,6 +389,7 @@ public actor MaximaSession {
                                         token: token, tempDirectory: transport.tempDirectory) {
             transport.send(line)
         }
+        for line in configuration.additionalSetupLines { transport.send(line) }
         setState(.idle)
         authWaiter?.resolve(.success(()))
     }
