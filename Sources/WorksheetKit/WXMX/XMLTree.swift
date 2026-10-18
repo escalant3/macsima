@@ -5,8 +5,8 @@ import Foundation
 /// A small XML tree with one canonical serialization (attributes sorted,
 /// fixed escaping), so XML the app stores comes back byte for byte after a
 /// `.wxmx` round trip. Text and whitespace are kept as they are.
-public indirect enum XMLNode: Equatable, Sendable {
-    case element(name: String, attributes: [String: String], children: [XMLNode])
+public indirect enum XMLTreeNode: Equatable, Sendable {
+    case element(name: String, attributes: [String: String], children: [XMLTreeNode])
     case text(String)
 
     public var name: String? {
@@ -17,11 +17,11 @@ public indirect enum XMLNode: Equatable, Sendable {
         if case .element(_, let attributes, _) = self { attributes } else { [:] }
     }
 
-    public var children: [XMLNode] {
+    public var children: [XMLTreeNode] {
         if case .element(_, _, let children) = self { children } else { [] }
     }
 
-    public var elementChildren: [XMLNode] { children.filter { $0.name != nil } }
+    public var elementChildren: [XMLTreeNode] { children.filter { $0.name != nil } }
 
     public var textContent: String {
         switch self {
@@ -31,7 +31,7 @@ public indirect enum XMLNode: Equatable, Sendable {
     }
 
     /// The node with `attributes` replaced.
-    public func with(attributes new: [String: String]) -> XMLNode {
+    public func with(attributes new: [String: String]) -> XMLTreeNode {
         guard case .element(let name, _, let children) = self else { return self }
         return .element(name: name, attributes: new, children: children)
     }
@@ -46,11 +46,11 @@ public indirect enum XMLNode: Equatable, Sendable {
     func write(to out: inout String) {
         switch self {
         case .text(let s):
-            out += XMLNode.escapeText(s)
+            out += XMLTreeNode.escapeText(s)
         case .element(let name, let attributes, let children):
             out += "<" + name
             for key in attributes.keys.sorted() {
-                out += " \(key)=\"\(XMLNode.escapeAttribute(attributes[key]!))\""
+                out += " \(key)=\"\(XMLTreeNode.escapeAttribute(attributes[key]!))\""
             }
             if children.isEmpty {
                 out += "/>"
@@ -116,7 +116,7 @@ public enum XMLTree {
     public static let maxDepth = 512
 
     /// Parses a whole document; returns the root element.
-    public static func parse(_ data: Data) throws(XMLTreeError) -> XMLNode {
+    public static func parse(_ data: Data) throws(XMLTreeError) -> XMLTreeNode {
         let builder = Builder()
         let parser = XMLParser(data: data)
         parser.delegate = builder
@@ -134,7 +134,7 @@ public enum XMLTree {
     }
 
     /// Parses a fragment (any number of top-level nodes).
-    public static func parseFragment(_ xml: String) throws(XMLTreeError) -> [XMLNode] {
+    public static func parseFragment(_ xml: String) throws(XMLTreeError) -> [XMLTreeNode] {
         let root = try parse(Data("<macsima-fragment>\(xml)</macsima-fragment>".utf8))
         return root.children
     }
@@ -146,8 +146,8 @@ public enum XMLTree {
     }
 
     private final class Builder: NSObject, XMLParserDelegate {
-        var stack: [(name: String, attributes: [String: String], children: [XMLNode])] = []
-        var roots: [XMLNode] = []
+        var stack: [(name: String, attributes: [String: String], children: [XMLTreeNode])] = []
+        var roots: [XMLTreeNode] = []
         var tooDeep = false
 
         func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?,
@@ -178,7 +178,7 @@ public enum XMLTree {
             }
         }
 
-        private func add(_ node: XMLNode) {
+        private func add(_ node: XMLTreeNode) {
             if stack.isEmpty { roots.append(node) } else { stack[stack.count - 1].children.append(node) }
         }
     }

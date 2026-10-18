@@ -29,7 +29,7 @@ public enum WXMXReader {
         } else if files.data["mimetype"] == nil {
             warnings.append("The archive has no mimetype entry.")
         }
-        let root: XMLNode
+        let root: XMLTreeNode
         do { root = try XMLTree.parse(content) } catch { throw .badXML(error.description) }
         guard root.name == "wxMaximaDocument" else { throw .notAWorksheet(root.name ?? "?") }
 
@@ -83,7 +83,7 @@ private struct Reader {
     /// Attributes of a cell element this app acts on itself.
     static let cellAttributes: Set<String> = ["uuid", "type", "sectioning_level"]
 
-    mutating func cell(_ node: XMLNode) -> Cell {
+    mutating func cell(_ node: XMLTreeNode) -> Cell {
         var attributes = node.attributes
         let type = attributes["type"] ?? ""
         let level = attributes["sectioning_level"]
@@ -165,12 +165,12 @@ private struct Reader {
         Int(String(text.reversed().prefix { $0.isNumber }.reversed()))
     }
 
-    mutating func raw(_ node: XMLNode, id: UUID, why: String) -> Cell {
+    mutating func raw(_ node: XMLTreeNode, id: UUID, why: String) -> Cell {
         warn(why)
         return Cell(id: id, kind: .raw, preserved: [node.xml])
     }
 
-    mutating func readEditor(_ editor: XMLNode, into cell: inout Cell) {
+    mutating func readEditor(_ editor: XMLTreeNode, into cell: inout Cell) {
         let lines = editor.elementChildren.filter { $0.name == "line" }
         let text = lines.map(\.textContent).joined(separator: "\n")
         cell.input = text
@@ -185,7 +185,7 @@ private struct Reader {
     /// Splits `<output><mth>…</mth></output>` into outputs: a new output
     /// starts at every element marked `breakline="true"`, at every label
     /// (older files mark no line starts), and after a question's answer.
-    mutating func outputs(_ output: XMLNode, attributes: inout [String: String]) -> [Output] {
+    mutating func outputs(_ output: XMLTreeNode, attributes: inout [String: String]) -> [Output] {
         var result: [Output] = []
         for mth in output.elementChildren {
             guard mth.name == "mth" || mth.name == "math" else {
@@ -193,7 +193,7 @@ private struct Reader {
                 warn("an unknown <\(mth.name ?? "?")> element in an output")
                 continue
             }
-            var chunk: [XMLNode] = []
+            var chunk: [XMLTreeNode] = []
             for node in mth.children {
                 if case .text(let t) = node, t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { continue }
                 if node.attributes["breakline"] == "true" || node.name == "lbl", !chunk.isEmpty {
@@ -211,7 +211,7 @@ private struct Reader {
         return result
     }
 
-    mutating func outputs(fromChunk raw: [XMLNode], attributes: inout [String: String]) -> [Output] {
+    mutating func outputs(fromChunk raw: [XMLTreeNode], attributes: inout [String: String]) -> [Output] {
         // The line-start marker belongs to the layout, not to the output.
         var chunk = raw
         if var first = chunk.first?.attributes, first["breakline"] == "true" {
@@ -259,7 +259,7 @@ private struct Reader {
     }
 
     /// `(%o3)\t` or `(%o3) ` → `%o3`.
-    static func label(_ lbl: XMLNode) -> String {
+    static func label(_ lbl: XMLTreeNode) -> String {
         let raw = lbl.attributes["altCopy"] ?? lbl.textContent
         return raw.trimmingCharacters(in: CharacterSet(charactersIn: "()\t "))
     }

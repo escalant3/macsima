@@ -70,7 +70,7 @@ public enum WXMXWriter {
             // wxMaxima writes version and zoom first; the rest in a fixed order.
             out += "\n<wxMaximaDocument version=\"\(WXMXWriter.version)\" zoom=\"\(worksheet.zoom)\""
             for key in attributes.keys.sorted() where key != "version" && key != "zoom" {
-                out += " \(key)=\"\(XMLNode.escapeAttribute(attributes[key]!))\""
+                out += " \(key)=\"\(XMLTreeNode.escapeAttribute(attributes[key]!))\""
             }
             out += ">\n"
             for cell in worksheet.cells { out += self.cell(cell) }
@@ -86,10 +86,10 @@ public enum WXMXWriter {
             let (type, level) = Self.typeAttributes(cell.kind)
             let outputXML = cell.outputs.map { self.output($0) }.joined()
 
-            var out = "\n<cell uuid=\"\(XMLNode.escapeAttribute(attributes.removeValue(forKey: "uuid")!))\" type=\"\(type)\""
+            var out = "\n<cell uuid=\"\(XMLTreeNode.escapeAttribute(attributes.removeValue(forKey: "uuid")!))\" type=\"\(type)\""
             if let level { out += " sectioning_level=\"\(level)\"" }
             for key in attributes.keys.sorted() {
-                out += " \(key)=\"\(XMLNode.escapeAttribute(attributes[key]!))\""
+                out += " \(key)=\"\(XMLTreeNode.escapeAttribute(attributes[key]!))\""
             }
             if cell.kind == .pageBreak { return out + "/>\n" }
             out += ">\n"
@@ -98,7 +98,7 @@ public enum WXMXWriter {
                 out += "<input>\n" + editor(cell, type: "input", level: nil) + "</input>"
                 if !outputXML.isEmpty { out += "\n<output>\n<mth>" + outputXML + "\n</mth></output>" }
             default:
-                out += editor(cell, type: type, level: level) + "\n"
+                out += editor(cell, type: type, level: level)
             }
             for xml in cell.preserved { out += xml }
             out += "\n</cell>\n"
@@ -127,7 +127,7 @@ public enum WXMXWriter {
             var head = "<editor type=\"\(type)\""
             if let level { head += " sectioning_level=\"\(level)\"" }
             // One <line>, with newlines as character references (as wxMaxima writes it).
-            let text = XMLNode.escapeText(cell.input).replacingOccurrences(of: "\n", with: "&#x0A;")
+            let text = XMLTreeNode.escapeText(cell.input).replacingOccurrences(of: "\n", with: "&#x0A;")
             return head + ">\n<line>" + text + "</line>\n</editor>\n"
         }
 
@@ -137,25 +137,25 @@ public enum WXMXWriter {
                 return Self.startLine(xml)
             case .question(let prompt, let answer):
                 // As wxMaxima keeps them: the prompt, then the answer in an input editor.
-                let text = XMLNode.escapeText(answer ?? "").replacingOccurrences(of: "\n", with: "&#x0A;")
+                let text = XMLTreeNode.escapeText(answer ?? "").replacingOccurrences(of: "\n", with: "&#x0A;")
                 return Self.startLine(prompt) + "<editor type=\"input\">\n<line>" + text + "</line>\n</editor>\n"
             case .text(let text):
                 guard !text.isEmpty else { return "" }
-                return "<t breakline=\"true\">" + XMLNode.escapeText(text).replacingOccurrences(of: "\n", with: "&#x0A;") + "</t>"
+                return "<t breakline=\"true\">" + XMLTreeNode.escapeText(text).replacingOccurrences(of: "\n", with: "&#x0A;") + "</t>"
             case .error(let kind, let message):
                 var a = "breakline=\"true\""
-                if let kind { a += " errorkind=\"\(XMLNode.escapeAttribute(kind))\"" }
-                return "<t \(a) type=\"error\">" + XMLNode.escapeText(message).replacingOccurrences(of: "\n", with: "&#x0A;") + "</t>"
+                if let kind { a += " errorkind=\"\(XMLTreeNode.escapeAttribute(kind))\"" }
+                return "<t \(a) type=\"error\">" + XMLTreeNode.escapeText(message).replacingOccurrences(of: "\n", with: "&#x0A;") + "</t>"
             case .image(let data, let format, let label, let attributes):
                 let name = imageName(format)
                 images.append((name, data))
                 var out = ""
                 if let label {
-                    out += "<lbl altCopy=\"(\(XMLNode.escapeAttribute(label)))&#x09;\" breakline=\"true\">(\(XMLNode.escapeText(label))) </lbl>"
+                    out += "<lbl altCopy=\"(\(XMLTreeNode.escapeAttribute(label)))&#x09;\" breakline=\"true\">(\(XMLTreeNode.escapeText(label))) </lbl>"
                 }
                 var a = attributes
                 if label == nil { a["breakline"] = "true" }
-                out += XMLNode.element(name: "img", attributes: a, children: [.text(name)]).xml
+                out += XMLTreeNode.element(name: "img", attributes: a, children: [.text(name)]).xml
                 return out
             }
         }
@@ -173,7 +173,7 @@ public enum WXMXWriter {
             }
             // Text first: no element to mark, so the chunk goes in a nested <mth>.
             if content.first?.name == nil {
-                return XMLNode.element(name: "mth", attributes: ["breakline": "true"], children: content).xml
+                return XMLTreeNode.element(name: "mth", attributes: ["breakline": "true"], children: content).xml
             }
             var a = content[0].attributes
             a["breakline"] = "true"

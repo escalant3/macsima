@@ -17,14 +17,24 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
     public static let readableContentTypes: [UTType] = [.wxmx]
 
     @Published public var worksheet: Worksheet
+    /// What the reader kept without being able to show it; shown when the file opens.
+    @Published public var openWarnings: [String] = []
 
     public init(worksheet: Worksheet = .empty()) {
         self.worksheet = worksheet
     }
 
     public required init(configuration: ReadConfiguration) throws {
-        // .wxmx reading arrives in Phase 2, step 6.
-        throw CocoaError(.fileReadUnsupportedScheme)
+        guard let data = configuration.file.regularFileContents else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        do {
+            let result = try WXMXReader.read(data)
+            worksheet = result.worksheet.cells.isEmpty ? .empty() : result.worksheet
+            openWarnings = result.warnings
+        } catch {
+            throw CocoaError(.fileReadCorruptFile, userInfo: [NSLocalizedFailureReasonErrorKey: "\(error)"])
+        }
     }
 
     public func snapshot(contentType: UTType) throws -> Worksheet {
@@ -32,8 +42,7 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
     }
 
     public func fileWrapper(snapshot: Worksheet, configuration: WriteConfiguration) throws -> FileWrapper {
-        // .wxmx writing arrives in Phase 2, step 6.
-        throw CocoaError(.fileWriteUnknown)
+        FileWrapper(regularFileWithContents: try WXMXWriter.write(snapshot))
     }
 
     // MARK: - Undoable edits

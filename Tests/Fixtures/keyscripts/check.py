@@ -40,6 +40,24 @@ elif script == "eval-basics":
     d4 = dump("eval", 4)
     check([c["label"] for c in d4["cells"]] == [1, 2, 3, 4, -1], "after Restart, Cmd+R relabels from 1 in order")
     check(d4["state"] == "question" and d4["status"] == "", "evaluation stops at the question; no status after a restart")
+elif script == "save-basics":
+    import zipfile, re
+    with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:
+        before = z.read("content.xml").decode()
+    with zipfile.ZipFile(".build/keyscripts/save-basics.wxmx") as z:
+        names = [i.filename for i in z.infolist()]
+        stored = all(i.compress_type == zipfile.ZIP_STORED for i in z.infolist())
+        after = z.read("content.xml").decode()
+        image = z.read("image1.png") if "image1.png" in names else b""
+    check(names == ["mimetype", "format.txt", "content.xml", "image1.png"] and stored,
+          "saved archive: mimetype, format.txt, content.xml, image1.png, all stored")
+    check("<line>Reference title (edited in Macsima)</line>" in after, "the edit is saved")
+    check(re.findall(r'uuid="([^"]+)"', before) == re.findall(r'uuid="([^"]+)"', after), "every cell keeps its uuid")
+    with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:
+        check(image == z.read("image1.png"), "the plot image is saved unchanged")
+    d = dump("save", 1)
+    check(len(d["cells"]) == 13 and d["cells"][0]["input"] == "Reference title (edited in Macsima)",
+          "the window shows 13 cells and the edited title")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

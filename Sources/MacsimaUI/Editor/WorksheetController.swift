@@ -15,6 +15,10 @@ public final class WorksheetController {
     public let document: WorksheetDocument
     public var focusedCell: UUID?
     public var undoManager: UndoManager?
+    /// Marks the document edited. Evaluation output changes the document
+    /// without the undo manager, which is all SwiftUI watches; the window
+    /// sets this to reach its NSDocument.
+    var markEdited: () -> Void = {}
 
     /// The session's state, for the toolbar.
     public private(set) var sessionState: SessionState = .dead
@@ -118,7 +122,7 @@ public final class WorksheetController {
         case .slowStart:
             statusMessage = "Maxima is slow to start…"
         case .async(let cellID, let content):
-            if let id = UUID(uuidString: cellID) { enqueue(id, .append(.math(xml: content))) }
+            if let id = UUID(uuidString: cellID) { enqueue(id, .append(.math(xml: Self.storedMath(content)))) }
         case .tag("statusbar", let content):
             statusMessage = content
         case .interruptChannelReady, .tag, .output:
@@ -218,11 +222,11 @@ public final class WorksheetController {
                     enqueue(id, .append(.error(kind: nil, message: "The plot file \(path) was gone before it could be read.")))
                 }
             }
-            if !out.mathML.isEmpty { enqueue(id, .append(.math(xml: xml))) }
+            if !out.mathML.isEmpty { enqueue(id, .append(.math(xml: Self.storedMath(xml)))) }
         case .text(let line):
             enqueue(id, .appendText(line))
         case .question(let prompt):
-            enqueue(id, .append(.question(prompt: prompt, answer: nil)))
+            enqueue(id, .append(.question(prompt: Self.storedMath(prompt), answer: nil)))
             asking = id
         case .debugger(let level):
             // Debugger UI beyond answering prompts is Phase 3.
@@ -237,7 +241,7 @@ public final class WorksheetController {
         case .prompt(let label):
             nextLabel = label
         case .async(let xml):
-            enqueue(id, .append(.math(xml: xml)))
+            enqueue(id, .append(.math(xml: Self.storedMath(xml))))
         case .tag("wxxml-asciimath", let content):
             enqueue(id, .appendText(content))
         case .tag("statusbar", let content):
@@ -253,6 +257,20 @@ public final class WorksheetController {
             flush()
             running.remove(id)
         }
+    }
+
+    /// Math as the model keeps it: one `<math>` element in canonical XML,
+    /// so it comes back byte for byte from a saved .wxmx. Background output
+    /// arrives as `<mth>`, prompts may hold several nodes.
+    static func storedMath(_ xml: String) -> String {
+        guard let nodes = try? XMLTree.parseFragment(xml) else { return xml }
+        let content: [XMLTreeNode]
+        if nodes.count == 1, let name = nodes[0].name, name == "math" || name == "mth" {
+            content = nodes[0].children
+        } else {
+            content = nodes
+        }
+        return XMLTreeNode.element(name: "math", attributes: [:], children: content).xml
     }
 
     /// Marks where a statement's text starts, so an error can take just that text.
@@ -274,6 +292,7 @@ public final class WorksheetController {
         flushTask = nil
         let batch = pending
         pending = [:]
+        if !batch.isEmpty { markEdited() }
         for (id, changes) in batch {
             document.worksheet.update(id) { cell in
                 for change in changes { Self.apply(change, to: &cell) }

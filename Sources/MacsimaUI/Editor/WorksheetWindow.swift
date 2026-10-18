@@ -40,6 +40,18 @@ struct WorksheetWindow: View {
             }
         }
         .frame(minWidth: 560, minHeight: 360)
+        .safeAreaInset(edge: .top) {
+            if !document.openWarnings.isEmpty {
+                OpenWarningsBanner(warnings: document.openWarnings) { document.openWarnings = [] }
+            }
+        }
+        .background {
+            WindowReader { window in
+                controller.markEdited = { [weak window] in
+                    (window?.windowController?.document as? NSDocument)?.updateChangeCount(.changeDone)
+                }
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             if let message = controller.statusMessage {
                 Text(message)
@@ -114,5 +126,27 @@ struct WorksheetToolbar: ToolbarContent {
         case .lisp: "Lisp mode"
         case .dead: "Maxima not running"
         }
+    }
+}
+
+/// What the reader kept from a file without being able to show it.
+struct OpenWarningsBanner: View {
+    let warnings: [String]
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Parts of this file are kept but not shown. They are saved back unchanged.")
+                    .font(.callout.weight(.medium))
+                ForEach(warnings, id: \.self) { Text($0).font(.caption).foregroundStyle(.secondary) }
+            }
+            Spacer()
+            Button("Dismiss", action: dismiss).controlSize(.small)
+        }
+        .padding(10)
+        .background(.bar)
     }
 }

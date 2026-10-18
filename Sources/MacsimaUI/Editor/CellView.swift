@@ -18,6 +18,18 @@ struct CellView: View {
     let onEvaluate: () -> Void
 
     var body: some View {
+        switch cell.kind {
+        case .pageBreak:
+            PlaceholderRow(text: "Page break", systemImage: "rectangle.split.1x2")
+        case .raw, .image:
+            PlaceholderRow(text: "A cell this app cannot show yet. It is kept and saved back unchanged.",
+                           systemImage: "shippingbox")
+        default:
+            editorCell
+        }
+    }
+
+    private var editorCell: some View {
         VStack(alignment: .leading, spacing: 4) {
             // TextEditor reports no text baseline, so the gutter is top-aligned
             // and nudged down to the editor's first line.
@@ -50,6 +62,12 @@ struct CellView: View {
             ForEach(Array(cell.outputs.enumerated()), id: \.offset) { _, output in
                 OutputView(output: output, cellID: cell.id)
             }
+            if !cell.preserved.isEmpty {
+                PlaceholderRow(text: cell.preserved.contains { $0.hasPrefix("<fold") }
+                               ? "Folded cells: kept and saved back, not shown yet."
+                               : "Parts of this cell are kept and saved back, not shown.",
+                               systemImage: "chevron.right.circle")
+            }
         }
     }
 
@@ -70,5 +88,20 @@ struct CellView: View {
         case .subsubsection, .heading5, .heading6: .system(size: 15, weight: .semibold)
         case .text, .image, .pageBreak, .raw: .system(size: 14)
         }
+    }
+}
+
+/// A gray line standing for something the editor does not show.
+struct PlaceholderRow: View {
+    let text: String
+    let systemImage: String
+
+    var body: some View {
+        Label(text, systemImage: systemImage)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .padding(.leading, outputIndent)
+            .padding(.vertical, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -1,0 +1,11 @@
+# Open a copy of a wxMaxima-written file, edit the first cell, save with
+# Cmd+S (in place, no panel), quit. Run with:
+#   Tests/Fixtures/keyscripts/run.sh save-basics Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx
+wait 5
+key down cmd
+type  (edited in Macsima)
+wait 1
+key s cmd
+wait 3
+dump .build/keyscripts/save-1.json
+quit
