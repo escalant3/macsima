@@ -101,7 +101,8 @@ private struct Context {
             return Self.mtext(node.textContent)
         case "lbl":
             let raw = attrs["altCopy"] ?? node.textContent
-            label = raw.trimmingCharacters(in: CharacterSet(charactersIn: "() "))
+            // Glue labels read "%o1"; wxMaxima's saved ones "(%o1)" and a tab.
+            label = raw.trimmingCharacters(in: CharacterSet(charactersIn: "()").union(.whitespacesAndNewlines))
             return ""
         case "mi", "v":
             return identifier(node.textContent)
@@ -126,9 +127,12 @@ private struct Context {
             guard let head = kids.first else { return row(children) }
             let name = head.name == "g" ? greek(head.textContent, asFunction: true) : emit(head)
             return "<mrow>\(name)<mo>&#x2061;</mo>\(kids.dropFirst().map { emit($0) }.joined())</mrow>"
+        case "p" where kids.count == 1 && Self.isChoose(kids[0]):
+            // A binomial draws its own parens (below).
+            return emit(kids[0])
         case "p":
             // print="no" only drops the parens from text exports (wxMaxima's
-            // ParenCell::ToString); they are always drawn, e.g. around binomials.
+            // ParenCell::ToString); they are always drawn.
             let tall = Self.isTall(node)
             return "<mrow>\(Self.fence("(", stretchy: tall))\(row(children))\(Self.fence(")", stretchy: tall))</mrow>"
         case "q":
@@ -138,8 +142,12 @@ private struct Context {
             return "<msqrt>\(Self.radicalStrut)\(row(children))</msqrt>"
         case "mfrac", "f":
             guard kids.count == 2 else { return unknownElement(node) }
-            let line = attrs["line"] == "no" ? " linethickness=\"0\"" : ""
-            return "<mfrac\(line)>\(emit(kids[0]))\(emit(kids[1]))</mfrac>"
+            if attrs["line"] == "no" {
+                // binomial(n, k). wxMaxima's saved files lose the <p> around it
+                // (ParenCell::ToXML skips print="no" parens), so draw them here.
+                return "<mrow><mo>(</mo><mfrac linethickness=\"0\">\(emit(kids[0]))\(emit(kids[1]))</mfrac><mo>)</mo></mrow>"
+            }
+            return "<mfrac>\(emit(kids[0]))\(emit(kids[1]))</mfrac>"
         case "msup", "e":
             guard kids.count == 2 else { return unknownElement(node) }
             var exponent = emit(kids[1])
@@ -244,6 +252,11 @@ private struct Context {
     static func fence(_ text: String, stretchy: Bool) -> String {
         stretchy ? "<mo>\(MathMLTranslator.escape(text))</mo>"
             : "<mo stretchy=\"false\">\(MathMLTranslator.escape(text))</mo>"
+    }
+
+    /// A binomial: a fraction without its bar.
+    static func isChoose(_ node: MathNode) -> Bool {
+        (node.name == "mfrac" || node.name == "f") && node.attribute("line") == "no"
     }
 
     /// Content taller than a line of text: fractions, matrices, sums,

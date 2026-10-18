@@ -50,6 +50,13 @@ struct WXMXMathTests {
         let multi = ml(#"<math><ie><r><v>O</v></r><r pos="presub"><v>a</v></r><r pos="postsup"><v>b</v></r></ie></math>"#)
         #expect(multi.contains("<mmultiscripts><mi>O</mi><none/><mi>b</mi><mprescripts/><mi>a</mi><none/></mmultiscripts>"))
         #expect(ml(#"<math><fnm></fnm></math>"#) == "")
+        // wxMaxima's labels carry parens and a tab.
+        #expect(MathMLTranslator.translate(#"<math><lbl altCopy="(%o3)&#x09;">(%o3) </lbl><n>1</n></math>"#).label == "%o3")
+        // wxMaxima saves binomials without their <p>; the parens are drawn anyway, once.
+        let saved = ml(#"<math><f line="no"><r><v>n</v></r><r><v>k</v></r></f></math>"#)
+        let glue = ml(#"<math><p print="no"><mfrac line="no"><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></mfrac></p></math>"#)
+        #expect(saved == glue)
+        #expect(saved.components(separatedBy: "<mo>(</mo>").count == 2)
     }
 
     @Test func matrixBracketsFollowWxMaxima() {
