@@ -1,0 +1,135 @@
+# Phase 1 exit script: run with
+#   .build/debug/maxima-session Tests/Fixtures/scripts/phase1-exit.mxs
+# Format: see Sources/MaximaKit/Scripting/ScriptRunner.swift.
+
+# Plain results
+2+2;
+!expect-text 4
+integrate(sin(x), x);
+!expect-text cos
+expand((x+1)^3);
+diff(sin(x)^2, x);
+solve(x^2-2=0, x);
+# The square root arrives as a <q> element.
+!expect-text <q>
+matrix([1,2],[3,4]);
+determinant(matrix([1,2],[3,4]));
+!expect-text -2
+limit(sin(x)/x, x, 0);
+sum(1/k^2, k, 1, inf), simpsum;
+taylor(exp(x), x, 0, 3);
+float(%pi);
+!expect-text 3.141592653589793
+float(1/3);
+factor(x^2-1);
+%alpha^2 + sqrt(2)/2;
+"a string";
+!expect-text a string
+
+# $ statements and state across cells
+a: 3$
+!expect completed
+b: a + 4$
+a * b;
+!expect-text 21
+f(x) := x^2 + 1$
+f(3);
+!expect-text 10
+!cell
+c: 10$
+d: c * 2$
+c + d;
+!end
+!expect-text 30
+
+# Side output and 1D display
+print("hello from print")$
+!expect-text hello from print
+display2d: false$
+(x+1)^2/y;
+!expect-text (x+1)^2/y
+display2d: true$
+tex(x^2/2);
+!expect-text over
+
+# Errors
+1/0;
+!expect failed:maxima
+x+;
+!expect failed:syntax
+error("custom failure");
+!expect failed:maxima
+!expect-text custom failure
+?car(1);
+!expect failed:lisp
+!cell
+p: 1$
+q: 1/0;
+r: 2;
+!end
+!expect failed:maxima
+!expect skipped
+p;
+!expect-text 1
+
+# Questions
+asksign(y);
+!expect question
+!answer pos;
+!expect completed
+!expect-text pos
+integrate(1/(x^2+k), x);
+!expect question
+!answer positive;
+!expect completed
+!expect-text atan
+
+# Lisp
+:lisp (+ 1 2)
+!expect-text 3
+to_lisp();
+!expect-state lisp
+(* 6 7)
+!expect-text 42
+(to-maxima)
+!expect-state idle
+3+3;
+!expect-text 6
+
+# Interrupt through the channel
+!async integrate(x^30*exp(-x^2)*sin(x)^20, x);
+!sleep 2
+!interrupt
+!expect interrupted
+4+4;
+!expect-text 8
+
+# Interrupt through SIGINT
+!async integrate(x^30*exp(-x^2)*sin(x)^20, x);
+!sleep 2
+!sigint
+!expect interrupted
+5+5;
+!expect-text 10
+
+# Plot
+wxplot2d(sin(x), [x, 0, %pi]);
+!expect completed
+!expect-plot
+
+# Kill while busy, then restart
+!async integrate(x^30*exp(-x^2)*sin(x)^20, x);
+!sleep 1
+!kill
+!expect died
+!expect-state dead
+!restart
+!expect-state idle
+a;
+!expect-text a
+6+6;
+!expect-text 12
+wxplot2d(cos(x), [x, 0, %pi]);
+!expect-plot
+float(%e);
+!expect-text 2.718281828459045

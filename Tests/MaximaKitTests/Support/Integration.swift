@@ -21,6 +21,11 @@ enum Integration {
         return path
     }
 
+    /// Removes the folder `script(_:)` made.
+    static func removeScript(_ path: String) {
+        try? FileManager.default.removeItem(atPath: URL(filePath: path).deletingLastPathComponent().path)
+    }
+
     static func groupAlive(_ group: pid_t) -> Bool {
         killpg(group, 0) == 0 || errno == EPERM
     }

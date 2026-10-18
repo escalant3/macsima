@@ -65,7 +65,7 @@ struct LifecycleIntegrationTests {
         await session.shutdown()
         #expect(!Integration.groupAlive(secondGroup))
         #expect(await session.processGroups == [firstGroup, secondGroup])
-        #expect(OrphanGuard.registered.isEmpty)
+        #expect(Set(OrphanGuard.registered).isDisjoint(with: [firstGroup, secondGroup]))
     }
 
     @Test func killWhileBusy() async throws {

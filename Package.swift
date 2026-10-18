@@ -22,6 +22,7 @@ let package = Package(
         .library(name: "WorksheetKit", targets: ["WorksheetKit"]),
         .executable(name: "Macsima", targets: ["Macsima"]),
         .executable(name: "maxima-spike", targets: ["maxima-spike"]),
+        .executable(name: "maxima-session", targets: ["maxima-session"]),
     ],
     targets: [
         .target(
@@ -38,6 +39,8 @@ let package = Package(
         ),
         // Phase 0 feasibility spike: raw socket link to Maxima, used to record transcripts.
         .executableTarget(name: "maxima-spike"),
+        // Phase 1 exit test: runs a session script through MaximaSession.
+        .executableTarget(name: "maxima-session", dependencies: ["MaximaKit"]),
         .testTarget(
             name: "MaximaKitTests",
             dependencies: ["MaximaKit"],

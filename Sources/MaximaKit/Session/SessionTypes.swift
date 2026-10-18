@@ -34,11 +34,20 @@ public enum ErrorKind: String, Sendable, Equatable {
     case lisp
 }
 
-public enum CellOutcome: Sendable, Equatable {
+public enum CellOutcome: Sendable, Equatable, CustomStringConvertible {
     case completed
     case failed(ErrorKind)
     case interrupted
     case sessionDied(String)
+
+    public var description: String {
+        switch self {
+        case .completed: "completed"
+        case .failed(let kind): "failed (\(kind.rawValue) error)"
+        case .interrupted: "interrupted"
+        case .sessionDied(let why): "session died (\(why))"
+        }
+    }
 }
 
 /// What happens while one cell is evaluated, in order.

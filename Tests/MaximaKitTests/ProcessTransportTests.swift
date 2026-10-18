@@ -37,6 +37,7 @@ struct ProcessTransportTests {
         let counter = FileManager.default.temporaryDirectory.appending(path: "macsima-count-\(UUID().uuidString)").path
         var config = MaximaConfiguration()
         config.maximaPath = try Integration.script("echo started >> '\(counter)'; echo 'no Lisp here' >&2; exit 3")
+        defer { Integration.removeScript(config.maximaPath) }
         let transport = try ProcessTransport(configuration: config)
         do {
             try await transport.launch(token: "t")
@@ -56,6 +57,7 @@ struct ProcessTransportTests {
         let pidFile = FileManager.default.temporaryDirectory.appending(path: "macsima-pid-\(UUID().uuidString)").path
         var config = MaximaConfiguration()
         config.maximaPath = try Integration.script("echo $$ > '\(pidFile)'; sleep 60")
+        defer { Integration.removeScript(config.maximaPath) }
         config.slowStartWarning = .milliseconds(300)
         config.connectTimeout = .seconds(1)
         let transport = try ProcessTransport(configuration: config)
