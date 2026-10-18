@@ -27,6 +27,8 @@ public actor MaximaSession {
     public private(set) var state: SessionState = .dead
     /// Whether the interrupt channel authenticated for the current process.
     public private(set) var interruptChannelReady = false
+    /// What the glue reported in `*wx-interrupt-channel-available*` (nil: not yet).
+    private var interruptChannelPromised: Bool?
     /// The current Maxima process group, for leak checks.
     public var processGroup: pid_t? { transport?.processGroup }
     /// Every process group this session started, for leak checks.
@@ -100,6 +102,7 @@ public actor MaximaSession {
         lispMode = false
         lastCellID = nil
         interruptChannelReady = false
+        interruptChannelPromised = nil
         token = makeToken()
         setState(.starting)
         reader = Task { [weak self] in
@@ -132,6 +135,14 @@ public actor MaximaSession {
         if case .failure(let error) = result {
             if gen == generation { await abandon(transport, reason: error.description) }
             throw error
+        }
+
+        // The channel connects just after the setup lines. When the glue says
+        // one is coming, give it a moment so the first interrupt can use it.
+        let deadline = ContinuousClock.now + .seconds(3)
+        while gen == generation, !interruptChannelReady, interruptChannelPromised != false,
+              ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
         }
     }
 
@@ -350,6 +361,9 @@ public actor MaximaSession {
             if let job = current { job.sink.yield(.tag(name: name, content: content)) }
             else { eventSink.yield(.tag(name: name, content: content)) }
         case .tag(let name, let content):
+            if name == "variables", let promised = Self.channelPromise(in: content) {
+                interruptChannelPromised = promised
+            }
             eventSink.yield(.tag(name: name, content: content))
         }
     }
@@ -418,6 +432,12 @@ public actor MaximaSession {
         } else {
             eventSink.yield(.async(cellID: id, content: payload))
         }
+    }
+
+    static func channelPromise(in variables: String) -> Bool? {
+        let key = "<name>*wx-interrupt-channel-available*</name><value>"
+        guard let r = variables.range(of: key) else { return nil }
+        return variables[r.upperBound...].hasPrefix("true")
     }
 
     private func setState(_ new: SessionState) {

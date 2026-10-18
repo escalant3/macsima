@@ -60,6 +60,7 @@ public final class ProcessTransport: MaximaTransport {
                 $0.process = process
                 $0.lispPIDs.append(process.pid)
             }
+            OrphanGuard.register(process.group)
 
             let slow = Task { [continuation, configuration] in
                 try await Task.sleep(for: configuration.slowStartWarning)
@@ -81,6 +82,7 @@ public final class ProcessTransport: MaximaTransport {
             case .exited:
                 lastTail = temp.logTail()
                 process.signalGroup(SIGKILL)   // anything it left in its group
+                OrphanGuard.unregister(process.group)
                 state.withLock {
                     $0.listener?.cancel()
                     $0.listener = nil
@@ -245,6 +247,7 @@ public final class ProcessTransport: MaximaTransport {
             }
             // gnuplot or another child may outlive the Lisp in the group.
             if MaximaProcess.groupAlive(process.group) { process.signalGroup(SIGKILL) }
+            OrphanGuard.unregister(process.group)
         }
         if first {
             temp.remove(lispPIDs: pids)
