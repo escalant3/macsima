@@ -8,5 +8,7 @@ Requires macOS 26 on Apple Silicon, Homebrew Maxima (`brew install maxima`, SBCL
 
     swift build
     swift run maxima-spike        # spawn Maxima, send integrate(sin(x), x); print raw bytes
+    # Command Line Tools only (no Xcode): plain `swift test` runs zero tests; use
+    swift test -Xswiftc -F/Library/Developer/CommandLineTools/Library/Developer/Frameworks
 
 License: GPL-2.0-or-later (see `LICENSE`). `Resources/lisp/wxMathML.lisp` is from wxMaxima, with its own notices.
