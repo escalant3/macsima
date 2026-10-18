@@ -163,7 +163,7 @@ enum KeyScriptDriver {
             return "math \(out.label ?? "-") \(out.plainText)"
         case .text(let t): return "text \(t)"
         case .error(let kind, let message): return "error \(kind ?? "-") \(message)"
-        case .image(let data, let format, let label): return "image \(label ?? "-") \(format) \(data.count) bytes"
+        case .image(let data, let format, let label, _): return "image \(label ?? "-") \(format) \(data.count) bytes"
         case .question(let prompt, let answer):
             return "question \(TranslationCache.shared.translate(prompt).plainText) answer=\(answer ?? "nil")"
         }

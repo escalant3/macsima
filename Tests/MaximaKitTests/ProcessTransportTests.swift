@@ -68,7 +68,13 @@ struct ProcessTransportTests {
         #expect(await raw.wait(timeout: .seconds(1)) { $0.contains(.slowStart) })
         let pid = pid_t((try? String(contentsOfFile: pidFile, encoding: .utf8))?.trimmingWhitespace ?? "") ?? 0
         #expect(pid > 0)
-        #expect(!Integration.groupAlive(pid), "the fake Maxima and its sleep are gone")
+        // A killed process can stay visible for a moment until it is reaped (seen under load).
+        var gone = false
+        for _ in 0..<30 where !gone {
+            gone = !Integration.groupAlive(pid)
+            if !gone { try await Task.sleep(for: .milliseconds(100)) }
+        }
+        #expect(gone, "the fake Maxima and its sleep are gone")
         try? FileManager.default.removeItem(atPath: pidFile)
     }
 

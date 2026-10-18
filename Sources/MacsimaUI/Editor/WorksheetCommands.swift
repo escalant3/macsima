@@ -59,6 +59,7 @@ extension CellKind {
         case .code: "Code"
         case .image: "Image"
         case .pageBreak: "Page Break"
+        case .raw: "Unsupported Cell"
         }
     }
 }

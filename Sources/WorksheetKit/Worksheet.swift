@@ -8,6 +8,9 @@ import Foundation
 public enum CellKind: String, CaseIterable, Codable, Sendable {
     case title, section, subsection, subsubsection, heading5, heading6
     case text, code, image, pageBreak
+    /// A cell this app cannot show (an unknown type, or an image cell): its
+    /// XML is kept in `preserved` and written back unchanged.
+    case raw
 
     /// True for the heading-like kinds (title down to heading6).
     public var isHeading: Bool {
@@ -25,7 +28,8 @@ public enum Output: Equatable, Sendable {
     /// `lisp`), or nil when unknown; `message` may be empty.
     case error(kind: String?, message: String)
     /// An image (a plot) with its bytes, so it outlives Maxima's temp file.
-    case image(data: Data, format: String, label: String?)
+    /// `attributes` keeps what a `.wxmx` said about it (`ppi`, gnuplot data).
+    case image(data: Data, format: String, label: String?, attributes: [String: String] = [:])
     /// A question Maxima asked (raw prompt XML) and the answer, once given.
     case question(prompt: String, answer: String?)
 }
@@ -39,17 +43,39 @@ public struct Cell: Identifiable, Equatable, Sendable {
     public var outputs: [Output]
     /// The `(%iN)` label of the last evaluation, if any.
     public var inputLabel: Int?
-    /// XML this app does not understand, kept verbatim for writing back.
+    /// XML this app does not understand, kept verbatim for writing back:
+    /// unknown child elements (folded cells, for example), or the whole cell
+    /// for `.raw`.
     public var preserved: [String]
+    /// Attributes of the `.wxmx` cell element this app does not act on
+    /// (`hide`, `auto_answer`, unmatched `questionN`/`answerN`, ...).
+    public var extraAttributes: [String: String]
+    /// The editor XML as read, while it carries formatting this app cannot
+    /// edit; written back as long as `input` still equals `text`.
+    public var preservedEditor: PreservedEditor?
 
     public init(id: UUID = UUID(), kind: CellKind, input: String = "", outputs: [Output] = [],
-                inputLabel: Int? = nil, preserved: [String] = []) {
+                inputLabel: Int? = nil, preserved: [String] = [], extraAttributes: [String: String] = [:],
+                preservedEditor: PreservedEditor? = nil) {
         self.id = id
         self.kind = kind
         self.input = input
         self.outputs = outputs
         self.inputLabel = inputLabel
         self.preserved = preserved
+        self.extraAttributes = extraAttributes
+        self.preservedEditor = preservedEditor
+    }
+}
+
+/// An editor element kept verbatim, with the text it held.
+public struct PreservedEditor: Equatable, Sendable {
+    public var text: String
+    public var xml: String
+
+    public init(text: String, xml: String) {
+        self.text = text
+        self.xml = xml
     }
 }
 
@@ -58,10 +84,22 @@ public struct Worksheet: Equatable, Sendable {
     public var cells: [Cell]
     /// Document-level XML this app does not understand, kept for writing back.
     public var preserved: [String]
+    /// The `.wxmx` zoom in percent.
+    public var zoom: Int
+    /// Attributes of `wxMaximaDocument` this app does not act on
+    /// (`activecell`, the variables list, ...).
+    public var extraAttributes: [String: String]
+    /// Files from a `.wxmx` that no output of this app uses (images of
+    /// preserved cells, gnuplot data): written back under the same names.
+    public var attachments: [String: Data]
 
-    public init(cells: [Cell] = [], preserved: [String] = []) {
+    public init(cells: [Cell] = [], preserved: [String] = [], zoom: Int = 100,
+                extraAttributes: [String: String] = [:], attachments: [String: Data] = [:]) {
         self.cells = cells
         self.preserved = preserved
+        self.zoom = zoom
+        self.extraAttributes = extraAttributes
+        self.attachments = attachments
     }
 
     /// A new worksheet with one empty code cell.

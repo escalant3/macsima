@@ -25,6 +25,10 @@ let package = Package(
         .executable(name: "maxima-session", targets: ["maxima-session"]),
         .executable(name: "macsima-render", targets: ["macsima-render"]),
     ],
+    dependencies: [
+        // .wxmx files are zip archives. ZIPFoundation is MIT-licensed (GPL-compatible).
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.19"),
+    ],
     targets: [
         .target(
             name: "MaximaKit",
@@ -32,7 +36,7 @@ let package = Package(
             resources: [.copy("Resources/wxMathML.lisp")]
         ),
         .target(name: "WXMLKit"),
-        .target(name: "WorksheetKit"),
+        .target(name: "WorksheetKit", dependencies: [.product(name: "ZIPFoundation", package: "ZIPFoundation")]),
         // Everything the app shows. The app target itself (App/Macsima, built
         // from project.yml with XcodeGen) only holds the @main entry point.
         .target(name: "MacsimaUI", dependencies: ["MaximaKit", "WXMLKit", "WorksheetKit"]),
@@ -50,7 +54,7 @@ let package = Package(
         ),
         .testTarget(
             name: "WorksheetKitTests",
-            dependencies: ["WorksheetKit"],
+            dependencies: ["WorksheetKit", .product(name: "ZIPFoundation", package: "ZIPFoundation")],
             swiftSettings: [.unsafeFlags(["-F", "\(cltDeveloper)/Frameworks"])]
         ),
         .testTarget(

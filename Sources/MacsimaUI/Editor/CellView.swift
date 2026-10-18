@@ -68,7 +68,7 @@ struct CellView: View {
         case .section: .system(size: 21, weight: .semibold)
         case .subsection: .system(size: 17, weight: .semibold)
         case .subsubsection, .heading5, .heading6: .system(size: 15, weight: .semibold)
-        case .text, .image, .pageBreak: .system(size: 14)
+        case .text, .image, .pageBreak, .raw: .system(size: 14)
         }
     }
 }

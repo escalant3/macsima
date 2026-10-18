@@ -29,7 +29,7 @@ struct OutputView: View {
                 .textSelection(.enabled)
                 .padding(.leading, outputIndent)
                 .frame(maxWidth: .infinity, alignment: .leading)
-        case .image(let data, _, let label):
+        case .image(let data, _, let label, _):
             if let image = NSImage(data: data) {
                 ImageOutputView(image: image, label: label)
             }
