@@ -157,14 +157,14 @@ in:    <math><lbl altCopy="%o24">(%o24) </lbl><tb bracketParens="true"><mtr><mtd
 label: %o24
 image: -
 text:  abcd
-out:   <math display="block"><mrow><mo>(</mo><mtable><mtr><mtd><mi>a</mi></mtd><mtd><mi>b</mi></mtd></mtr><mtr><mtd><mi>c</mi></mtd><mtd><mi>d</mi></mtd></mtr></mtable><mo>)</mo></mrow></math>
+out:   <math display="block"><mrow><mo>(</mo><mtable><mtr><mtd><mrow displaystyle="true"><mi>a</mi></mrow></mtd><mtd><mrow displaystyle="true"><mi>b</mi></mrow></mtd></mtr><mtr><mtd><mrow displaystyle="true"><mi>c</mi></mrow></mtd><mtd><mrow displaystyle="true"><mi>d</mi></mrow></mtd></mtr></mtable><mo>)</mo></mrow></math>
 
 ### 24
 in:    <math><lbl altCopy="%o25">(%o25) </lbl><tb bracketParens="true"><mtr><mtd><mfrac lisp="wxxml-mquotient"><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac></mtd><mtd><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></mtd></mtr><mtr><mtd><q><mn>2</mn></q></mtd><mtd><s>%pi</s></mtd></mtr></tb></math>
 label: %o25
 image: -
 text:  (1)/(2)x^(2)sqrt(2)%pi
-out:   <math display="block"><mrow><mo>(</mo><mtable><mtr><mtd><mfrac><mn>1</mn><mn>2</mn></mfrac></mtd><mtd><msup><mi>x</mi><mn>2</mn></msup></mtd></mtr><mtr><mtd><msqrt><mn>2</mn></msqrt></mtd><mtd><mi>&#x03C0;</mi></mtd></mtr></mtable><mo>)</mo></mrow></math>
+out:   <math display="block"><mrow><mo>(</mo><mtable><mtr><mtd><mrow displaystyle="true"><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></mtd><mtd><mrow displaystyle="true"><msup><mi>x</mi><mn>2</mn></msup></mrow></mtd></mtr><mtr><mtd><mrow displaystyle="true"><msqrt><mn>2</mn></msqrt></mrow></mtd><mtd><mrow displaystyle="true"><mi>&#x03C0;</mi></mrow></mtd></mtr></mtable><mo>)</mo></mrow></math>
 
 ### 25
 in:    <math><lbl altCopy="%o26">(%o26) </lbl><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn><mo>:=</mo><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></math>

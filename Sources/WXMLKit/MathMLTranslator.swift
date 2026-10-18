@@ -135,7 +135,8 @@ private struct Context {
         case "mtr":
             return "<mtr>\(kids.map { emit($0) }.joined())</mtr>"
         case "mtd":
-            return "<mtd>\(row(children))</mtd>"
+            // Table cells drop display style; wxMaxima shows full-size fractions in matrices.
+            return "<mtd><mrow displaystyle=\"true\">\(row(children))</mrow></mtd>"
         case "sm":
             guard kids.count == 3 else { return unknownElement(node) }
             let op = attrs["type"] == "prod" ? "&#x220F;" : "&#x2211;"
