@@ -28,11 +28,13 @@ Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadma
 - Does my SBCL have threads: `sbcl --noinform --eval '(progn (format t "threads: ~a~%" (if (member :sb-thread *features*) "yes" "no")) (quit))'`
 
 ## Current phase
-Phase 1 is done: `MaximaKit` is the tested engine (see `docs/PHASE1_REPORT.md`; Phase 0 findings are in `docs/PHASE0_REPORT.md`). Phase 2 (minimal worksheet) is next. Stop and ask before starting it.
+Phase 2 is done: Macsima is a working worksheet app (see `docs/PHASE2_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` and `docs/PHASE1_REPORT.md`). Phase 3 (daily driver) is next. Stop and ask before starting it.
 
-Engine facts to keep in mind (details in the reports, BOOTSTRAP.md and fixtures):
-- Use `MaximaSession` (an actor) for everything Maxima: `start`, `evaluate(cellID:text:)` returns an `AsyncStream<CellEvent>` ending in `.finished`, `answer`, `interrupt`, `restart`, `kill`, `shutdown`. Session-wide output arrives on `session.events`.
-- Most engine tests replay `Tests/Fixtures/transcripts/glue/` through `ReplayTransport`; real-Maxima tests are skipped when `/opt/homebrew/bin/maxima` is missing. Record new behaviour by running `maxima-spike record` for just the new scenario.
-- Errors are recognized from plain text only (`OutputClassifier.swift` lists the strings). An `error()` with an expression has its message in a `math` chunk.
-- Each Maxima gets a private temp folder that is deleted on kill, restart and shutdown, along with any plot images in it. Load images as soon as they arrive.
-- The exit test is `.build/debug/maxima-session Tests/Fixtures/scripts/phase1-exit.mxs`.
+Facts to keep in mind (details in the reports, BOOTSTRAP.md, WXMX_COMPAT.md and PARITY.md):
+- **Build the app.** `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build`. All code lives in the package (`MacsimaUI`); `App/Macsima` only holds `@main`.
+- **Engine.** `MaximaSession` (actor) does all Maxima work; each window's `WorksheetController` owns one and batches its events every 100 ms.
+- **Math rendering.** One shared hidden web view (`MathSnapshotRenderer`) renders outputs to cached images; `macsima-render verify` checks the images match their math. Translate math on the main thread (`TranslationCache`): the translator is recursive and capped at 400 levels.
+- **`.wxmx`.** `WXMXReader` and `WXMXWriter` in WorksheetKit keep everything they don't understand. Store Maxima's math as one canonical `<math>` element (`WorksheetController.storedMath`) so files round-trip exactly.
+- **UI tests without Accessibility.** Key scripts in `Tests/Fixtures/keyscripts/` (`run.sh editor-basics|eval-basics|save-basics`) drive the debug app with synthesized key events. Screenshots: window only, never the whole screen.
+- **wxMaxima as a reference.** Run it only on copies, with `-f <private ini>` and a scratch `HOME`; check that its settings are unchanged afterwards. Batch mode (`-b`) saves but never exits, and stops at errors and questions.
+- **Fixtures.** Re-record session fixtures with `MACSIMA_RECORD_WXMX=1` and translator snapshots with `MACSIMA_RECORD_SNAPSHOTS=1`.

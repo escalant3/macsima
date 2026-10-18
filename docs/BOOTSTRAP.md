@@ -127,6 +127,16 @@ Maxima evaluates text and prints tagged text. Everything below is on your side o
 
 A `.wxmx` file's `content.xml` has a `wxMaximaDocument` root (a sample shows `version="1.1" zoom="100"`) containing `cell` elements: `type="text"` holds an `editor type="text"` with `line` children, `type="code"` holds an `editor type="input"`. That is all I confirmed; wxMaxima's manual documents the format in full, so read that section before writing the parser. Treat files as hostile input: the current release added a size cap on `content.xml` as a decompression-bomb guard and fixed hangs on corrupt archives.
 
+Confirmed in Phase 2 against wxMaxima's writer (13e4aee), its manual and files wxMaxima 26.09 wrote:
+- **Zip.** Entries in the order `mimetype` (`text/x-wxmathml`), `format.txt`, `content.xml`, then the images, all stored without compression.
+- **Root.** `<wxMaximaDocument version="1.5" zoom="100">`, plus `activecell` and the variables list.
+- **Cells.** `uuid` on every cell. Deeper headings are written as `subsection` with `sectioning_level` 4, 5 and 6.
+- **Code cells.** One `<line>` with `&#x0A;` newlines, and `<output><mth>`. Outputs are split by `breakline="true"` (and by labels in older files).
+- **Output dialect.** wxMaxima's own names: `r`, `v`, `n`, `f`, `e`, `i`, operators as `fnm`.
+- **Plain text and errors.** Plain-text output is `<t type="ASCII-Art">`, errors `<t type="error">`.
+- **Answers.** A question's answer is an `<editor type="input">` inside the output.
+- **Gaps.** Everything Macsima keeps without showing is in `docs/WXMX_COMPAT.md`.
+
 ### Compatibility ledger
 
 Full `.wxmx` compatibility is a long-term goal, reached in steps. Step one reads and writes only what this app produces. After that, each gap is either closed or recorded. The ledger is a Markdown table in the repo, `docs/WXMX_COMPAT.md`, with one row per wxMaxima feature: the element or cell type, whether the app reads it, whether it writes it, a status (full, partial, missing) and what to avoid in wxMaxima if you want files this app can open.
@@ -151,6 +161,11 @@ Start with the simplest renderer and swap it behind a protocol; the XML parser a
 | D. Maxima's ASCII art | Send `set_display(ascii)` (defined in the glue Lisp) and show the `wxxml-asciimath` block in a monospace font | Trivial; works on day one | Ugly; no copy-as-formula |
 
 **Recommendation:** D in the spike, B for the MVP, and A only for the cases B handles poorly. B reuses the engine's XML unchanged and keeps the translator in one file you can test against captured transcripts.
+
+Phase 2 took B, but not with a web view per output:
+- **Process cost.** WebKit starts a content process for each web view: 38–52 processes and 1.2–1.6 GB for 200 outputs, with heavy scroll stutter.
+- **Shared renderer.** One hidden web view renders each output to a cached image instead: one process, about 40 MB, smooth scrolling. A live web view appears only when an output is clicked for selection.
+- **Workarounds.** WebKit's MathML needs non-stretchy fences around short content, a strut inside radicals, and `menclose` for overlines (`docs/PHASE2_REPORT.md`).
 
 ## Proposed native architecture
 
@@ -230,7 +245,7 @@ Durations are my estimates for one experienced Mac developer, not sourced figure
 
 1. **Phase 0, feasibility spike (done 2026-10-18).** Use your Homebrew Maxima 5.50.0. Listen, spawn, connect, send `integrate(sin(x), x);`, print the raw bytes. *Exit:* the tagged XML for a result appears in your log, and you know whether the interrupt channel works on your SBCL build (otherwise interrupts fall back to SIGINT).
 2. **Phase 1, engine kit (done 2026-10-18).** Tag scanner, session state machine, evaluation queue, restart, kill, interrupt, token handshake, all tested against recorded transcripts. *Exit:* a scripted session of 50 commands that includes an error, a question, an interrupt and a kill.
-3. **Phase 2, minimal worksheet (6 to 8 weeks).** Cell editing, evaluate, MathML rendering, inline plots, open and save `.wxmx`. *Exit:* save a worksheet, reopen it and re-evaluate it; then try real `.wxmx` files from wxMaxima, and record every element the app cannot handle in the ledger.
+3. **Phase 2, minimal worksheet (done 2026-10-18).** Cell editing, evaluate, MathML rendering, inline plots, open and save `.wxmx`. *Exit:* save a worksheet, reopen it and re-evaluate it; then try real `.wxmx` files from wxMaxima, and record every element the app cannot handle in the ledger.
 4. **Phase 3, daily driver (8 to 12 weeks).** Autocomplete, variables panel, help, export, undo, search, debugger and Lisp modes, dark mode. *Exit:* one week of real work with no fallback to wxMaxima.
 5. **Phase 4, sharing (optional).** Only if the app proves worth sharing: a README with install steps and the compatibility ledger first; a notarized DMG with a bundled Maxima only if people ask (see Shipping later).
 
@@ -275,30 +290,63 @@ What Phase 2 inherits: plot files vanish on kill, restart and shutdown, so the w
 
 Still untested: LDB, paths with spaces or non-ASCII characters, a second Maxima release, SVG plots, `slide`, `wxdraw`, a Lisp without threads, the orphan guard on SIGINT and SIGHUP, interrupting while a question is waiting, and an impostor connection.
 
+### Phase 2 results (2026-10-18)
+
+The minimal worksheet is done, and the exit check passes:
+- **Re-evaluation.** Ten saved sessions reopen and re-evaluate with the same results, in a test that runs the real Maxima.
+- **Reading wxMaxima's files.** Macsima opens wxMaxima's sample files and files wxMaxima 26.09 wrote.
+- **wxMaxima reading Macsima's files.** wxMaxima loads, evaluates and saves 8 of the 10 sessions in batch mode. Batch mode stops at errors and questions; those two files are to be opened by hand.
+
+The app:
+- **Build.** A SwiftUI document app; the thin app target comes from `project.yml` via XcodeGen.
+- **Editing.** Cells edited in SwiftUI `TextEditor`s.
+- **Evaluation.** One Maxima per window, events batched every 100 ms.
+- **Math.** MathML rendered by one shared web view.
+- **Files.** `.wxmx` read and write that keeps everything it doesn't understand.
+
+Corrections to the sections above, found in Phase 2:
+- **Rendering.** One web view per output is too heavy (see Math rendering options); use one shared renderer.
+- **Matrices.** `bracketParens="true"` means square brackets, Maxima's default matrix style.
+- **The glue and `:lisp-quiet`.** A `:lisp-quiet` line in a cell gets no prompt back. MaximaKit now finishes such a statement at once. wxMaxima's own batch mode still hangs on it.
+- **wxMaxima's batch mode.** `-b` evaluates and saves but does not exit, and stops at errors and questions. `-f <file>` and a scratch `HOME` keep a run away from the user's wxMaxima settings.
+- **Untrusted files.** Nesting must be capped: a 155-level sample overflowed a 512 KB thread stack in the translator, and a 100,000-level file crashed the tree code.
+
+What Phase 3 inherits:
+- **Editor.** No AppKit yet; cross-cell selection, search and autocomplete will likely need `NSTextView`.
+- **Math.** Outputs are images, so selection needs a click. Long outputs don't wrap.
+- **Kept but not shown.** Folding, hidden cells, text formatting, zoom, image cells and animations are preserved and listed.
+- **Real keystrokes.** Untested while Terminal lacks Accessibility. The editor is tested with key events synthesized inside the app.
+
 ## Bootstrap kit
 
 ### Repository layout
 
 ```text
 Macsima/
-  Package.swift
+  Package.swift          SwiftPM: the libraries, tools and tests
+  project.yml            XcodeGen spec for the app target (Macsima.xcodeproj is generated, gitignored)
   LICENSE                GPL-2.0-or-later
   README.md
   CLAUDE.md              project rules and pointers for Claude Code
   Sources/
     MaximaKit/           engine: process, socket, scanner, session
-    WXMLKit/             math XML to MathML (later a layout tree)
-    WorksheetKit/        cells, .wxm and .wxmx read/write
-    maxima-spike/        Phase 0 command-line spike
-  App/Macsima/           SwiftUI shell + worksheet view
-  Resources/lisp/        wxMathML.lisp, unmodified, notices kept (GPL)
+      Resources/         wxMathML.lisp, unmodified, notices kept (GPL), a SwiftPM resource
+    WXMLKit/             math XML (glue and .wxmx dialects) to MathML
+    WorksheetKit/        cell model, .wxmx read/write (ZIPFoundation)
+    MacsimaUI/           everything the app shows: document, editor, rendering, controller
+    maxima-spike/        Phase 0 command-line spike (records transcripts)
+    maxima-session/      Phase 1 runner for session scripts
+    macsima-render/      Phase 2 rendering snapshots, benchmark, renderer check
+  App/Macsima/           the @main entry point only
   docs/
     BOOTSTRAP.md         this document
     WXMX_COMPAT.md       compatibility ledger
-    PHASE0_REPORT.md     what the real Maxima showed
+    PARITY.md            feature parity with wxMaxima
+    PHASE0_REPORT.md, PHASE1_REPORT.md, PHASE2_REPORT.md
   Tests/
-    Fixtures/transcripts/   49 captured sessions, README, record.sh
-    Fixtures/wxmx/          sample .wxmx files, including your own
+    Fixtures/transcripts/   captured Maxima sessions, README, record.sh
+    Fixtures/wxmx/          wxMaxima samples, Macsima-written sessions, wxMaxima re-saves
+    Fixtures/keyscripts/    key scripts that drive the app (debug builds)
   Scripts/               packaging scripts, added only if you share the app
 ```
 
