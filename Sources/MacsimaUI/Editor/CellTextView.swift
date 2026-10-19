@@ -19,6 +19,11 @@ final class CellTextView: NSTextView {
     /// cell, keeping the caret's x position (view coordinates).
     /// Returns false when there is no cell that way.
     var onLeave: ((_ up: Bool, _ x: CGFloat) -> Bool)?
+    /// Shift+Up with the selection already at the start (or Shift+Down at
+    /// the end): select whole cells from here.
+    var onSelectCells: ((_ up: Bool) -> Void)?
+    /// Paste when the pasteboard holds cells: inserts them after this cell.
+    var onPasteCells: (() -> Bool)?
     /// Where to put the caret once the focus arrives (a caret request).
     var pendingCaret: CaretPlace?
     /// Every change to the text (typing, undo, Replace, sync): writes the model.
@@ -285,6 +290,23 @@ final class CellTextView: NSTextView {
 
     override func moveDown(_ sender: Any?) {
         if !leaveIfAtEdge(up: false) { super.moveDown(sender) }
+    }
+
+    override func moveUpAndModifySelection(_ sender: Any?) {
+        if selectedRange().location == 0, let onSelectCells { onSelectCells(true) } else { super.moveUpAndModifySelection(sender) }
+    }
+
+    override func moveDownAndModifySelection(_ sender: Any?) {
+        if NSMaxRange(selectedRange()) == (string as NSString).length, let onSelectCells {
+            onSelectCells(false)
+        } else {
+            super.moveDownAndModifySelection(sender)
+        }
+    }
+
+    override func paste(_ sender: Any?) {
+        if CellClipboard.hasCells, onPasteCells?() == true { return }
+        super.paste(sender)
     }
 
     /// With the caret on the first line (up) or the last line (down), hands

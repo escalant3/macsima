@@ -66,6 +66,28 @@ final class EditorUITests: XCTestCase {
         XCTAssertEqual(app.textViews["cell-input-0"].value as? String, "a:1;")
     }
 
+    /// A real click on a cell's bar, a Shift-click, then Cmd+C and Cmd+V
+    /// (the app copies to a private pasteboard under test).
+    @MainActor
+    func testCopyAndPasteWholeCells() throws {
+        waitForReady()
+        let first = app.textViews["cell-input-0"]
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        first.click()
+        app.typeText("p:1;")
+        app.typeKey("0", modifierFlags: .command)
+        app.typeText("q:2;")
+        app.descendants(matching: .any)["cell-bar-0"].click()
+        XCUIElement.perform(withKeyModifiers: .shift) { app.descendants(matching: .any)["cell-bar-1"].click() }
+        app.typeKey("c", modifierFlags: .command)
+        app.typeKey("v", modifierFlags: .command)
+        XCTAssertTrue(app.textViews["cell-input-3"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textViews["cell-input-2"].value as? String, "p:1;")
+        XCTAssertEqual(app.textViews["cell-input-3"].value as? String, "q:2;")
+        app.typeKey("z", modifierFlags: .command)
+        XCTAssertFalse(app.textViews["cell-input-2"].waitForExistence(timeout: 2))
+    }
+
     @MainActor
     func testArrowKeysMoveBetweenCells() throws {
         waitForReady()

@@ -19,6 +19,13 @@ public final class WorksheetController {
         didSet { if focusedCell != oldValue, !notingFocus { focusRequest &+= 1 } }
     }
     @ObservationIgnored private var notingFocus = false
+    /// Whole cells selected (CellSelection.swift), in document order; empty
+    /// while editing.
+    public internal(set) var selectedCells: [UUID] = []
+    @ObservationIgnored var selectionAnchor: UUID?
+    @ObservationIgnored var selectionHead: UUID?
+    /// First responder while cells are selected; the window installs it.
+    @ObservationIgnored var selectionResponder: CellSelectionResponder?
     /// Bumped by every request to move the focus; an editor takes the focus
     /// when it sees a new value and its cell is `focusedCell`.
     public private(set) var focusRequest = 0
@@ -145,6 +152,8 @@ public final class WorksheetController {
         editor.onFocus = { [weak self] in self?.noteFocus(id) }
         editor.onEvaluate = { [weak self] in self?.evaluateAndAdvance(id) }
         editor.onLeave = { [weak self] up, x in self?.leave(id, up: up, x: x) ?? false }
+        editor.onSelectCells = { [weak self] up in self?.startCellSelection(from: id, up: up) }
+        editor.onPasteCells = { [weak self] in self?.pasteCells(after: id) ?? false }
         editors[id] = editor
         return editor
     }
@@ -167,6 +176,7 @@ public final class WorksheetController {
     /// An editor took the focus by itself (a click, Tab): record it without
     /// a focus request, so the worksheet doesn't scroll.
     func noteFocus(_ id: UUID) {
+        clearCellSelection()
         notingFocus = true
         focusedCell = id
         notingFocus = false

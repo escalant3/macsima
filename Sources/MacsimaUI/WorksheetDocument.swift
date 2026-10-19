@@ -71,6 +71,46 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
         if worksheet.cells.isEmpty { worksheet.insert(Cell(kind: .code), at: 0) }
     }
 
+    /// Inserts `cells` at `index`, as one undoable action (paste).
+    @MainActor
+    public func insertCells(_ cells: [Cell], at index: Int, undo: UndoManager?, name: String = "Paste") {
+        let start = min(max(0, index), worksheet.cells.count)
+        for (k, cell) in cells.enumerated() { worksheet.insert(cell, at: start + k) }
+        undo?.registerUndo(withTarget: self) { doc in
+            MainActor.assumeIsolated { doc.deleteCells(cells.map(\.id), undo: undo, name: name) }
+        }
+        undo?.setActionName(name)
+    }
+
+    /// Deletes the cells `ids`, as one undoable action (cut, delete).
+    @MainActor
+    public func deleteCells(_ ids: [UUID], undo: UndoManager?, name: String = "Delete Cells") {
+        // Removed in document order, put back in the same order.
+        let removed = ids.compactMap { id in worksheet.index(of: id).map { (id, $0) } }
+            .sorted { $0.1 < $1.1 }
+        var restore: [(Cell, Int)] = []
+        for (id, _) in removed.reversed() {
+            if let (cell, index) = worksheet.remove(id) { restore.insert((cell, index), at: 0) }
+        }
+        guard !restore.isEmpty else { return }
+        undo?.registerUndo(withTarget: self) { doc in
+            MainActor.assumeIsolated {
+                for (cell, index) in restore { doc.worksheet.insert(cell, at: index) }
+                doc.undoManagerRedoDelete(restore.map(\.0.id), undo: undo, name: name)
+            }
+        }
+        undo?.setActionName(name)
+        if worksheet.cells.isEmpty { worksheet.insert(Cell(kind: .code), at: 0) }
+    }
+
+    @MainActor
+    private func undoManagerRedoDelete(_ ids: [UUID], undo: UndoManager?, name: String) {
+        undo?.registerUndo(withTarget: self) { doc in
+            MainActor.assumeIsolated { doc.deleteCells(ids, undo: undo, name: name) }
+        }
+        undo?.setActionName(name)
+    }
+
     @MainActor
     public func setKind(_ id: UUID, _ kind: CellKind, undo: UndoManager?) {
         guard let old = worksheet[id]?.kind, old != kind else { return }

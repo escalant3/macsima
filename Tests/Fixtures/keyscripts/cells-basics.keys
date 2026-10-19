@@ -1,0 +1,34 @@
+# Whole cells: select with the bar, copy, paste, undo, cut, delete (Phase 3, step 7).
+wait 3
+type a:1;
+key return shift
+wait 2
+type b:2;
+key 1 cmd
+type A note.
+click-bar 0
+click-bar 1 shift
+dump .build/keyscripts/cells-1.json
+pasteboard .build/keyscripts/cells-pb0.json
+key c cmd
+pasteboard .build/keyscripts/cells-pb1.json
+click-bar 2
+key v cmd
+dump .build/keyscripts/cells-2.json
+key z cmd
+dump .build/keyscripts/cells-3.json
+click-bar 0
+key x cmd
+dump .build/keyscripts/cells-4.json
+key z cmd
+dump .build/keyscripts/cells-5.json
+click-bar 2
+key delete
+dump .build/keyscripts/cells-6.json
+# The delete left the caret at the start of cell 1.
+key up shift
+dump .build/keyscripts/cells-7.json
+shot .build/keyscripts/cells-7.png
+key down
+dump .build/keyscripts/cells-8.json
+quit

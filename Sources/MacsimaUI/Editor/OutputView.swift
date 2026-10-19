@@ -131,9 +131,7 @@ struct MathOutputItem: View {
 /// Copying one math output: as Maxima input, LaTeX, MathML or a picture.
 @MainActor
 enum OutputCopy {
-    /// Where copies go: the general pasteboard, or a private one while a
-    /// key script or UI test runs, so they leave the user's clipboard alone.
-    static var pasteboard = NSPasteboard.general
+    static var pasteboard: NSPasteboard { CellClipboard.pasteboard }
 
     enum Kind: String, CaseIterable {
         case input, latex, mathml, image

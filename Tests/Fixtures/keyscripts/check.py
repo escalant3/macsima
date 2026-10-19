@@ -65,6 +65,25 @@ elif script == "copy-basics":
     check(str(c3["string"]).startswith("<math") and "&#x2211;" in c3["string"], "Copy MathML: a <math> element with the sum sign")
     check("public.png" in c4["types"] and "public.tiff" in c4["types"] and 30 < c4.get("image", [0, 0])[0] < 200,
           "Copy as Image: PNG and TIFF of the math alone (no label column): " + str(c4.get("image")))
+elif script == "cells-basics":
+    def inputs(n): return [c["input"] for c in dump("cells", n)["cells"]]
+    d1 = dump("cells", 1)
+    check(d1["selectedCells"] == [0, 1] and d1["firstResponder"] == "CellSelectionResponder",
+          "a click on the bar and a Shift-click select cells 0 and 1")
+    pb = dump("cells", "pb1")
+    check("local.macsima.cells" in pb["types"] and "text/x-wxmaxima-batch" in pb["types"]
+          and pb["string"].startswith("(%i1) a:1;\n(%o1) 1"), "Cmd+C puts the cells, .wxm and text on the pasteboard")
+    check(inputs(2) == ["a:1;", "b:2;", "A note.", "a:1;", "b:2;"] and dump("cells", 2)["selectedCells"] == [3, 4],
+          "Cmd+V pastes them after the selected cell and selects them")
+    c2 = dump("cells", 2)["cells"]
+    check(c2[3]["outputs"] == c2[0]["outputs"] and c2[3]["outputs"] != [], "pasted cells keep their outputs")
+    check(inputs(3) == ["a:1;", "b:2;", "A note."], "Cmd+Z undoes the paste in one step")
+    check(inputs(4) == ["b:2;", "A note."], "Cmd+X cuts the selected cell")
+    check(inputs(5) == ["a:1;", "b:2;", "A note."], "Cmd+Z puts it back")
+    check(inputs(6) == ["a:1;", "b:2;"], "Delete deletes the selected cell")
+    check(dump("cells", 7)["selectedCells"] == [0, 1], "Shift+Up at the start of a cell selects it and the one above")
+    d8 = dump("cells", 8)
+    check(d8["selectedCells"] == [] and d8["firstResponder"] == "CellTextView", "Down goes back to editing")
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:

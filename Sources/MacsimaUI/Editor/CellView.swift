@@ -34,6 +34,10 @@ struct CellView: View {
     /// The cell's position, for accessibility identifiers (`cell-input-N`).
     let index: Int
     let isFocused: Bool
+    /// Selected as a whole cell (CellSelection.swift).
+    var isSelected = false
+    /// A click on the cell's bar or gutter; `extend` when Shift was held.
+    var onBarClick: (_ extend: Bool) -> Void = { _ in }
     let focusRequest: Int
     let caretRequest: CaretRequest?
     let makeEditor: () -> CellTextView
@@ -41,14 +45,25 @@ struct CellView: View {
     @Environment(\.worksheetScale) private var scale
 
     var body: some View {
-        switch cell.kind {
-        case .pageBreak:
-            PlaceholderRow(text: "Page break", systemImage: "rectangle.split.1x2")
-        case .raw, .image:
-            PlaceholderRow(text: "A cell this app cannot show yet. It is kept and saved back unchanged.",
-                           systemImage: "shippingbox")
-        default:
-            editorCell
+        Group {
+            switch cell.kind {
+            case .pageBreak:
+                PlaceholderRow(text: "Page break", systemImage: "rectangle.split.1x2")
+                    .contentShape(Rectangle())
+                    .onTapGesture { onBarClick(NSEvent.modifierFlags.contains(.shift)) }
+            case .raw, .image:
+                PlaceholderRow(text: "A cell this app cannot show yet. It is kept and saved back unchanged.",
+                               systemImage: "shippingbox")
+                    .contentShape(Rectangle())
+                    .onTapGesture { onBarClick(NSEvent.modifierFlags.contains(.shift)) }
+            default:
+                editorCell
+            }
+        }
+        .background {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 4).fill(Color.accentColor.opacity(0.14))
+            }
         }
     }
 
@@ -61,6 +76,15 @@ struct CellView: View {
                     .foregroundStyle(.secondary)
                     .frame(width: metrics.gutterWidth, alignment: .trailing)
                     .padding(.top, Self.gutterOffset(for: cell.kind, scale: scale))
+                    // The gutter selects the whole cell, as wxMaxima's bracket does.
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .contentShape(Rectangle())
+                    .onTapGesture { onBarClick(NSEvent.modifierFlags.contains(.shift)) }
+                    .accessibilityElement()
+                    .accessibilityLabel("Select cell")
+                    .accessibilityValue(isSelected ? "selected" : "")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityIdentifier("cell-bar-\(index)")
                 CellEditor(text: cell.input, kind: cell.kind, scale: scale, accessibilityID: "cell-input-\(index)",
                            isFocused: isFocused, focusRequest: focusRequest,
                            caretRequest: caretRequest, cellID: cell.id, makeView: makeEditor)
@@ -69,7 +93,7 @@ struct CellView: View {
             .padding(.trailing, 6)
             .background(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(isFocused ? Color.accentColor : failed ? Color.red.opacity(0.7)
+                    .fill(isFocused || isSelected ? Color.accentColor : failed ? Color.red.opacity(0.7)
                           : Color.secondary.opacity(cell.kind == .code ? 0.25 : 0))
                     .frame(width: 3)
             }

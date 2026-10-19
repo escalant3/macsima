@@ -40,6 +40,8 @@ struct WorksheetCommands: Commands {
                 }
             }
             .disabled(controller?.focusedCell == nil)
+            Button("Select All Cells") { controller?.selectAllCells() }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
             Button("Delete Cell") { controller?.deleteFocusedCell() }
                 .keyboardShortcut(.delete, modifiers: [.command, .shift])
                 .disabled(controller?.focusedCell == nil)

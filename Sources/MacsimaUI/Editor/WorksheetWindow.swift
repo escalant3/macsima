@@ -23,7 +23,9 @@ struct WorksheetWindow: View {
                         CellView(
                             cell: cell,
                             index: index,
-                            isFocused: controller.focusedCell == cell.id,
+                            isFocused: controller.focusedCell == cell.id && controller.selectedCells.isEmpty,
+                            isSelected: controller.selectedCells.contains(cell.id),
+                            onBarClick: { extend in controller.clickBar(cell.id, extend: extend) },
                             focusRequest: controller.focusRequest,
                             caretRequest: controller.caretRequest,
                             makeEditor: { controller.editor(for: cell.id) }
@@ -56,6 +58,12 @@ struct WorksheetWindow: View {
         .background {
             WindowReader { window in
                 controller.window = window
+                if controller.selectionResponder == nil, let content = window.contentView {
+                    let responder = CellSelectionResponder(frame: .zero)
+                    responder.controller = controller
+                    content.addSubview(responder)
+                    controller.selectionResponder = responder
+                }
                 controller.watchClose(of: window)
                 controller.markEdited = { [weak window] in
                     (window?.windowController?.document as? NSDocument)?.updateChangeCount(.changeDone)

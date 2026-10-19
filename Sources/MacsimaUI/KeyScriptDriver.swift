@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -32,7 +32,7 @@ enum KeyScriptDriver {
             // Never type into the user's own documents (a restored window, say):
             // only untitled worksheets and files under .build/keyscripts.
             if TestGuard.refuseIfForeign(allowed: "/.build/keyscripts/", log: log) { return }
-            OutputCopy.pasteboard = TestGuard.pasteboard
+            CellClipboard.pasteboard = TestGuard.pasteboard
             NSApp.activate()
             documentWindow?.makeKeyAndOrderFront(nil)
             // Synthesized keys only reach an active app: say when another app
@@ -140,6 +140,13 @@ enum KeyScriptDriver {
             WorksheetController.keyController?.find.replacement = rest
         case "find-replace-all":
             WorksheetController.keyController?.find.replaceAll()
+        case "click-bar":
+            // `click-bar <cell> [shift]` (0-based): a click on the cell's bar.
+            let parts = rest.split(separator: " ").map(String.init)
+            if let c = Int(parts.first ?? ""), let controller = WorksheetController.keyController,
+               c < controller.document.worksheet.cells.count {
+                controller.clickBar(controller.document.worksheet.cells[c].id, extend: parts.contains("shift"))
+            }
         case "copy-output":
             // `copy-output <cell> <output> input|latex|mathml|image` (0-based), as the output's menu does.
             let parts = rest.split(separator: " ").map(String.init)
@@ -200,6 +207,7 @@ enum KeyScriptDriver {
     ]
     private static let keyCodes: [String: UInt16] = [
         "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1, "f": 3, "g": 5, "e": 14, "/": 44, "=": 24, "-": 27, "w": 13,
+        "c": 8, "x": 7, "v": 9, "a": 0,
     ]
 
     /// The key window, or else the frontmost document window (the app may
@@ -287,6 +295,9 @@ enum KeyScriptDriver {
         var info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]
         info["zoom"] = controller.document.worksheet.zoom
+        let ids = controller.document.worksheet.cells.map(\.id)
+        info["selectedCells"] = controller.selectedCells.compactMap { ids.firstIndex(of: $0) }
+        info["firstResponder"] = NSApp.keyWindow?.firstResponder.map { String(describing: type(of: $0)) } ?? ""
         info["renders"] = MathSnapshotRenderer.shared.recent.map { r -> [String: Any] in
             ["label": r.label ?? "", "wrap": r.wrap.map { Int($0) } ?? -1,
              "width": Int(r.size.width), "height": Int(r.size.height)]
