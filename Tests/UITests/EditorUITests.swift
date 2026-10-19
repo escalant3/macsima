@@ -1,0 +1,68 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+import XCTest
+
+/// Real keystrokes against the Debug app, through XCUITest. Each test starts
+/// from a fresh untitled worksheet; restored windows are ignored, and the app
+/// refuses to run if a document outside `.build/` is open (TestGuard).
+final class EditorUITests: XCTestCase {
+    private var app: XCUIApplication!
+
+    @MainActor
+    override func setUp() async throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments = ["-ApplePersistenceIgnoreState", "YES", "-MacsimaUITest", "YES"]
+        app.launch()
+    }
+
+    @MainActor
+    override func tearDown() async throws {
+        // The untitled worksheet is thrown away with the app.
+        app.terminate()
+    }
+
+    @MainActor
+    private func waitForReady() {
+        let state = app.staticTexts["session-state"]
+        let ready = NSPredicate(format: "value == 'Ready' OR label == 'Ready'")
+        expectation(for: ready, evaluatedWith: state)
+        waitForExpectations(timeout: 20)
+    }
+
+    @MainActor
+    func testEvaluateWithShiftReturn() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("integrate(sin(x),x);")
+        app.typeKey(.return, modifierFlags: .shift)
+
+        let output = app.descendants(matching: .any)["cell-output-0-0"]
+        XCTAssertTrue(output.waitForExistence(timeout: 20))
+        XCTAssertEqual(output.label, "-cos(x)")
+        // Shift+Return moves on to a new cell, which takes the typing.
+        XCTAssertTrue(app.textViews["cell-input-1"].waitForExistence(timeout: 5))
+        app.typeText("1+1;")
+        XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "1+1;")
+    }
+
+    @MainActor
+    func testUndoTypingThenDeleteCell() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("a:1;")
+        app.typeKey("1", modifierFlags: .command)   // insert a text cell
+        XCTAssertTrue(app.textViews["cell-input-1"].waitForExistence(timeout: 5))
+        app.typeText("prose")
+        app.typeKey("z", modifierFlags: .command)
+        XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "")
+        // The physical Delete key with Command and Shift deletes the cell.
+        app.typeKey(.delete, modifierFlags: [.command, .shift])
+        XCTAssertFalse(app.textViews["cell-input-1"].waitForExistence(timeout: 2))
+        XCTAssertEqual(app.textViews["cell-input-0"].value as? String, "a:1;")
+    }
+}

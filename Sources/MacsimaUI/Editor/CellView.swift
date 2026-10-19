@@ -12,6 +12,8 @@ let outputIndent: CGFloat = gutterWidth + gutterSpacing + 5
 /// One cell: its editor with the `(%iN)` gutter, then its outputs.
 struct CellView: View {
     let cell: Cell
+    /// The cell's position, for accessibility identifiers (`cell-input-N`).
+    let index: Int
     @Binding var text: String
     var focus: FocusState<UUID?>.Binding
     let isFocused: Bool
@@ -46,6 +48,7 @@ struct CellView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(minHeight: 20)
                     .focused(focus, equals: cell.id)
+                    .accessibilityIdentifier("cell-input-\(index)")
                     .onKeyPress(.return, phases: .down) { press in
                         guard press.modifiers.contains(.shift) else { return .ignored }
                         onEvaluate()
@@ -59,8 +62,9 @@ struct CellView: View {
                     .fill(isFocused ? Color.accentColor : Color.secondary.opacity(cell.kind == .code ? 0.25 : 0))
                     .frame(width: 3)
             }
-            ForEach(Array(cell.outputs.enumerated()), id: \.offset) { _, output in
+            ForEach(Array(cell.outputs.enumerated()), id: \.offset) { n, output in
                 OutputView(output: output, cellID: cell.id)
+                    .accessibilityIdentifier("cell-output-\(index)-\(n)")
             }
             if !cell.preserved.isEmpty {
                 PlaceholderRow(text: cell.preserved.contains { $0.hasPrefix("<fold") }

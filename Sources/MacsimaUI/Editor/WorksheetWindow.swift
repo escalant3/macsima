@@ -20,9 +20,10 @@ struct WorksheetWindow: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 10) {
-                    ForEach(document.worksheet.cells) { cell in
+                    ForEach(Array(document.worksheet.cells.enumerated()), id: \.element.id) { index, cell in
                         CellView(
                             cell: cell,
+                            index: index,
                             text: Binding(get: { cell.input }, set: { document.setInput(cell.id, $0) }),
                             focus: $focus,
                             isFocused: focus == cell.id,
@@ -107,6 +108,7 @@ struct WorksheetToolbar: ToolbarContent {
                 Text(Self.label(controller.sessionState))
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("session-state")
             }
         }
         ToolbarItem {

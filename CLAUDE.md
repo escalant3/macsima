@@ -23,6 +23,7 @@ Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadma
 ## Commands
 - Build: `swift build`
 - Test: `swift test`. The "Executed 0 tests" line is the XCTest runner and is expected when a package only uses Swift Testing. Read the Swift Testing line instead ("Test run with N tests ... passed") and check that N is above zero.
+- UI tests (real keystrokes, XCUITest): `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode -destination 'platform=macOS' test`. Automation Mode is enabled without authentication on this Mac; they take over keyboard and mouse. See `Tests/UITests/README.md`.
 - Package platform must be `.macOS(.v26)` in `Package.swift`.
 - Maxima: `/opt/homebrew/bin/maxima --version`
 - Does my SBCL have threads: `sbcl --noinform --eval '(progn (format t "threads: ~a~%" (if (member :sb-thread *features*) "yes" "no")) (quit))'`

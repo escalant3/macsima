@@ -13,7 +13,10 @@ extension UTType {
 public struct MacsimaScenes: Scene {
     public init() {
         #if DEBUG
-        Task { @MainActor in KeyScriptDriver.startIfRequested() }
+        Task { @MainActor in
+            KeyScriptDriver.startIfRequested()
+            TestGuard.startIfUITest()
+        }
         #endif
     }
 

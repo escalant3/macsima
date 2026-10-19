@@ -72,6 +72,8 @@ struct MathOutputItem: View {
             }
         }
         .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(out.plainText)
         .onTapGesture { live.toggle() }
         .contextMenu {
             Button("Copy as Text") { Self.copy(out.plainText) }

@@ -35,7 +35,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18). The first tab
 | Line breaking of long outputs | Breaks long expressions over lines | No line breaking: a long output is one wide image that runs past the window's edge (no sideways scrolling yet) | missing | 3 |
 | Zoom | Saved in the file, applied | Kept and saved back, not applied | missing | 3 |
 | Cursor position (`activecell`) | Saved and restored | Kept from the file, not updated | partial | 3 |
-| Real keystrokes | | You checked Cmd+Shift+Delete with the physical Delete key and the editor with a real keyboard (2026-10-19). Automated checks post synthesized key events to the app's own event queue. | done | |
+| Real keystrokes | | XCUITest target (`Tests/UITests/`, Phase 3 step 1) types real keys: Shift+Return, Cmd+1, Cmd+Z, Cmd+Shift+Delete. The key-script driver still posts synthesized events for the longer scripts. | done | |
 | `.wxmx` timestamps | Local time | ZIPFoundation writes them two hours off here; harmless | partial | later |
 | Answer layout | The answer follows the question on the same line | The answer is on its own line below the question (seen by opening 04-question in both apps) | partial | 3 |
 | Error marker | Marks an error line in yellow (seen on the first error of 03-errors; the cause is not yet traced in wxMaxima's source) | Error text in red, no marker | partial | 3 |

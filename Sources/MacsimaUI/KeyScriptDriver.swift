@@ -29,14 +29,7 @@ enum KeyScriptDriver {
             try? await Task.sleep(for: .seconds(2))
             // Never type into the user's own documents (a restored window, say):
             // only untitled worksheets and files under .build/keyscripts.
-            let foreign = NSDocumentController.shared.documents.compactMap(\.fileURL)
-                .filter { !$0.path.contains("/.build/keyscripts/") }
-            if !foreign.isEmpty {
-                log("refusing to run: open documents outside .build/keyscripts: \(foreign.map(\.path))")
-                for document in NSDocumentController.shared.documents { document.close() }
-                NSApp.terminate(nil)
-                return
-            }
+            if TestGuard.refuseIfForeign(allowed: "/.build/keyscripts/", log: log) { return }
             NSApp.activate()
             documentWindow?.makeKeyAndOrderFront(nil)
             log("app active: \(NSApp.isActive), key window: \(NSApp.keyWindow != nil)")
