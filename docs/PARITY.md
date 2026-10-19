@@ -15,7 +15,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18). The first tab
 | Autocomplete | `wxxml-symbols` and the user's own definitions | none | missing | 3 |
 | Variables and status | Watch panel, status bar, CPU polling | Toolbar state (Ready, Evaluating…, waiting for an answer) and a status line for Maxima's own messages (`statusbar`, start-up problems). No watch panel. | partial | 3 |
 | Help | Topic names, the HTML manual | none | missing | 3 |
-| Export and tooling | HTML, LaTeX, `.mac`, `.wxm` export, undo, search, diff viewer | Undo for cell insert, delete and type changes, and typing. No export, no search, no diff. | partial | 3 |
+| Export and tooling | HTML, LaTeX, `.mac`, `.wxm` export, undo, search, diff viewer | Undo for cell insert, delete, type changes and typing (also after a cell scrolled away). Find and Replace across every cell's input (Phase 3 step 3). No export, no diff. | partial | 3 |
 | Settings | Maxima and gnuplot paths, display options, `wxmaxima-init` | The Maxima path. | partial | 3 |
 
 ## Found during Phase 2

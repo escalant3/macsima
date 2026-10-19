@@ -37,11 +37,20 @@ struct WorksheetWindow: View {
             .onChange(of: controller.focusRequest) {
                 if let id = controller.focusedCell { withAnimation { proxy.scrollTo(id) } }
             }
+            .onChange(of: controller.scrollRequest?.serial) {
+                guard let id = controller.scrollRequest?.cell else { return }
+                proxy.scrollTo(id)
+                // Once the cell is laid out: a long cell scrolls on to the match.
+                DispatchQueue.main.async { controller.afterScroll?() }
+            }
         }
         .frame(minWidth: 560, minHeight: 360)
-        .safeAreaInset(edge: .top) {
-            if !document.openWarnings.isEmpty {
-                OpenWarningsBanner(warnings: document.openWarnings) { document.openWarnings = [] }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(spacing: 0) {
+                if controller.find.isVisible { FindBar(find: controller.find) }
+                if !document.openWarnings.isEmpty {
+                    OpenWarningsBanner(warnings: document.openWarnings) { document.openWarnings = [] }
+                }
             }
         }
         .background {
@@ -81,6 +90,7 @@ struct WorksheetWindow: View {
         }
         .onChange(of: document.worksheet.cells.map(\.id)) { old, new in
             // The focused cell went away (undo, delete): focus its neighbour.
+            controller.find.documentChanged()
             guard let id = controller.focusedCell, !new.contains(id) else { return }
             let index = old.firstIndex(of: id) ?? new.count
             controller.focusedCell = new.isEmpty ? nil : new[min(max(0, index - 1), new.count - 1)]

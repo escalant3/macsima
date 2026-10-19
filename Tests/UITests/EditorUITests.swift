@@ -84,4 +84,30 @@ final class EditorUITests: XCTestCase {
         // The caret was at column 4 ("abc1"), so it lands at the end of "xyz;".
         XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "xyz;2")
     }
+
+    @MainActor
+    func testFindAcrossCells() throws {
+        waitForReady()
+        let first = app.textViews["cell-input-0"]
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        first.click()
+        app.typeText("x+1;")
+        app.typeKey("0", modifierFlags: .command)
+        app.typeText("x^2+x;")
+        app.typeKey("f", modifierFlags: .command)
+        app.typeText("x")   // straight into the find field
+        let status = app.descendants(matching: .any)["find-status"]
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        XCTAssertEqual(status.value as? String, "1 of 3")
+        app.typeKey("g", modifierFlags: .command)
+        XCTAssertEqual(status.value as? String, "2 of 3")
+        app.typeKey("g", modifierFlags: [.command, .shift])
+        app.typeKey("g", modifierFlags: [.command, .shift])
+        XCTAssertEqual(status.value as? String, "3 of 3", "Find Previous wraps")
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertFalse(status.exists)
+        // The focus is on the match: typing replaces the selected x.
+        app.typeText("z")
+        XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "x^2+z;")
+    }
 }

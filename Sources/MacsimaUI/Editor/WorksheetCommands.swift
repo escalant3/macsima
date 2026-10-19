@@ -41,6 +41,19 @@ struct WorksheetCommands: Commands {
                 .keyboardShortcut(.delete, modifiers: [.command, .shift])
                 .disabled(controller?.focusedCell == nil)
         }
+        // Replaces the Edit menu's text-view Find items, which search one cell.
+        CommandGroup(replacing: .textEditing) {
+            Button("Find…") { controller?.find.show(replace: false) }
+                .keyboardShortcut("f", modifiers: .command)
+            Button("Find and Replace…") { controller?.find.show(replace: true) }
+                .keyboardShortcut("f", modifiers: [.command, .option])
+            Button("Find Next") { controller?.find.next() }
+                .keyboardShortcut("g", modifiers: .command)
+            Button("Find Previous") { controller?.find.previous() }
+                .keyboardShortcut("g", modifiers: [.command, .shift])
+            Button("Use Selection for Find") { controller?.find.useSelection() }
+                .keyboardShortcut("e", modifiers: .command)
+        }
         CommandMenu("Maxima") {
             Button("Interrupt") { controller?.interrupt() }
                 .keyboardShortcut(".", modifiers: .command)

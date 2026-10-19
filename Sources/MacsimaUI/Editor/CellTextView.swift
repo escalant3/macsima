@@ -83,28 +83,40 @@ final class CellTextView: NSTextView {
         updateBracketMatch()
     }
 
-    /// The bracket pair shown at the caret, as text ranges, to remove later.
-    private var bracketMarks: [NSTextRange] = []
+    /// Find's matches in this cell, shown with a background.
+    var findMarks: [NSRange] = [] {
+        didSet { if findMarks != oldValue { updateBracketMatch() } }
+    }
 
     override func setSelectedRanges(_ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool) {
         super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
         updateBracketMatch()
     }
 
-    /// Marks the bracket next to the caret and its partner (code cells, no selection).
+    /// Redraws the backgrounds: Find's matches, then the bracket next to the
+    /// caret and its partner (code cells, no selection).
     private func updateBracketMatch() {
         guard let layout = textLayoutManager else { return }
-        for range in bracketMarks { layout.removeRenderingAttribute(.backgroundColor, for: range) }
-        bracketMarks = []
+        layout.removeRenderingAttribute(.backgroundColor, for: layout.documentRange)
+        let length = (string as NSString).length
+        for mark in findMarks where NSMaxRange(mark) <= length {
+            if let range = textRange(mark) {
+                layout.addRenderingAttribute(.backgroundColor, value: Self.findColor, for: range)
+            }
+        }
         let selection = selectedRange()
         guard highlightsSyntax, selection.length == 0,
               let (a, b) = MaximaTokenizer.matchingBracket(in: string, caret: selection.location) else { return }
         for offset in [a, b] {
             if let range = textRange(NSRange(location: offset, length: 1)) {
                 layout.addRenderingAttribute(.backgroundColor, value: Self.bracketColor, for: range)
-                bracketMarks.append(range)
             }
         }
+    }
+
+    static let findColor = NSColor(name: "MacsimaFindMatch") { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor.systemOrange.withAlphaComponent(0.35) : NSColor.systemOrange.withAlphaComponent(0.3)
     }
 
     static let bracketColor = NSColor(name: "MacsimaBracketMatch") { appearance in

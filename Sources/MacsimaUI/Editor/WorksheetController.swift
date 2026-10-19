@@ -50,8 +50,12 @@ public final class WorksheetController {
     /// Session factory, replaceable in tests.
     var makeSession: (MaximaConfiguration) -> MaximaSession = { MaximaSession(configuration: $0) }
 
+    /// Find and Replace for this window.
+    public let find = FindController()
+
     public init(document: WorksheetDocument) {
         self.document = document
+        find.controller = self
     }
 
     // MARK: - Window registry
@@ -103,6 +107,19 @@ public final class WorksheetController {
     /// controller weakly; the controller owns the views.
     @ObservationIgnored private var editors: [UUID: CellTextView] = [:]
 
+    func forEachEditor(_ body: (UUID, CellTextView) -> Void) {
+        for (id, editor) in editors { body(id, editor) }
+    }
+
+    /// A request to scroll a cell into view, then run `then` (the window acts on it).
+    public private(set) var scrollRequest: (cell: UUID, serial: Int)?
+    @ObservationIgnored var afterScroll: (() -> Void)?
+
+    func scroll(to id: UUID, then: @escaping () -> Void) {
+        afterScroll = then
+        scrollRequest = (id, (scrollRequest?.serial ?? 0) + 1)
+    }
+
     /// The cell's editor if one was made (for the key-script dumps).
     func existingEditor(for id: UUID) -> CellTextView? { editors[id] }
 
@@ -111,7 +128,11 @@ public final class WorksheetController {
         if let editor = editors[id] { return editor }
         let editor = CellTextView()
         editor.string = document.worksheet[id]?.input ?? ""
-        editor.onTextChange = { [weak self] text in self?.document.setInput(id, text) }
+        editor.onTextChange = { [weak self] text in
+            self?.document.setInput(id, text)
+            self?.find.documentChanged()
+        }
+        editor.findMarks = find.marks(for: id)
         editor.undoSource = { [weak self] in self?.undoManager }
         editor.onFocus = { [weak self] in self?.noteFocus(id) }
         editor.onEvaluate = { [weak self] in self?.evaluateAndAdvance(id) }
