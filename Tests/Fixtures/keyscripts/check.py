@@ -127,6 +127,11 @@ elif script == "format-basics":
     check(c3["formats"] == [], "Cmd+Z again undoes the bold: " + str(c3))
     check(text(4)["formats"] == ["italic=0-16", "underline=11-16", "superscript=11-16"],
           "Cmd+A, Cmd+I: all italic; then underlined superscript: " + str(text(4)["formats"]))
+elif script == "checkpoint-b":
+    d = dump("checkpoint-b", 1)
+    kinds = [c["kind"] for c in d["cells"]]
+    check(kinds[:8] == ["code", "code", "code", "text", "section", "code", "section", "image"]
+          and d["cells"][4]["folded"] and d["selectedCells"] == [3, 4], "the checkpoint B worksheet was built: " + str(kinds))
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:

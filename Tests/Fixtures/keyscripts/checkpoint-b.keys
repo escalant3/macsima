@@ -1,0 +1,44 @@
+# Screenshots for checkpoint B (Phase 3, Part B).
+wait 3
+resize 980 1250
+type expand((a+b+c)^4);
+key return shift
+wait 2
+type with_slider(k,[1,2,3,4],sin(k*x),[x,0,%pi]);
+key return shift
+wait 3
+key 1 cmd
+type Part B: long outputs wrap, animations play, sections fold.
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key b cmd
+key 3 cmd
+type Folded section
+key 0 cmd
+type solve(x^2-2=0,x);
+key 3 cmd
+type Images
+insert-image docs/phase2-snapshots/07-greek-sqrt.png
+toggle-fold 4
+wait 2
+scroll-to 0
+wait 1
+shot .build/keyscripts/checkpoint-b-1.png
+click-bar 3
+click-bar 4 shift
+wait 1
+shot .build/keyscripts/checkpoint-b-2.png
+dump .build/keyscripts/checkpoint-b-1.json
+quit

@@ -14,3 +14,16 @@ Window-only captures (`screencapture -l`) taken by the key scripts in `Tests/Fix
 | `06-question-waiting.png` | The answer field on the question's line while Maxima waits | `eval-basics` |
 | `07-zoom-150.png` | A saved worksheet at 150% | `zoom-basics` |
 | `08-close-edited.png` | Closing an edited saved worksheet: Save, Revert Changes, Cancel | `close-saved` |
+
+## Checkpoint B: math output
+
+Before-and-after snapshots of line breaking are in `docs/phase3-snapshots/`.
+
+| File | What it shows | Script |
+| --- | --- | --- |
+| `09-part-b.png` | A long expansion broken into lines, a `with_slider` animation with Play, the slider and the frame number, bold text, a folded section, an image cell | `checkpoint-b` |
+| `10-cells-selected.png` | Two whole cells selected (gutter click, Shift-click), ready for Copy, Cut or Delete | `checkpoint-b` |
+| `11-image-cell.png` | The image cell from wxMaxima's `all-celltypes` sample: caption and JPEG | `kinds-basics` |
+| `12-folded.png` | Two sections folded with Fold All; "3 cells folded" | `folds-basics` |
+| `13-text-formats.png` | Italic text with an underlined superscript (Format menu) | `format-basics` |
+| `14-wxdraw-svg.png` | A `wxdraw2d` plot, then an SVG plot (`wxplot_usesvg:true`) | `plots-basics` |
