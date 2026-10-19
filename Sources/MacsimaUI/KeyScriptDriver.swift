@@ -6,14 +6,16 @@ import SwiftUI
 import WorksheetKit
 
 /// Drives the app from a script of key events, for checking the editor
-/// without Accessibility permission: synthesized NSEvents go through
-/// NSApp.sendEvent, the same path as typing (text views, onKeyPress, menu
-/// key equivalents). Launch with `-MacsimaKeyScript <file>`. Debug builds only.
+/// without Accessibility permission: synthesized NSEvents are posted to the
+/// app's own event queue, the same path as typing (text views, onKeyPress,
+/// menu key equivalents, undo grouping). Launch with `-MacsimaKeyScript <file>`. Debug builds only.
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, or one character), `menu <item title>`,
 /// `wait <seconds>`, `dump <path>` (cells as JSON), `shot <path>` (the key
-/// window), `quit` (discarding changes). `#` starts a comment.
+/// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
+/// (discarding changes). `#` starts a comment. It refuses to run when a
+/// document outside `.build/keyscripts` is open (a restored window, say).
 @MainActor
 enum KeyScriptDriver {
     private static var started = false
@@ -25,6 +27,16 @@ enum KeyScriptDriver {
               let script = try? String(contentsOfFile: path, encoding: .utf8) else { return }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(2))
+            // Never type into the user's own documents (a restored window, say):
+            // only untitled worksheets and files under .build/keyscripts.
+            let foreign = NSDocumentController.shared.documents.compactMap(\.fileURL)
+                .filter { !$0.path.contains("/.build/keyscripts/") }
+            if !foreign.isEmpty {
+                log("refusing to run: open documents outside .build/keyscripts: \(foreign.map(\.path))")
+                for document in NSDocumentController.shared.documents { document.close() }
+                NSApp.terminate(nil)
+                return
+            }
             NSApp.activate()
             documentWindow?.makeKeyAndOrderFront(nil)
             log("app active: \(NSApp.isActive), key window: \(NSApp.keyWindow != nil)")
@@ -79,6 +91,10 @@ enum KeyScriptDriver {
                 try? p.run()
                 p.waitUntilExit()
             }
+        case "undo-state":
+            // Debugging aid: what Cmd+Z would do right now.
+            let undo = NSApp.keyWindow?.undoManager
+            log("undo-state \(rest): level \(undo?.groupingLevel ?? -1), canUndo \(undo?.canUndo ?? false), action \"\(undo?.undoActionName ?? "")\", groupsByEvent \(undo?.groupsByEvent ?? false), same as controller's \(undo === WorksheetController.keyController?.undoManager)")
         case "quit":
             // Discard changes, so no "save changes?" sheet stops the quit.
             NSDocumentController.shared.documents.forEach { $0.updateChangeCount(.changeCleared) }
@@ -116,7 +132,10 @@ enum KeyScriptDriver {
                 windowNumber: window.windowNumber, context: nil, characters: characters,
                 charactersIgnoringModifiers: ignoring, isARepeat: false, keyCode: keyCode) else { continue }
             if NSApp.isActive {
-                NSApp.sendEvent(event)
+                // Through the app's event queue, so every event completes a real
+                // event-loop cycle (AppKit closes undo groups at the end of one;
+                // calling sendEvent directly left typing groups open).
+                NSApp.postEvent(event, atStart: false)
             } else if type == .keyDown, !flags.intersection([.command, .control]).isEmpty,
                       NSApp.mainMenu?.performKeyEquivalent(with: event) == true {
                 continue
