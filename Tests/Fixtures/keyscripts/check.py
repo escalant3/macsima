@@ -153,6 +153,9 @@ elif script == "close-saved":
     check("<line>Before the break</line>" in content and "breakx" not in content,
           "Revert Changes closes the window and leaves the file as it was saved")
     check(procs(2) == [], f"and shuts that window's Maxima down: {procs(2)}")
+elif script == "appearance":
+    c = dump("appearance", 1)["cells"]
+    check(len(c[0]["outputs"]) == 1 and c[1]["outputs"][1].startswith("error"), "the outputs arrived")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

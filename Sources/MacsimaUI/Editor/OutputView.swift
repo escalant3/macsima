@@ -50,6 +50,7 @@ struct MessageText: View {
     let text: String
     let isError: Bool
     @State private var showsExplanation = false
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         let explanation = MessageExplanations.explanation(for: text)
@@ -61,7 +62,8 @@ struct MessageText: View {
                 .padding(.horizontal, explanation == nil ? 0 : 3)
                 .background {
                     if explanation != nil {
-                        RoundedRectangle(cornerRadius: 3).fill(Color.yellow.opacity(0.28))
+                        // Lighter on dark backgrounds, where a strong yellow turns the red text muddy.
+                        RoundedRectangle(cornerRadius: 3).fill(Color.yellow.opacity(scheme == .dark ? 0.14 : 0.28))
                     }
                 }
                 .help(explanation ?? "")

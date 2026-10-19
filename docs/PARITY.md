@@ -31,7 +31,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 | Box labels (`boxname`) | Shows the label | The box shows, the label doesn't | partial | 3 |
 | Plot resolution | Uses `ppi` to show plots sharp | pngcairo plots are 600×450 at 1×, slightly soft on Retina; `ppi` is kept but not applied | partial | 3 |
 | Matrix brackets | `bracketParens`, `angledParens`, `straightParens`, `noneParens`, round by default | All of them | done | |
-| Dark mode | Configurable colours | The math images follow the system appearance; the editor uses system colours. Not tested beyond two snapshots. | partial | 3 |
+| Dark mode | Configurable colours | Follows the system appearance: editor, syntax colours, bracket, find and error marks, the explanation marker, and the math images, which re-render when the appearance changes (the `appearance` key script, light and dark screenshots; Phase 3 step 5). Colours are not configurable | done | colour settings: later |
 | Line breaking of long outputs | Breaks long expressions over lines | No line breaking: a long output is one wide image that runs past the window's edge (no sideways scrolling yet) | missing | 3 |
 | Zoom | Saved in the file, applied | Kept and saved back, not applied | missing | 3 |
 | Cursor position (`activecell`) | Saved and restored | Kept from the file, not updated | partial | 3 |

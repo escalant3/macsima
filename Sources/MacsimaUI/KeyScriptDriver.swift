@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -123,6 +123,10 @@ enum KeyScriptDriver {
                     && !$0.contains("/bin/ps")
             }
             try? lines.joined(separator: "\n").write(toFile: rest, atomically: true, encoding: .utf8)
+        case "appearance":
+            // dark, light, or system (the user's setting).
+            NSApp.appearance = rest == "dark" ? NSAppearance(named: .darkAqua)
+                : rest == "light" ? NSAppearance(named: .aqua) : nil
         case "find-replacement":
             // The replacement field's text (typing goes to the query field).
             WorksheetController.keyController?.find.replacement = rest

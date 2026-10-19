@@ -1,0 +1,25 @@
+# Dark mode (Phase 3, step 5): the same worksheet in light and dark, for
+# screenshots. Checked by eye; the dump only confirms the outputs arrived.
+wait 3
+appearance light
+type /* syntax */ f(x):=x^2+sin(x)$ integrate(f(x),x);
+key return shift
+type matrix([1,x],[y^2,sqrt(2)]); 1/0;
+key return shift
+type asksign(z);
+key return shift
+wait 2
+type pos
+key return
+key 1 cmd
+type A text cell.
+key 2 cmd
+type A title
+wait 3
+shot .build/keyscripts/appearance-light.png
+appearance dark
+wait 3
+shot .build/keyscripts/appearance-dark.png
+dump .build/keyscripts/appearance-1.json
+appearance system
+quit
