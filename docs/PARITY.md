@@ -1,6 +1,6 @@
 # Feature parity with wxMaxima
 
-Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18). The first table follows the "What the GUI owns" table in `docs/BOOTSTRAP.md`, row by row. The second lists what turned up along the way. Status is done, partial or missing. Phase is where the gap belongs, following BOOTSTRAP.md's MVP column and roadmap. File-format details are in `docs/WXMX_COMPAT.md`.
+Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated during Phase 3. The first table follows the "What the GUI owns" table in `docs/BOOTSTRAP.md`, row by row. The second lists what turned up along the way. Status is done, partial or missing. Phase is where the gap belongs, following BOOTSTRAP.md's MVP column and roadmap. File-format details are in `docs/WXMX_COMPAT.md`.
 
 ## The GUI table from BOOTSTRAP.md
 
@@ -41,6 +41,10 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18). The first tab
 | Error marker | Marks an error line in yellow (seen on the first error of 03-errors; the cause is not yet traced in wxMaxima's source) | Error text in red, no marker | partial | 3 |
 | Input labels after opening a file | No `(%iN)` until the cell is evaluated again | Guesses `(%iN)` from the first output label; can be wrong after a syntax error. Should match wxMaxima | partial | 3 |
 | Syntax highlighting in code cells | Yes | Comments, strings, numbers, keywords, Lisp symbols and `:lisp` lines, terminators, and built-ins from `<wxxml-symbols>` (Phase 3 step 3). Single-letter names in that list (`x`, `a`, `t`, ...) are interned by Maxima's own code, so they stay plain | done | |
+| Matching brackets | Highlights the partner of the bracket at the cursor | The bracket next to the caret and its partner get a background; brackets in strings and comments don't count (Phase 3 step 3) | done | |
+| Auto-indent | Indents continuation lines | Return keeps the indentation, one level deeper after an open bracket; a closing bracket on an empty line takes a level off (Phase 3 step 3) | done | |
+| Comment out a selection | Wraps the selection in `/* */` | Cmd+/ wraps the touched lines in one `/* */`, or unwraps them (Phase 3 step 3) | done | |
+| Find and Replace | Across the worksheet | Across every cell's input, with match case, Replace and Replace All (one undo step); outputs are not searched (Phase 3 step 3) | done | |
 | Moving between cells with the arrow keys | Up and Down move the cursor through inputs and outputs, across cells | Up on a cell's first line and Down on its last move to the neighbouring cell with an editor, in the same column (Phase 3 step 3). Outputs are skipped: they can't take the focus | partial | outputs: 3 (with cross-cell selection, step 7) |
 | After Shift+Return | The cursor moves to the next cell, or to a new cell at the end | The same (a Phase 2 follow-up, 2026-10-19) | done | |
 | Starting the app | Opens an untitled worksheet | The same; untitled worksheets are saved later with Cmd+S (a Phase 2 follow-up, 2026-10-19) | done | |
