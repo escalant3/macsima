@@ -34,16 +34,19 @@ struct OutputView: View {
                 ImageOutputView(image: image, label: label)
             }
         case .question(let prompt, let answer):
-            VStack(alignment: .leading, spacing: 2) {
+            // The answer follows the question on its line, as in wxMaxima.
+            HStack(alignment: .center, spacing: 8) {
                 MathOutputItem(xml: prompt)
+                    .fixedSize(horizontal: true, vertical: false)
                 if let answer {
                     Text(answer)
                         .font(.system(size: 14, design: .monospaced))
-                        .padding(.leading, outputIndent)
+                        .textSelection(.enabled)
                 } else if let cellID {
                     AnswerField(cellID: cellID)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
@@ -116,7 +119,6 @@ struct AnswerField: View {
                 .textFieldStyle(.roundedBorder)
                 .font(.system(size: 14, design: .monospaced))
                 .frame(maxWidth: 320)
-                .padding(.leading, outputIndent)
                 .focused($focused)
                 .onSubmit { controller.answer(text, for: cellID) }
                 .onAppear { focused = true }

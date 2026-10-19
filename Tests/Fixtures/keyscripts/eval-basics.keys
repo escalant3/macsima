@@ -13,6 +13,7 @@ wait 2
 type asksign(y);
 key return shift
 wait 2
+shot .build/keyscripts/eval-question.png
 type pos
 key return
 wait 2

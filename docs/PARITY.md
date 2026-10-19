@@ -37,7 +37,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 | Cursor position (`activecell`) | Saved and restored | Kept from the file, not updated | partial | 3 |
 | Real keystrokes | | XCUITest target (`Tests/UITests/`, Phase 3 step 1) types real keys: Shift+Return, Cmd+1, Cmd+Z, Cmd+Shift+Delete. The key-script driver still posts synthesized events for the longer scripts. | done | |
 | `.wxmx` timestamps | Local time | ZIPFoundation writes them two hours off here; harmless | partial | later |
-| Answer layout | The answer follows the question on the same line | The answer is on its own line below the question (seen by opening 04-question in both apps) | partial | 3 |
+| Answer layout | The answer follows the question on the same line | The same: the answer, or the field while Maxima waits, follows the question on its line (Phase 3 step 4) | done | |
 | Error marker | Marks an error line in yellow (seen on the first error of 03-errors; the cause is not yet traced in wxMaxima's source) | Error text in red, no marker | partial | 3 |
 | Input labels after opening a file | No `(%iN)` until the cell is evaluated again | Guesses `(%iN)` from the first output label; can be wrong after a syntax error. Should match wxMaxima | partial | 3 |
 | Syntax highlighting in code cells | Yes | Comments, strings, numbers, keywords, Lisp symbols and `:lisp` lines, terminators, and built-ins from `<wxxml-symbols>` (Phase 3 step 3). Single-letter names in that list (`x`, `a`, `t`, ...) are interned by Maxima's own code, so they stay plain | done | |
