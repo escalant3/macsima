@@ -7,7 +7,10 @@ import WorksheetKit
 /// code, Ctrl+1 text, Ctrl+2 title, Ctrl+3 section, Ctrl+4 subsection),
 /// with Command in place of Control.
 struct WorksheetCommands: Commands {
-    @FocusedValue(WorksheetController.self) private var controller
+    @FocusedValue(WorksheetController.self) private var focusedController
+    /// The focused scene's controller. SwiftUI sometimes has no focused value
+    /// while an AppKit text view is first responder; then the window used last.
+    private var controller: WorksheetController? { focusedController ?? WorksheetController.keyController }
 
     var body: some Commands {
         CommandMenu("Cell") {

@@ -47,6 +47,7 @@ struct WorksheetWindow: View {
         }
         .background {
             WindowReader { window in
+                controller.window = window
                 controller.markEdited = { [weak window] in
                     (window?.windowController?.document as? NSDocument)?.updateChangeCount(.changeDone)
                 }

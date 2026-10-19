@@ -66,8 +66,14 @@ public final class WorksheetController {
         Self.live.append(WeakController(controller: self))
     }
 
-    /// The controller of the window used last.
-    static var keyController: WorksheetController? { live.last(where: { $0.controller != nil })?.controller }
+    /// The window showing this worksheet, once it is on screen.
+    @ObservationIgnored weak var window: NSWindow?
+
+    /// The controller of the key window, else of the window used last.
+    static var keyController: WorksheetController? {
+        let controllers = all
+        return controllers.first { $0.window != nil && $0.window === NSApp.keyWindow } ?? controllers.last
+    }
 
     /// Every open window's controller.
     static var all: [WorksheetController] { live.compactMap(\.controller) }
