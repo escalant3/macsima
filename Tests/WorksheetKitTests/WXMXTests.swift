@@ -33,7 +33,7 @@ func richWorksheet() -> Worksheet {
             .question(prompt: XMLTree.canonical("<math><st>Is </st><mi>y</mi><st> positive?</st></math>"), answer: "pos;"),
             .question(prompt: XMLTree.canonical("<math><st>Is </st><mi>z</mi><st> zero?</st></math>"), answer: nil),
             .math(xml: XMLTree.canonical(#"<math><lbl altCopy="%o4">(%o4) </lbl><tb bracketParens="true"><mtr><mtd><mn>1</mn></mtd></mtr></tb></math>"#)),
-        ], inputLabel: 1),
+        ]),
         Cell(kind: .code, input: ""),
         Cell(kind: .pageBreak),
         Cell(kind: .raw, preserved: [#"<cell type="image"><editor type="text"><line>caption</line></editor><img>kept.png</img></cell>"#]),
@@ -111,7 +111,8 @@ struct WXMXReadingTests {
         #expect(result.worksheet.attachments.isEmpty, "the image is used by the output, not an attachment")
         #expect(cells.allSatisfy { $0.extraAttributes.isEmpty }, "\(cells.map(\.extraAttributes))")
         #expect(Array(result.worksheet.extraAttributes.keys) == ["activecell"])
-        #expect(cells[5].inputLabel == 1 && cells[6].inputLabel == 3, "input labels come from the output labels")
+        // .wxmx keeps no input labels; like wxMaxima, none show until the cell is evaluated again.
+        #expect(cells.allSatisfy { $0.inputLabel == nil })
         // Saving and reading again keeps everything.
         let again = try WXMXReader.read(try WXMXWriter.write(result.worksheet)).worksheet
         #expect(again == result.worksheet)

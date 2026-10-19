@@ -139,30 +139,7 @@ private struct Reader {
             }
         }
         cell.extraAttributes = attributes
-        cell.inputLabel = Self.inputLabel(cell.outputs)
         return cell
-    }
-
-    /// .wxmx keeps no input label; the first output label (%oN or %tN) tells it.
-    static func inputLabel(_ outputs: [Output]) -> Int? {
-        for output in outputs {
-            switch output {
-            case .image(_, _, let label?, _):
-                return number(in: label)
-            case .math(let xml):
-                if let r = xml.range(of: #"altCopy="\(?%[ot]\d+"#, options: .regularExpression) {
-                    return number(in: String(xml[r]))
-                }
-            default:
-                continue
-            }
-        }
-        return nil
-    }
-
-    /// The digits at the end of `%o12`-like text.
-    static func number(in text: String) -> Int? {
-        Int(String(text.reversed().prefix { $0.isNumber }.reversed()))
     }
 
     mutating func raw(_ node: XMLTreeNode, id: UUID, why: String) -> Cell {

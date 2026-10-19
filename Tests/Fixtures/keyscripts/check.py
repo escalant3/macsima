@@ -75,6 +75,8 @@ elif script == "advance-existing":
     def focused(n):
         return [i for i, c in enumerate(dump("advance-existing", n)["cells"]) if c["focused"]]
     check(focused(1) == [1], "from the first heading, Shift+Return moves to the next cell (1+1;)")
+    check(all(c["label"] == -1 for c in dump("advance-existing", 1)["cells"]),
+          "after opening a file no input labels show, as in wxMaxima")
     c2 = dump("advance-existing", 2)["cells"]
     check(focused(2) == [3], "evaluating 1+1; skips the page break and moves to the next heading")
     check(c2[1]["outputs"] == ["math %o1 2"], "1+1; was evaluated")
