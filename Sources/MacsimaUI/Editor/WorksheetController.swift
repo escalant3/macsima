@@ -88,7 +88,7 @@ public final class WorksheetController {
     /// lazy cell not created yet takes it when it arrives.
     public func focus(_ id: UUID, caret place: CaretPlace) {
         caretRequest = CaretRequest(cell: id, place: place, serial: (caretRequest?.serial ?? 0) + 1)
-        if let editor = editors[id]?.view, let window = editor.window {
+        if let editor = editors[id], let window = editor.window {
             editor.pendingCaret = place
             window.makeFirstResponder(editor)   // records the focus through noteFocus
             editor.applyPendingCaret()
@@ -96,13 +96,28 @@ public final class WorksheetController {
         if focusedCell == id { requestFocus() } else { focusedCell = id }
     }
 
-    /// The editors on screen, by cell (registered by CellEditor).
-    @ObservationIgnored private var editors: [UUID: WeakEditor] = [:]
-    private struct WeakEditor { weak var view: CellTextView? }
+    /// Each cell's editor, kept for the document's lifetime. The lazy stack
+    /// drops views that scroll away; a text view made anew would lose its
+    /// undo actions, and undoing them would edit an orphaned text storage
+    /// (Phase 3: undo after scrolling did nothing). Callbacks hold the
+    /// controller weakly; the controller owns the views.
+    @ObservationIgnored private var editors: [UUID: CellTextView] = [:]
 
-    func register(_ editor: CellTextView, for id: UUID) {
-        if editors.count > 200 { editors = editors.filter { $0.value.view != nil } }
-        editors[id] = WeakEditor(view: editor)
+    /// The cell's editor if one was made (for the key-script dumps).
+    func existingEditor(for id: UUID) -> CellTextView? { editors[id] }
+
+    /// The cell's editor, made on first use.
+    func editor(for id: UUID) -> CellTextView {
+        if let editor = editors[id] { return editor }
+        let editor = CellTextView()
+        editor.string = document.worksheet[id]?.input ?? ""
+        editor.onTextChange = { [weak self] text in self?.document.setInput(id, text) }
+        editor.undoSource = { [weak self] in self?.undoManager }
+        editor.onFocus = { [weak self] in self?.noteFocus(id) }
+        editor.onEvaluate = { [weak self] in self?.evaluateAndAdvance(id) }
+        editor.onLeave = { [weak self] up, x in self?.leave(id, up: up, x: x) ?? false }
+        editors[id] = editor
+        return editor
     }
 
     /// Up from a cell's first line, or Down from its last: the previous or

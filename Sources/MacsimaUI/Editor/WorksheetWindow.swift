@@ -23,14 +23,10 @@ struct WorksheetWindow: View {
                         CellView(
                             cell: cell,
                             index: index,
-                            text: Binding(get: { cell.input }, set: { document.setInput(cell.id, $0) }),
                             isFocused: controller.focusedCell == cell.id,
                             focusRequest: controller.focusRequest,
                             caretRequest: controller.caretRequest,
-                            onFocus: { controller.noteFocus(cell.id) },
-                            onEvaluate: { controller.evaluateAndAdvance(cell.id) },
-                            onLeave: { up, x in controller.leave(cell.id, up: up, x: x) },
-                            register: { controller.register($0, for: cell.id) }
+                            makeEditor: { controller.editor(for: cell.id) }
                         )
                         .id(cell.id)
                     }

@@ -1,0 +1,192 @@
+# Undo of typing in a cell that scrolled out of view and back (lazy stack).
+wait 2
+type 1+1;
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+key 0 cmd
+type last
+dump .build/keyscripts/undo-scroll-1.json
+shot .build/keyscripts/undo-scroll-1.png
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+key up
+type abc
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+key down
+wait 1
+key z cmd
+wait 1
+dump .build/keyscripts/undo-scroll-2.json
+quit

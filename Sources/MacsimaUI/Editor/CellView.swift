@@ -15,14 +15,10 @@ struct CellView: View {
     let cell: Cell
     /// The cell's position, for accessibility identifiers (`cell-input-N`).
     let index: Int
-    @Binding var text: String
     let isFocused: Bool
     let focusRequest: Int
     let caretRequest: CaretRequest?
-    let onFocus: () -> Void
-    let onEvaluate: () -> Void
-    let onLeave: (_ up: Bool, _ x: CGFloat) -> Bool
-    let register: (CellTextView) -> Void
+    let makeEditor: () -> CellTextView
 
     var body: some View {
         switch cell.kind {
@@ -44,10 +40,9 @@ struct CellView: View {
                     .foregroundStyle(.secondary)
                     .frame(width: gutterWidth, alignment: .trailing)
                     .padding(.top, Self.gutterOffset(for: cell.kind))
-                CellEditor(text: $text, kind: cell.kind, accessibilityID: "cell-input-\(index)",
+                CellEditor(text: cell.input, kind: cell.kind, accessibilityID: "cell-input-\(index)",
                            isFocused: isFocused, focusRequest: focusRequest,
-                           caretRequest: caretRequest, cellID: cell.id,
-                           onFocus: onFocus, onEvaluate: onEvaluate, onLeave: onLeave, register: register)
+                           caretRequest: caretRequest, cellID: cell.id, makeView: makeEditor)
             }
             .padding(.vertical, 3)
             .padding(.trailing, 6)

@@ -161,7 +161,9 @@ enum KeyScriptDriver {
         guard let controller = WorksheetController.keyController else { log("no controller"); return }
         let cells = controller.document.worksheet.cells.map { cell -> [String: Any] in
             ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.map(describe),
-             "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell]
+             "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell,
+             "editorText": controller.existingEditor(for: cell.id)?.string ?? NSNull(),
+             "inWindow": controller.existingEditor(for: cell.id)?.window != nil]
         }
         var info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]

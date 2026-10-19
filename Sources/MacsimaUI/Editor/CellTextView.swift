@@ -21,6 +21,13 @@ final class CellTextView: NSTextView {
     var onLeave: ((_ up: Bool, _ x: CGFloat) -> Bool)?
     /// Where to put the caret once the focus arrives (a caret request).
     var pendingCaret: CaretPlace?
+    /// Every change to the text (typing, undo, Replace, sync): writes the model.
+    var onTextChange: ((String) -> Void)?
+    /// The document's undo manager, also while the view is off screen.
+    var undoSource: (() -> UndoManager?)?
+    /// The last focus and caret requests this view acted on.
+    var seenFocusRequest: Int?
+    var seenCaretRequest: Int?
     /// Colours the text as Maxima code (code cells only).
     var highlightsSyntax = false {
         didSet { if highlightsSyntax != oldValue { rehighlight() } }
@@ -53,6 +60,20 @@ final class CellTextView: NSTextView {
         smartInsertDeleteEnabled = false
         NotificationCenter.default.addObserver(self, selector: #selector(symbolsChanged),
                                                name: MaximaSymbols.didChange, object: nil)
+        // Every change to the characters, typing or not: undo and redo
+        // change the storage without calling didChangeText.
+        NotificationCenter.default.addObserver(self, selector: #selector(storageEdited(_:)),
+                                               name: NSTextStorage.didProcessEditingNotification, object: textStorage)
+    }
+
+    @objc private func storageEdited(_ notification: Notification) {
+        guard let storage = textStorage, storage.editedMask.contains(.editedCharacters) else { return }
+        onTextChange?(storage.string)
+        // After the edit is done: the layout follows the storage.
+        DispatchQueue.main.async { [weak self] in
+            self?.rehighlight()
+            self?.invalidateIntrinsicContentSize()
+        }
     }
 
     @objc private func symbolsChanged() { rehighlight() }
@@ -102,6 +123,28 @@ final class CellTextView: NSTextView {
     override func didChangeText() {
         super.didChangeText()
         rehighlight()
+        invalidateIntrinsicContentSize()
+    }
+
+    override var undoManager: UndoManager? { undoSource?() ?? super.undoManager }
+
+    /// Takes the model's text when it changed without this view (a file
+    /// revert, say). The view's own undo actions no longer fit the text, so
+    /// they go: undoing them would garble it.
+    func sync(_ text: String) {
+        guard string != text, !hasMarkedText() else { return }
+        if let storage = textStorage { undoManager?.removeAllActions(withTarget: storage) }
+        string = text
+        rehighlight()
+        invalidateIntrinsicContentSize()
+    }
+
+    /// Replaces `range` the way typing does, so it is undone the same way.
+    func replace(_ range: NSRange, with text: String) {
+        guard NSMaxRange(range) <= (string as NSString).length,
+              shouldChangeText(in: range, replacementString: text) else { return }
+        textStorage?.replaceCharacters(in: range, with: text)
+        didChangeText()
     }
 
     @available(*, unavailable)
@@ -211,9 +254,12 @@ final class CellTextView: NSTextView {
     }
 }
 
-/// Hosts a CellTextView in SwiftUI, bound to the cell's input.
+/// Hosts a cell's CellTextView in SwiftUI. The view itself comes from the
+/// controller, which keeps one per cell for the document's lifetime (see
+/// `WorksheetController.editor(for:)`), and writes typing into the model.
 struct CellEditor: NSViewRepresentable {
-    @Binding var text: String
+    /// The cell's input in the model, to catch changes made elsewhere.
+    let text: String
     let kind: CellKind
     let accessibilityID: String
     /// This cell is the controller's focused cell.
@@ -223,49 +269,34 @@ struct CellEditor: NSViewRepresentable {
     /// The controller's latest caret request, applied once if it is for this cell.
     let caretRequest: CaretRequest?
     let cellID: UUID
-    let onFocus: () -> Void
-    let onEvaluate: () -> Void
-    let onLeave: (_ up: Bool, _ x: CGFloat) -> Bool
-    /// Tells the controller this cell's editor exists.
-    let register: (CellTextView) -> Void
+    /// The cell's editor, kept by the controller.
+    let makeView: () -> CellTextView
 
     func makeNSView(context: Context) -> CellTextView {
-        let view = CellTextView()
-        view.delegate = context.coordinator
-        view.string = text
-        apply(to: view, context: context)
-        view.rehighlight()
+        let view = makeView()
+        update(view)
         return view
     }
 
     func updateNSView(_ view: CellTextView, context: Context) {
-        context.coordinator.parent = self
-        // Only when the model changed underneath (undo of a structural edit,
-        // Replace): typing already wrote the same text into the model.
-        if view.string != text, !view.hasMarkedText() {
-            view.string = text
-            view.rehighlight()
-            view.invalidateIntrinsicContentSize()
-        }
-        apply(to: view, context: context)
+        update(view)
     }
 
-    private func apply(to view: CellTextView, context: Context) {
+    private func update(_ view: CellTextView) {
+        view.sync(text)
         let font = Self.font(for: kind)
         if view.font != font { view.font = font }
         view.highlightsSyntax = kind == .code
         view.setAccessibilityIdentifier(accessibilityID)
-        view.onFocus = onFocus
-        view.onEvaluate = onEvaluate
-        view.onLeave = onLeave
-        register(view)
-        if let request = caretRequest, request.cell == cellID, context.coordinator.caretRequest != request.serial {
-            context.coordinator.caretRequest = request.serial
+        // The view outlives this representable, so it remembers which
+        // requests it has seen: a cell scrolled back into view doesn't redo them.
+        if let request = caretRequest, request.cell == cellID, view.seenCaretRequest != request.serial {
+            view.seenCaretRequest = request.serial
             view.pendingCaret = request.place
             if view.window?.firstResponder === view { DispatchQueue.main.async { view.applyPendingCaret() } }
         }
-        if context.coordinator.focusRequest != focusRequest {
-            context.coordinator.focusRequest = focusRequest
+        if view.seenFocusRequest != focusRequest {
+            view.seenFocusRequest = focusRequest
             if isFocused {
                 view.wantsFocus = true
                 // After this update: SwiftUI may still be moving views about.
@@ -278,25 +309,6 @@ struct CellEditor: NSViewRepresentable {
         var width = proposal.width ?? nsView.frame.width
         if !width.isFinite || width <= 0 { width = 400 }
         return CGSize(width: width, height: nsView.height(forWidth: width))
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
-
-    @MainActor
-    final class Coordinator: NSObject, NSTextViewDelegate {
-        var parent: CellEditor
-        /// The focus request this editor has seen; nil before the first update.
-        var focusRequest: Int?
-        /// The caret request this editor has applied.
-        var caretRequest: Int?
-
-        init(parent: CellEditor) { self.parent = parent }
-
-        func textDidChange(_ notification: Notification) {
-            guard let view = notification.object as? CellTextView else { return }
-            if parent.text != view.string { parent.text = view.string }
-            view.invalidateIntrinsicContentSize()
-        }
     }
 
     static func font(for kind: CellKind) -> NSFont {

@@ -97,6 +97,12 @@ elif script == "editor-syntax":
     check(at(7) == ([1], [12, 0]), f"Down in the last cell moves to its end: {at(7)}")
     check(at(8) == ([2], [2, 0]), f"Up from a second line stays in the cell: {at(8)}")
     check(at(9) == ([1], [2, 0]), f"then Up leaves for the cell above: {at(9)}")
+elif script == "undo-scroll":
+    c1 = dump("undo-scroll", 1)["cells"]
+    check(len(c1) == 61 and c1[60]["input"] == "last", f"61 cells, typing in the last: {len(c1)}")
+    c2 = dump("undo-scroll", 2)["cells"]
+    check(c2[0]["input"] == "1+1;" and c2[60]["focused"],
+          f"Cmd+Z in the last cell undoes the typing in the first, which scrolled away: {c2[0]['input']!r}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")
