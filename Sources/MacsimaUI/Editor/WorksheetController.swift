@@ -178,6 +178,12 @@ public final class WorksheetController {
         focusedCell = cells.isEmpty ? nil : cells[min(index, cells.count - 1)].id
     }
 
+    /// Cmd+/ in the focused code cell.
+    public func toggleComment() {
+        guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return }
+        editor(for: id).toggleComment()
+    }
+
     public func setFocusedKind(_ kind: CellKind) {
         guard let id = focusedCell else { return }
         document.setKind(id, kind, undo: undoManager)

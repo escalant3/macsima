@@ -32,7 +32,7 @@ key up
 dump .build/keyscripts/editor-syntax-8.json
 key up
 dump .build/keyscripts/editor-syntax-9.json
-# Auto-indent (3f), in a new code cell.
+# Auto-indent (3f) and Cmd+/ (3g), in a new code cell.
 key 0 cmd
 type f(x):=block([a],
 key return
@@ -42,4 +42,10 @@ type a^2
 key return
 type )$
 dump .build/keyscripts/editor-syntax-10.json
+key / cmd
+dump .build/keyscripts/editor-syntax-11.json
+key / cmd
+dump .build/keyscripts/editor-syntax-12.json
+key z cmd
+dump .build/keyscripts/editor-syntax-13.json
 quit

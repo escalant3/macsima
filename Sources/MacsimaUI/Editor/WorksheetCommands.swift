@@ -31,6 +31,9 @@ struct WorksheetCommands: Commands {
             Button("Insert Subsection Cell") { controller?.insertCell(.subsection) }
                 .keyboardShortcut("4", modifiers: .command)
             Divider()
+            Button("Comment or Uncomment") { controller?.toggleComment() }
+                .keyboardShortcut("/", modifiers: .command)
+                .disabled(controller?.focusedCell == nil)
             Menu("Change Cell Type") {
                 ForEach([CellKind.code, .text, .title, .section, .subsection], id: \.self) { kind in
                     Button(kind.displayName) { controller?.setFocusedKind(kind) }

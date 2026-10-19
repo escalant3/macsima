@@ -286,6 +286,16 @@ final class CellTextView: NSTextView {
         super.insertText(text, replacementRange: replacementRange)
     }
 
+    /// Cmd+/: comments out the selected lines, or uncomments them.
+    func toggleComment() {
+        guard highlightsSyntax else { return }
+        let edit = MaximaEditing.toggleComment(in: string, selection: selectedRange())
+        breakUndoCoalescing()
+        replace(edit.range, with: edit.text)
+        undoManager?.setActionName("Comment")
+        setSelectedRange(edit.selection)
+    }
+
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         if event.keyCode == 36 || event.keyCode == 76, flags == .shift {   // Return, keypad Enter

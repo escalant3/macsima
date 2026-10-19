@@ -27,4 +27,35 @@ public enum MaximaEditing {
         guard !line.isEmpty, line.allSatisfy({ $0 == " " }), line.count >= indentUnit.count else { return nil }
         return String(line.dropLast(indentUnit.count))
     }
+
+    /// Cmd+/: comments out the lines the selection touches (the caret's line
+    /// when nothing is selected) as one `/* ... */`, or removes that comment
+    /// when the lines already are one. Returns the range to replace, its new
+    /// text, and the selection afterwards.
+    public static func toggleComment(in text: String, selection: NSRange) -> (range: NSRange, text: String, selection: NSRange) {
+        let ns = text as NSString
+        var lines = ns.lineRange(for: selection)
+        // The newline that ends the last line stays outside the comment, and
+        // a selection ending at the start of a line doesn't take that line.
+        if selection.length > 0, NSMaxRange(selection) > lines.location,
+           ns.length >= NSMaxRange(selection), NSMaxRange(selection) > 0,
+           ns.character(at: NSMaxRange(selection) - 1) == 10, NSMaxRange(selection) < NSMaxRange(lines) {
+            lines = ns.lineRange(for: NSRange(location: selection.location, length: selection.length - 1))
+        }
+        if lines.length > 0, ns.character(at: NSMaxRange(lines) - 1) == 10 { lines.length -= 1 }
+        let block = ns.substring(with: lines)
+        let trimmed = block.trimmingCharacters(in: .whitespaces)
+        let new: String
+        if trimmed.hasPrefix("/*"), trimmed.hasSuffix("*/"), trimmed.count >= 4 {
+            let lead = String(block.prefix { $0 == " " || $0 == "\t" })
+            var inner = String(trimmed.dropFirst(2).dropLast(2))
+            if inner.hasPrefix(" ") { inner.removeFirst() }
+            if inner.hasSuffix(" ") { inner.removeLast() }
+            new = lead + inner
+        } else {
+            let lead = String(block.prefix { $0 == " " || $0 == "\t" })
+            new = lead + "/* " + block.dropFirst(lead.count) + " */"
+        }
+        return (lines, new, NSRange(location: lines.location, length: (new as NSString).length))
+    }
 }

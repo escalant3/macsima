@@ -100,6 +100,9 @@ elif script == "editor-syntax":
     code = lambda n: [c["input"] for c in dump("editor-syntax", n)["cells"] if c["focused"]][0]
     block = "f(x):=block([a],\n  a:x,\n  a^2\n)$"
     check(code(10) == block, f"Return indents after an open bracket and keeps it; ) takes it off: {code(10)!r}")
+    check(code(11) == "f(x):=block([a],\n  a:x,\n  a^2\n/* )$ */", f"Cmd+/ comments the caret's line: {code(11)!r}")
+    check(code(12) == block, f"Cmd+/ again uncomments it: {code(12)!r}")
+    check(code(13) == "f(x):=block([a],\n  a:x,\n  a^2\n/* )$ */", f"Cmd+Z undoes the uncomment: {code(13)!r}")
 elif script == "undo-scroll":
     c1 = dump("undo-scroll", 1)["cells"]
     check(len(c1) == 61 and c1[60]["input"] == "last", f"61 cells, typing in the last: {len(c1)}")
