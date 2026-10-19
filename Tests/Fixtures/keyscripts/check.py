@@ -97,6 +97,9 @@ elif script == "editor-syntax":
     check(at(7) == ([1], [12, 0]), f"Down in the last cell moves to its end: {at(7)}")
     check(at(8) == ([2], [2, 0]), f"Up from a second line stays in the cell: {at(8)}")
     check(at(9) == ([1], [2, 0]), f"then Up leaves for the cell above: {at(9)}")
+    code = lambda n: [c["input"] for c in dump("editor-syntax", n)["cells"] if c["focused"]][0]
+    block = "f(x):=block([a],\n  a:x,\n  a^2\n)$"
+    check(code(10) == block, f"Return indents after an open bracket and keeps it; ) takes it off: {code(10)!r}")
 elif script == "undo-scroll":
     c1 = dump("undo-scroll", 1)["cells"]
     check(len(c1) == 61 and c1[60]["input"] == "last", f"61 cells, typing in the last: {len(c1)}")

@@ -256,6 +256,36 @@ final class CellTextView: NSTextView {
         return onLeave(up, caret.minX)
     }
 
+    // MARK: - Indentation and comments (code cells)
+
+    /// The current line from its start up to the caret.
+    private var lineBeforeCaret: (range: NSRange, text: String) {
+        let ns = string as NSString
+        let caret = selectedRange().location
+        let start = ns.lineRange(for: NSRange(location: caret, length: 0)).location
+        let range = NSRange(location: start, length: caret - start)
+        return (range, ns.substring(with: range))
+    }
+
+    /// Return keeps the line's indentation, one level deeper after an open bracket.
+    override func insertNewline(_ sender: Any?) {
+        guard highlightsSyntax else { return super.insertNewline(sender) }
+        let indent = MaximaEditing.indentAfterNewline(line: lineBeforeCaret.text)
+        insertText("\n" + indent, replacementRange: selectedRange())
+    }
+
+    /// A closing bracket typed on a line of only indentation takes one level off.
+    override func insertText(_ text: Any, replacementRange: NSRange) {
+        if highlightsSyntax, let typed = text as? String, [")", "]", "}"].contains(typed),
+           selectedRange().length == 0, replacementRange.location == NSNotFound {
+            let line = lineBeforeCaret
+            if let indent = MaximaEditing.indentBeforeClosing(line: line.text) {
+                return super.insertText(indent + typed, replacementRange: line.range)
+            }
+        }
+        super.insertText(text, replacementRange: replacementRange)
+    }
+
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         if event.keyCode == 36 || event.keyCode == 76, flags == .shift {   // Return, keypad Enter
