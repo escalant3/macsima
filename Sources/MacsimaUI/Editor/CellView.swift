@@ -18,8 +18,11 @@ struct CellView: View {
     @Binding var text: String
     let isFocused: Bool
     let focusRequest: Int
+    let caretRequest: CaretRequest?
     let onFocus: () -> Void
     let onEvaluate: () -> Void
+    let onLeave: (_ up: Bool, _ x: CGFloat) -> Bool
+    let register: (CellTextView) -> Void
 
     var body: some View {
         switch cell.kind {
@@ -43,7 +46,8 @@ struct CellView: View {
                     .padding(.top, Self.gutterOffset(for: cell.kind))
                 CellEditor(text: $text, kind: cell.kind, accessibilityID: "cell-input-\(index)",
                            isFocused: isFocused, focusRequest: focusRequest,
-                           onFocus: onFocus, onEvaluate: onEvaluate)
+                           caretRequest: caretRequest, cellID: cell.id,
+                           onFocus: onFocus, onEvaluate: onEvaluate, onLeave: onLeave, register: register)
             }
             .padding(.vertical, 3)
             .padding(.trailing, 6)

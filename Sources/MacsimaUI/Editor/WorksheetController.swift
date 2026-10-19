@@ -80,6 +80,43 @@ public final class WorksheetController {
 
     // MARK: - Cells
 
+    /// Where the caret goes in the cell that gets the focus next.
+    public private(set) var caretRequest: CaretRequest?
+
+    /// Moves the focus to `id` with the caret at `place`. An editor already
+    /// in the window takes it at once, so the next keystroke lands there; a
+    /// lazy cell not created yet takes it when it arrives.
+    public func focus(_ id: UUID, caret place: CaretPlace) {
+        caretRequest = CaretRequest(cell: id, place: place, serial: (caretRequest?.serial ?? 0) + 1)
+        if let editor = editors[id]?.view, let window = editor.window {
+            editor.pendingCaret = place
+            window.makeFirstResponder(editor)   // records the focus through noteFocus
+            editor.applyPendingCaret()
+        }
+        if focusedCell == id { requestFocus() } else { focusedCell = id }
+    }
+
+    /// The editors on screen, by cell (registered by CellEditor).
+    @ObservationIgnored private var editors: [UUID: WeakEditor] = [:]
+    private struct WeakEditor { weak var view: CellTextView? }
+
+    func register(_ editor: CellTextView, for id: UUID) {
+        if editors.count > 200 { editors = editors.filter { $0.value.view != nil } }
+        editors[id] = WeakEditor(view: editor)
+    }
+
+    /// Up from a cell's first line, or Down from its last: the previous or
+    /// next cell with an editor, at the same x. False when there is none.
+    @discardableResult
+    public func leave(_ id: UUID, up: Bool, x: CGFloat) -> Bool {
+        let cells = document.worksheet.cells
+        guard let index = cells.firstIndex(where: { $0.id == id }) else { return false }
+        let range = up ? Array(cells[..<index].reversed()) : Array(cells[(index + 1)...])
+        guard let target = range.first(where: { $0.hasEditor }) else { return false }
+        focus(target.id, caret: up ? .lastLine(x: x) : .firstLine(x: x))
+        return true
+    }
+
     /// Gives the focus back to `focusedCell` (after the answer field had it).
     public func requestFocus() { focusRequest &+= 1 }
 
@@ -166,7 +203,7 @@ public final class WorksheetController {
         evaluate(id)
         let cells = document.worksheet.cells
         guard let index = cells.firstIndex(where: { $0.id == id }) else { return }
-        if let next = cells[(index + 1)...].first(where: { ![.raw, .pageBreak, .image].contains($0.kind) }) {
+        if let next = cells[(index + 1)...].first(where: \.hasEditor) {
             focusedCell = next.id
         } else {
             focusedCell = document.insertCell(.code, after: cells.last?.id, undo: undoManager)
@@ -377,4 +414,9 @@ public final class WorksheetController {
             }
         }
     }
+}
+
+extension Cell {
+    /// The cell shows a text editor (page breaks, image and unknown cells don't).
+    var hasEditor: Bool { ![.raw, .pageBreak, .image].contains(kind) }
 }

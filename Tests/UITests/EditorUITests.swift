@@ -65,4 +65,23 @@ final class EditorUITests: XCTestCase {
         XCTAssertFalse(app.textViews["cell-input-1"].waitForExistence(timeout: 2))
         XCTAssertEqual(app.textViews["cell-input-0"].value as? String, "a:1;")
     }
+
+    @MainActor
+    func testArrowKeysMoveBetweenCells() throws {
+        waitForReady()
+        let first = app.textViews["cell-input-0"]
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        first.click()
+        app.typeText("abc;")
+        app.typeKey("0", modifierFlags: .command)   // a new code cell below
+        app.typeText("xyz;")
+        app.typeKey(.leftArrow, modifierFlags: [])
+        app.typeKey(.upArrow, modifierFlags: [])     // into the first cell, same column
+        app.typeText("1")
+        XCTAssertEqual(first.value as? String, "abc1;")
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeText("2")
+        // The caret was at column 4 ("abc1"), so it lands at the end of "xyz;".
+        XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "xyz;2")
+    }
 }

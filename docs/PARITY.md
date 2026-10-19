@@ -41,7 +41,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18). The first tab
 | Error marker | Marks an error line in yellow (seen on the first error of 03-errors; the cause is not yet traced in wxMaxima's source) | Error text in red, no marker | partial | 3 |
 | Input labels after opening a file | No `(%iN)` until the cell is evaluated again | Guesses `(%iN)` from the first output label; can be wrong after a syntax error. Should match wxMaxima | partial | 3 |
 | Syntax highlighting in code cells | Yes | Comments, strings, numbers, keywords, Lisp symbols and `:lisp` lines, terminators, and built-ins from `<wxxml-symbols>` (Phase 3 step 3). Single-letter names in that list (`x`, `a`, `t`, ...) are interned by Maxima's own code, so they stay plain | done | |
-| Moving between cells with the arrow keys | Up and Down move the cursor through inputs and outputs, across cells | Only with the mouse | missing | 3 (likely needs `NSTextView` for the caret position) |
+| Moving between cells with the arrow keys | Up and Down move the cursor through inputs and outputs, across cells | Up on a cell's first line and Down on its last move to the neighbouring cell with an editor, in the same column (Phase 3 step 3). Outputs are skipped: they can't take the focus | partial | outputs: 3 (with cross-cell selection, step 7) |
 | After Shift+Return | The cursor moves to the next cell, or to a new cell at the end | The same (a Phase 2 follow-up, 2026-10-19) | done | |
 | Starting the app | Opens an untitled worksheet | The same; untitled worksheets are saved later with Cmd+S (a Phase 2 follow-up, 2026-10-19) | done | |
 

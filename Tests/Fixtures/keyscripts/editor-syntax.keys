@@ -17,4 +17,19 @@ key left
 dump .build/keyscripts/editor-syntax-3.json
 key right
 dump .build/keyscripts/editor-syntax-4.json
+# Arrow keys between cells (step 3d). The caret is at 7 in the second cell.
+key up
+dump .build/keyscripts/editor-syntax-5.json
+key down
+dump .build/keyscripts/editor-syntax-6.json
+key down
+dump .build/keyscripts/editor-syntax-7.json
+key 0 cmd
+type aaa
+key return
+type bb
+key up
+dump .build/keyscripts/editor-syntax-8.json
+key up
+dump .build/keyscripts/editor-syntax-9.json
 quit

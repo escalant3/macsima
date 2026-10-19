@@ -15,6 +15,12 @@ final class CellTextView: NSTextView {
     /// Set when the controller asked for this cell's focus before the view
     /// was in a window (a lazy cell scrolled into view): taken on arrival.
     var wantsFocus = false
+    /// Up on the first line or Down on the last: leave for the neighbouring
+    /// cell, keeping the caret's x position (view coordinates).
+    /// Returns false when there is no cell that way.
+    var onLeave: ((_ up: Bool, _ x: CGFloat) -> Bool)?
+    /// Where to put the caret once the focus arrives (a caret request).
+    var pendingCaret: CaretPlace?
     /// Colours the text as Maxima code (code cells only).
     var highlightsSyntax = false {
         didSet { if highlightsSyntax != oldValue { rehighlight() } }
@@ -136,6 +142,63 @@ final class CellTextView: NSTextView {
         guard wantsFocus, let window else { return }
         wantsFocus = false
         if window.firstResponder !== self { window.makeFirstResponder(self) }
+        applyPendingCaret()
+    }
+
+    func applyPendingCaret() {
+        guard let place = pendingCaret, window != nil else { return }
+        pendingCaret = nil
+        let length = (string as NSString).length
+        let range: NSRange
+        switch place {
+        case .start: range = NSRange(location: 0, length: 0)
+        case .end: range = NSRange(location: length, length: 0)
+        case .firstLine(let x): range = NSRange(location: offset(atX: x, firstLine: true), length: 0)
+        case .lastLine(let x): range = NSRange(location: offset(atX: x, firstLine: false), length: 0)
+        case .range(let r): range = NSMaxRange(r) <= length ? r : NSRange(location: length, length: 0)
+        }
+        setSelectedRange(range)
+        scrollRangeToVisible(range)
+    }
+
+    // MARK: - Moving between cells
+
+    /// The caret's rectangle at `offset`, in view coordinates.
+    func caretRect(at offset: Int) -> CGRect? {
+        guard let layout = textLayoutManager, let range = textRange(NSRange(location: offset, length: 0)) else { return nil }
+        layout.ensureLayout(for: layout.documentRange)
+        var rect: CGRect?
+        layout.enumerateTextSegments(in: range, type: .selection, options: .rangeNotRequired) { _, segment, _, _ in
+            rect = segment
+            return false
+        }
+        return rect.map { $0.offsetBy(dx: textContainerOrigin.x, dy: textContainerOrigin.y) }
+    }
+
+    /// The insertion offset nearest `x` on the first or the last line.
+    private func offset(atX x: CGFloat, firstLine: Bool) -> Int {
+        let length = (string as NSString).length
+        guard let line = caretRect(at: firstLine ? 0 : length) else { return firstLine ? 0 : length }
+        return characterIndexForInsertion(at: NSPoint(x: x, y: line.midY))
+    }
+
+    override func moveUp(_ sender: Any?) {
+        if !leaveIfAtEdge(up: true) { super.moveUp(sender) }
+    }
+
+    override func moveDown(_ sender: Any?) {
+        if !leaveIfAtEdge(up: false) { super.moveDown(sender) }
+    }
+
+    /// With the caret on the first line (up) or the last line (down), hands
+    /// the move to the worksheet. Not while a selection is being extended.
+    private func leaveIfAtEdge(up: Bool) -> Bool {
+        let selection = selectedRange()
+        guard let onLeave, selection.length == 0,
+              let caret = caretRect(at: selection.location),
+              let edge = caretRect(at: up ? 0 : (string as NSString).length) else { return false }
+        guard abs(caret.midY - edge.midY) < 1 else { return false }
+        return onLeave(up, caret.minX)
     }
 
     override func keyDown(with event: NSEvent) {
@@ -157,8 +220,14 @@ struct CellEditor: NSViewRepresentable {
     let isFocused: Bool
     /// Changes with every focus request (`WorksheetController.focusRequest`).
     let focusRequest: Int
+    /// The controller's latest caret request, applied once if it is for this cell.
+    let caretRequest: CaretRequest?
+    let cellID: UUID
     let onFocus: () -> Void
     let onEvaluate: () -> Void
+    let onLeave: (_ up: Bool, _ x: CGFloat) -> Bool
+    /// Tells the controller this cell's editor exists.
+    let register: (CellTextView) -> Void
 
     func makeNSView(context: Context) -> CellTextView {
         let view = CellTextView()
@@ -188,6 +257,13 @@ struct CellEditor: NSViewRepresentable {
         view.setAccessibilityIdentifier(accessibilityID)
         view.onFocus = onFocus
         view.onEvaluate = onEvaluate
+        view.onLeave = onLeave
+        register(view)
+        if let request = caretRequest, request.cell == cellID, context.coordinator.caretRequest != request.serial {
+            context.coordinator.caretRequest = request.serial
+            view.pendingCaret = request.place
+            if view.window?.firstResponder === view { DispatchQueue.main.async { view.applyPendingCaret() } }
+        }
         if context.coordinator.focusRequest != focusRequest {
             context.coordinator.focusRequest = focusRequest
             if isFocused {
@@ -211,6 +287,8 @@ struct CellEditor: NSViewRepresentable {
         var parent: CellEditor
         /// The focus request this editor has seen; nil before the first update.
         var focusRequest: Int?
+        /// The caret request this editor has applied.
+        var caretRequest: Int?
 
         init(parent: CellEditor) { self.parent = parent }
 
@@ -231,4 +309,20 @@ struct CellEditor: NSViewRepresentable {
         case .text, .image, .pageBreak, .raw: .systemFont(ofSize: 14)
         }
     }
+}
+
+/// Where the caret goes when a cell gets the focus.
+public enum CaretPlace: Equatable, Sendable {
+    case start, end
+    /// On the first or last line, nearest this x (view coordinates).
+    case firstLine(x: CGFloat), lastLine(x: CGFloat)
+    /// A selection (UTF-16), for Find.
+    case range(NSRange)
+}
+
+/// A request to place the caret in a cell; `serial` tells repeats apart.
+public struct CaretRequest: Equatable, Sendable {
+    public var cell: UUID
+    public var place: CaretPlace
+    public var serial: Int
 }

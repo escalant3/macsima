@@ -89,6 +89,14 @@ elif script == "editor-syntax":
     check(bg(2) == ["1:(", "11:)"], f"after the closing parenthesis, it and its partner are marked: {bg(2)}")
     check(bg(3) == ["3:[", "5:]"], f"after ], the bracket pair [ ] is marked: {bg(3)}")
     check(bg(4) == [], f"no bracket next to the caret, no mark: {bg(4)}")
+    def at(n):
+        d = dump("editor-syntax", n)
+        return [i for i, c in enumerate(d["cells"]) if c["focused"]], d["editor"]["selection"]
+    check(at(5) == ([0], [7, 0]), f"Up on the first line moves to the cell above, same column: {at(5)}")
+    check(at(6) == ([1], [7, 0]), f"Down on the last line moves to the cell below, same column: {at(6)}")
+    check(at(7) == ([1], [12, 0]), f"Down in the last cell moves to its end: {at(7)}")
+    check(at(8) == ([2], [2, 0]), f"Up from a second line stays in the cell: {at(8)}")
+    check(at(9) == ([1], [2, 0]), f"then Up leaves for the cell above: {at(9)}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")
