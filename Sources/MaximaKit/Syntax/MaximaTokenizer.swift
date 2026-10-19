@@ -103,6 +103,33 @@ public enum MaximaTokenizer {
         return tokens
     }
 
+    /// The bracket next to the caret (the one before it first, else the one
+    /// after it) and its partner, as UTF-16 offsets. Brackets in strings and
+    /// comments don't count; nil when there is no bracket or no partner of
+    /// the same type.
+    public static func matchingBracket(in text: String, caret: Int) -> (Int, Int)? {
+        let s = Array(text.utf16)
+        let brackets = tokenize(text).filter { $0.kind == .bracket }.map(\.range.lowerBound)
+        guard let here = brackets.firstIndex(of: caret - 1) ?? brackets.firstIndex(of: caret) else { return nil }
+        let opens = Array("([{".utf16), closes = Array(")]}".utf16)
+        let c = s[brackets[here]]
+        var depth = 0
+        if let type = opens.firstIndex(of: c) {
+            for k in here..<brackets.count {
+                let d = s[brackets[k]]
+                if opens.contains(d) { depth += 1 } else { depth -= 1 }
+                if depth == 0 { return closes[type] == d ? (brackets[here], brackets[k]) : nil }
+            }
+        } else if let type = closes.firstIndex(of: c) {
+            for k in stride(from: here, through: 0, by: -1) {
+                let d = s[brackets[k]]
+                if closes.contains(d) { depth += 1 } else { depth -= 1 }
+                if depth == 0 { return opens[type] == d ? (brackets[k], brackets[here]) : nil }
+            }
+        }
+        return nil
+    }
+
     // MARK: - Pieces
 
     private static func endOfComment(_ s: [UInt16], from start: Int) -> Int {

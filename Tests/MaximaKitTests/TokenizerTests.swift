@@ -57,4 +57,24 @@ struct TokenizerTests {
         #expect(tokens.map(\.range) == [0..<1, 1..<2, 2..<4, 4..<5])
         #expect(MaximaTokenizer.tokenize("").isEmpty)
     }
+
+    @Test func matchingBrackets() {
+        let text = "f(x[1], \"(\" /* ) */ {a})"
+        //          0123456789...
+        let ns = text as NSString
+        let close = ns.length - 1
+        // Caret after the closing parenthesis, and before the opening one.
+        #expect(MaximaTokenizer.matchingBracket(in: text, caret: close + 1)! == (1, close))
+        #expect(MaximaTokenizer.matchingBracket(in: text, caret: 1)! == (1, close))
+        // The bracket before the caret wins: after "[" at 3 the partner is "]" at 5.
+        #expect(MaximaTokenizer.matchingBracket(in: text, caret: 4)! == (3, 5))
+        // Brackets in strings and comments don't count.
+        let brace = ns.range(of: "{").location
+        #expect(MaximaTokenizer.matchingBracket(in: text, caret: brace)! == (brace, brace + 2))
+        #expect(MaximaTokenizer.matchingBracket(in: text, caret: 9) == nil)   // inside the string
+        // Mismatched or unclosed.
+        #expect(MaximaTokenizer.matchingBracket(in: "(]", caret: 1) == nil)
+        #expect(MaximaTokenizer.matchingBracket(in: "((", caret: 1) == nil)
+        #expect(MaximaTokenizer.matchingBracket(in: "ab", caret: 1) == nil)
+    }
 }

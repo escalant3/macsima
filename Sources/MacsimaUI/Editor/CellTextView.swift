@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 import AppKit
+import MaximaKit
 import SwiftUI
 import WorksheetKit
 
@@ -50,7 +51,47 @@ final class CellTextView: NSTextView {
 
     @objc private func symbolsChanged() { rehighlight() }
 
-    func rehighlight() { SyntaxHighlighter.apply(to: self, enabled: highlightsSyntax) }
+    func rehighlight() {
+        SyntaxHighlighter.apply(to: self, enabled: highlightsSyntax)
+        updateBracketMatch()
+    }
+
+    /// The bracket pair shown at the caret, as text ranges, to remove later.
+    private var bracketMarks: [NSTextRange] = []
+
+    override func setSelectedRanges(_ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool) {
+        super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
+        updateBracketMatch()
+    }
+
+    /// Marks the bracket next to the caret and its partner (code cells, no selection).
+    private func updateBracketMatch() {
+        guard let layout = textLayoutManager else { return }
+        for range in bracketMarks { layout.removeRenderingAttribute(.backgroundColor, for: range) }
+        bracketMarks = []
+        let selection = selectedRange()
+        guard highlightsSyntax, selection.length == 0,
+              let (a, b) = MaximaTokenizer.matchingBracket(in: string, caret: selection.location) else { return }
+        for offset in [a, b] {
+            if let range = textRange(NSRange(location: offset, length: 1)) {
+                layout.addRenderingAttribute(.backgroundColor, value: Self.bracketColor, for: range)
+                bracketMarks.append(range)
+            }
+        }
+    }
+
+    static let bracketColor = NSColor(name: "MacsimaBracketMatch") { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor.systemYellow.withAlphaComponent(0.35) : NSColor.systemYellow.withAlphaComponent(0.45)
+    }
+
+    /// The TextKit 2 range for UTF-16 offsets.
+    func textRange(_ range: NSRange) -> NSTextRange? {
+        guard let layout = textLayoutManager, let content = layout.textContentManager,
+              let from = content.location(layout.documentRange.location, offsetBy: range.location),
+              let to = content.location(from, offsetBy: range.length) else { return nil }
+        return NSTextRange(location: from, end: to)
+    }
 
     override func didChangeText() {
         super.didChangeText()

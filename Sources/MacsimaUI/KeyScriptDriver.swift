@@ -11,7 +11,7 @@ import WorksheetKit
 /// menu key equivalents, undo grouping). Launch with `-MacsimaKeyScript <file>`. Debug builds only.
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
-/// delete, escape, tab, up, down, or one character), `menu <item title>`,
+/// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
 /// `wait <seconds>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
@@ -103,6 +103,8 @@ enum KeyScriptDriver {
         "return": ("\r", 36), "delete": ("\u{7F}", 51), "backspace": ("\u{8}", 51), "escape": ("\u{1B}", 53), "tab": ("\t", 48),
         "up": (String(UnicodeScalar(NSUpArrowFunctionKey)!), 126),
         "down": (String(UnicodeScalar(NSDownArrowFunctionKey)!), 125),
+        "left": (String(UnicodeScalar(NSLeftArrowFunctionKey)!), 123),
+        "right": (String(UnicodeScalar(NSRightArrowFunctionKey)!), 124),
     ]
     private static let keyCodes: [String: UInt16] = [
         "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1,
@@ -173,22 +175,28 @@ enum KeyScriptDriver {
     /// The focused editor: its selection and its coloured ranges as
     /// `text=colorName` (rendering attributes, which the model doesn't hold).
     private static func describe(_ editor: CellTextView) -> [String: Any] {
-        var colors: [String] = []
+        var colors: [String] = [], backgrounds: [String] = []
         if let layout = editor.textLayoutManager, let content = layout.textContentManager {
             let ns = editor.string as NSString
             layout.enumerateRenderingAttributes(from: layout.documentRange.location, reverse: false) { _, attributes, range in
+                let from = content.offset(from: layout.documentRange.location, to: range.location)
+                let length = content.offset(from: range.location, to: range.endLocation)
+                let text = ns.substring(with: NSRange(location: from, length: length))
                 if let color = attributes[.foregroundColor] as? NSColor {
-                    let from = content.offset(from: layout.documentRange.location, to: range.location)
-                    let length = content.offset(from: range.location, to: range.endLocation)
-                    let text = ns.substring(with: NSRange(location: from, length: length))
-                    let name = color.type == .catalog ? color.colorNameComponent : "\(color)"
-                    colors.append("\(text)=\(name)")
+                    colors.append("\(text)=\(name(color))")
+                }
+                if let color = attributes[.backgroundColor] as? NSColor {
+                    backgrounds.append("\(from):\(text)=\(name(color))")
                 }
                 return true
             }
         }
         let selection = editor.selectedRange()
-        return ["colors": colors, "selection": [selection.location, selection.length]]
+        return ["colors": colors, "backgrounds": backgrounds, "selection": [selection.location, selection.length]]
+    }
+
+    private static func name(_ color: NSColor) -> String {
+        color.type == .catalog ? color.colorNameComponent : (color.type == .componentBased ? "\(color)" : "dynamic")
     }
 
     /// A short description of an output for dumps: kind, then the gist.

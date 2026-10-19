@@ -4,4 +4,17 @@ wait 2
 type /* note */ f(x):=if x>1.5e3 then sin(x) else "big"; ?car $
 dump .build/keyscripts/editor-syntax-1.json
 shot .build/keyscripts/editor-syntax-1.png
+# Matching brackets: after the closing parenthesis, then after "]".
+key 0 cmd
+type g(a[1], "(")
+dump .build/keyscripts/editor-syntax-2.json
+key left
+key left
+key left
+key left
+key left
+key left
+dump .build/keyscripts/editor-syntax-3.json
+key right
+dump .build/keyscripts/editor-syntax-4.json
 quit

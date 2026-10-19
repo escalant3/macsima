@@ -85,6 +85,10 @@ elif script == "editor-syntax":
                  "then=systemPurpleColor", "sin=systemTealColor", "else=systemPurpleColor",
                  '"big"=systemRedColor', ";=secondaryLabelColor", "?car=systemOrangeColor", "$=secondaryLabelColor"],
           f"comment, keywords, number, built-in, string, terminators and Lisp symbol coloured: {e1}")
+    bg = lambda n: [b.split("=")[0] for b in dump("editor-syntax", n)["editor"]["backgrounds"]]
+    check(bg(2) == ["1:(", "11:)"], f"after the closing parenthesis, it and its partner are marked: {bg(2)}")
+    check(bg(3) == ["3:[", "5:]"], f"after ], the bracket pair [ ] is marked: {bg(3)}")
+    check(bg(4) == [], f"no bracket next to the caret, no mark: {bg(4)}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")
