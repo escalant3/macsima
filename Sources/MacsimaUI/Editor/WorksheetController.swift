@@ -146,7 +146,7 @@ public final class WorksheetController {
         case .tag("statusbar", let content):
             statusMessage = content
         case .tag("wxxml-symbols", let content):
-            MaximaSymbols.shared.ingest(content)
+            MaximaSymbols.shared.ingestInBackground(content)
         case .interruptChannelReady, .tag, .output:
             break
         }

@@ -69,6 +69,11 @@ struct SessionFixtureTests {
     func evaluate(_ document: WorksheetDocument, answers: [String]) async throws {
         let controller = WorksheetController(document: document)
         await controller.start()
+        // The state arrives through the session's event stream, just after start() returns.
+        let started = ContinuousClock.now
+        while controller.sessionState != .idle, ContinuousClock.now < started + .seconds(5) {
+            try await Task.sleep(for: .milliseconds(20))
+        }
         #expect(controller.sessionState == .idle, "Maxima started: \(controller.statusMessage ?? "")")
         controller.evaluateAll()
         var left = answers

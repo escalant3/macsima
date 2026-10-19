@@ -19,22 +19,41 @@ final class MaximaSymbols {
 
     /// Adds the names in one `<wxxml-symbols>` tag's content.
     func ingest(_ content: String) {
+        add(Self.parse(content))
+    }
+
+    /// Parses off the main thread (the tag is about 60 KB), then adds.
+    func ingestInBackground(_ content: String) {
+        Task {
+            let parsed = await Task.detached { Self.parse(content) }.value
+            add(parsed)
+        }
+    }
+
+    private func add(_ parsed: (names: Set<String>, templates: [String: String])) {
         let before = names.count
+        names.formUnion(parsed.names)
+        templates.merge(parsed.templates) { _, new in new }
+        if names.count != before { NotificationCenter.default.post(name: Self.didChange, object: nil) }
+    }
+
+    nonisolated static func parse(_ content: String) -> (names: Set<String>, templates: [String: String]) {
+        var names: Set<String> = [], templates: [String: String] = [:]
         for match in content.matches(of: /<value>([^<]*)<\/value>/) {
-            let name = Self.unescape(String(match.1))
+            let name = unescape(String(match.1))
             // The list holds every name Maxima's own code interned, single
             // letters like x, a or t among them; those stay plain.
             if name.count > 1 { names.insert(name) }
         }
         for match in content.matches(of: /<function>([^<]*)<\/function><template>([^<]*)<\/template>/) {
-            let name = Self.unescape(String(match.1))
-            templates[name] = Self.unescape(String(match.2))
+            let name = unescape(String(match.1))
+            templates[name] = unescape(String(match.2))
             if name.count > 1 { names.insert(name) }
         }
-        if names.count != before { NotificationCenter.default.post(name: Self.didChange, object: nil) }
+        return (names, templates)
     }
 
-    static func unescape(_ s: String) -> String {
+    nonisolated static func unescape(_ s: String) -> String {
         guard s.contains("&") else { return s }
         return s.replacingOccurrences(of: "&lt;", with: "<").replacingOccurrences(of: "&gt;", with: ">")
             .replacingOccurrences(of: "&quot;", with: "\"").replacingOccurrences(of: "&apos;", with: "'")
