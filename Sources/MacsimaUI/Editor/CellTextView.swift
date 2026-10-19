@@ -22,6 +22,11 @@ final class CellTextView: NSTextView {
     /// Shift+Up with the selection already at the start (or Shift+Down at
     /// the end): select whole cells from here.
     var onSelectCells: ((_ up: Bool) -> Void)?
+    private var hadFocusWhenRemoved = false
+    /// The editor left the window while it had the keyboard.
+    var onRemovedWhileFocused: (() -> Void)?
+    /// True while this editor's cell is the worksheet's focused cell.
+    var isFocusedCell: (() -> Bool)?
     /// Paste when the pasteboard holds cells: inserts them after this cell.
     var onPasteCells: (() -> Bool)?
     /// Where to put the caret once the focus arrives (a caret request).
@@ -235,9 +240,27 @@ final class CellTextView: NSTextView {
         return ok
     }
 
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil, let window, window.firstResponder === self { hadFocusWhenRemoved = true }
+        super.viewWillMove(toWindow: newWindow)
+    }
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         takeFocusIfWanted()
+        // SwiftUI may move a cached editor to a new host view when the cells
+        // above it change (a plot arrives). Leaving the window took the
+        // focus away and gave it to the window; take it back, or the next
+        // keystrokes go nowhere.
+        if let window, window.firstResponder === window, isFocusedCell?() == true {
+            window.makeFirstResponder(self)
+        }
+        // Removed while it had the keyboard (the lazy stack drops cells
+        // pushed out of view): the worksheet may bring it back.
+        if window == nil, hadFocusWhenRemoved {
+            hadFocusWhenRemoved = false
+            onRemovedWhileFocused?()
+        }
     }
 
     func takeFocusIfWanted() {

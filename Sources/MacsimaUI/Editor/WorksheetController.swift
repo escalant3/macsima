@@ -16,9 +16,15 @@ public final class WorksheetController {
     /// The cell with the keyboard focus. Setting it to another cell moves
     /// the focus there (see `focusRequest`).
     public var focusedCell: UUID? {
-        didSet { if focusedCell != oldValue, !notingFocus { focusRequest &+= 1 } }
+        didSet {
+            if focusedCell != oldValue, !notingFocus { focusRequest &+= 1 }
+            followsFocus = true
+        }
     }
     @ObservationIgnored private var notingFocus = false
+    /// Keep the focused cell in view while outputs above it grow; off once
+    /// the user scrolls (WorksheetWindow watches live scrolling).
+    @ObservationIgnored var followsFocus = true
     /// Whole cells selected (CellSelection.swift), in document order; empty
     /// while editing.
     public internal(set) var selectedCells: [UUID] = []
@@ -154,6 +160,13 @@ public final class WorksheetController {
         editor.onLeave = { [weak self] up, x in self?.leave(id, up: up, x: x) ?? false }
         editor.onSelectCells = { [weak self] up in self?.startCellSelection(from: id, up: up) }
         editor.onPasteCells = { [weak self] in self?.pasteCells(after: id) ?? false }
+        editor.isFocusedCell = { [weak self] in self?.focusedCell == id && self?.selectedCells.isEmpty == true }
+        editor.onRemovedWhileFocused = { [weak self] in
+            // Output above pushed the cell out of view: follow it, as
+            // wxMaxima does, unless the user scrolled away.
+            guard let self, self.followsFocus, self.focusedCell == id else { return }
+            DispatchQueue.main.async { self.requestFocus() }
+        }
         editors[id] = editor
         return editor
     }
@@ -172,6 +185,10 @@ public final class WorksheetController {
 
     /// Gives the focus back to `focusedCell` (after the answer field had it).
     public func requestFocus() { focusRequest &+= 1 }
+
+    /// The user scrolled the worksheet: stop following the focused cell
+    /// until it gets the focus again.
+    func userScrolled() { followsFocus = false }
 
     /// An editor took the focus by itself (a click, Tab): record it without
     /// a focus request, so the worksheet doesn't scroll.
@@ -254,6 +271,8 @@ public final class WorksheetController {
     /// Shuts Maxima down when `window` closes. A window closes after its
     /// document agreed (the save sheet); SwiftUI's onDisappear also fires for
     /// windows that only hide, a background tab for one.
+    @ObservationIgnored private var scrollObserver: NSObjectProtocol?
+
     func watchClose(of window: NSWindow) {
         guard closeObserver == nil else { return }
         closeObserver = NotificationCenter.default.addObserver(
@@ -261,6 +280,21 @@ public final class WorksheetController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 Task { await self.shutdown() }
+            }
+        }
+    }
+
+    /// A user scroll (trackpad, wheel, scroller) in this window's worksheet
+    /// stops the following of the focused cell. Programmatic scrolls don't
+    /// send this notification.
+    func watchScrolling(in window: NSWindow) {
+        guard scrollObserver == nil else { return }
+        scrollObserver = NotificationCenter.default.addObserver(
+            forName: NSScrollView.willStartLiveScrollNotification, object: nil, queue: .main) { [weak self, weak window] note in
+            let scrollView = note.object as? NSScrollView
+            MainActor.assumeIsolated {
+                guard let window, scrollView?.window === window else { return }
+                self?.userScrolled()
             }
         }
     }

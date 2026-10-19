@@ -65,6 +65,7 @@ struct WorksheetWindow: View {
                     controller.selectionResponder = responder
                 }
                 controller.watchClose(of: window)
+                controller.watchScrolling(in: window)
                 controller.markEdited = { [weak window] in
                     (window?.windowController?.document as? NSDocument)?.updateChangeCount(.changeDone)
                 }
