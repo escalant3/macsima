@@ -75,8 +75,31 @@ public enum WXMFormat {
     /// Cells as wxMaxima writes them, one after the other (the clipboard form).
     /// Cells `.wxm` can't hold (kept raw cells) are left out.
     public static func cells(_ cells: [Cell]) -> String {
+        let sheet = Worksheet(cells: cells)
+        return text(sheet, 0..<cells.count)
+    }
+
+    /// The cells in `range`; a folded heading's section goes between fold
+    /// markers after it (TreeToWXM's hidden tree), nested folds included.
+    static func text(_ sheet: Worksheet, _ range: Range<Int>) -> String {
         var out = ""
-        for cell in cells {
+        var i = range.lowerBound
+        while i < range.upperBound {
+            let section = sheet.foldRange(of: i).clamped(to: range)
+            out += cellText(sheet.cells[i])
+            if sheet.cells[i].isFolded, !section.isEmpty {
+                out += Marker.foldStart + "\n" + text(sheet, section) + Marker.foldEnd + "\n"
+                i = section.upperBound
+            } else {
+                i += 1
+            }
+        }
+        return out
+    }
+
+    static func cellText(_ cell: Cell) -> String {
+        var out = ""
+        for cell in [cell] {
             var text = ""
             if cell.extraAttributes["hide"] == "true" { text += Marker.hide + "\n" }
             switch cell.kind {
@@ -153,8 +176,8 @@ public enum WXMFormat {
         }
     }
 
-    /// Cells from `.wxm` text. Folded cells come back unfolded, after their
-    /// heading (Macsima has no folding yet); images are left out.
+    /// Cells from `.wxm` text. Folded cells follow their heading, which is
+    /// marked folded; images are left out.
     public static func read(_ text: String) -> ReadResult {
         var warnings: Set<String> = []
         let lines = text.replacingOccurrences(of: "\r\n", with: "\n").split(separator: "\n", omittingEmptySubsequences: false)
@@ -221,8 +244,11 @@ public enum WXMFormat {
                 if !cells.isEmpty { cells[cells.count - 1].extraAttributes["auto_answer"] = "yes" }
             } else if line == Marker.pageBreak {
                 append(Cell(kind: .pageBreak))
-            } else if line == Marker.foldStart || line == Marker.foldEnd {
-                if line == Marker.foldStart { warnings.insert("folded cells (shown unfolded)") }
+            } else if line == Marker.foldStart {
+                // The cells up to the matching end are the section of the
+                // heading before; they stay in the list, folded under it.
+                if let last = cells.indices.last, cells[last].kind.isHeading { cells[last].isFolded = true }
+            } else if line == Marker.foldEnd {
             } else if !line.trimmingCharacters(in: .whitespaces).isEmpty, !cells.isEmpty,
                       [.code, .text].contains(cells[cells.count - 1].kind) || cells[cells.count - 1].kind.isHeading,
                       !line.hasPrefix(trailerComment), !line.hasPrefix("\"Created with "), line != firstLine,

@@ -73,13 +73,32 @@ public enum WXMXWriter {
                 out += " \(key)=\"\(XMLTreeNode.escapeAttribute(attributes[key]!))\""
             }
             out += ">\n"
-            for cell in worksheet.cells { out += self.cell(cell) }
+            out += cells(worksheet, 0..<worksheet.cells.count)
             for xml in worksheet.preserved { out += "\n" + xml + "\n" }
             out += "\n</wxMaximaDocument>"
             return out
         }
 
-        mutating func cell(_ cell: Cell) -> String {
+        /// The cells in `range`; a folded heading takes its section into a
+        /// `<fold>` inside it, as wxMaxima writes it (nested folds included).
+        mutating func cells(_ worksheet: Worksheet, _ range: Range<Int>) -> String {
+            var out = ""
+            var i = range.lowerBound
+            while i < range.upperBound {
+                let cell = worksheet.cells[i]
+                let section = worksheet.foldRange(of: i).clamped(to: range)
+                if cell.isFolded, cell.kind.isHeading, !section.isEmpty {
+                    out += self.cell(cell, fold: cells(worksheet, section))
+                    i = section.upperBound
+                } else {
+                    out += self.cell(cell)
+                    i += 1
+                }
+            }
+            return out
+        }
+
+        mutating func cell(_ cell: Cell, fold: String? = nil) -> String {
             if cell.kind == .raw { return "\n" + cell.preserved.joined(separator: "\n") + "\n" }
             var attributes = cell.extraAttributes
             if attributes["uuid"] == nil { attributes["uuid"] = cell.id.uuidString.lowercased() }
@@ -102,6 +121,7 @@ public enum WXMXWriter {
                 out += editor(cell, type: "input", level: nil) + outputXML
             default:
                 out += editor(cell, type: type, level: level)
+                if let fold { out += "<fold>" + fold + "</fold>" }
             }
             for xml in cell.preserved { out += xml }
             out += "\n</cell>\n"

@@ -16,6 +16,19 @@ public enum CellKind: String, CaseIterable, Codable, Sendable {
     public var isHeading: Bool {
         [.title, .section, .subsection, .subsubsection, .heading5, .heading6].contains(self)
     }
+
+    /// 1 for a title down to 6 for heading 6; nil for other kinds.
+    public var headingLevel: Int? {
+        switch self {
+        case .title: 1
+        case .section: 2
+        case .subsection: 3
+        case .subsubsection: 4
+        case .heading5: 5
+        case .heading6: 6
+        default: nil
+        }
+    }
 }
 
 /// One piece of a code cell's output.
@@ -57,10 +70,21 @@ public struct Cell: Identifiable, Equatable, Sendable {
     /// The editor XML as read, while it carries formatting this app cannot
     /// edit; written back as long as `input` still equals `text`.
     public var preservedEditor: PreservedEditor?
+    /// A heading whose section is folded: the cells after it, up to the next
+    /// heading of its level or higher, are hidden (wxMaxima keeps them in a
+    /// `<fold>` inside the heading).
+    public var isFolded = false
+
+    /// A code or text cell shown as its first line only, outputs hidden
+    /// (wxMaxima's `hide="true"`).
+    public var isHidden: Bool {
+        get { extraAttributes["hide"] == "true" }
+        set { extraAttributes["hide"] = newValue ? "true" : nil }
+    }
 
     public init(id: UUID = UUID(), kind: CellKind, input: String = "", outputs: [Output] = [],
                 inputLabel: Int? = nil, preserved: [String] = [], extraAttributes: [String: String] = [:],
-                preservedEditor: PreservedEditor? = nil) {
+                preservedEditor: PreservedEditor? = nil, isFolded: Bool = false) {
         self.id = id
         self.kind = kind
         self.input = input
@@ -69,6 +93,7 @@ public struct Cell: Identifiable, Equatable, Sendable {
         self.preserved = preserved
         self.extraAttributes = extraAttributes
         self.preservedEditor = preservedEditor
+        self.isFolded = isFolded
     }
 }
 
@@ -154,6 +179,48 @@ public struct Worksheet: Equatable, Sendable {
             $0.outputs = []
             $0.inputLabel = nil
         }
+    }
+
+    /// The cells a heading at `index` folds: up to the next heading of its
+    /// level or higher (wxMaxima's GroupCell::Fold). Empty for other cells.
+    public func foldRange(of index: Int) -> Range<Int> {
+        guard cells.indices.contains(index), let level = cells[index].kind.headingLevel else { return index..<index }
+        var end = index + 1
+        while end < cells.count {
+            if let l = cells[end].kind.headingLevel, l <= level { break }
+            end += 1
+        }
+        return (index + 1)..<end
+    }
+
+    /// Indices of the cells a reader sees: those inside a folded heading's
+    /// section are left out.
+    public var visibleIndices: [Int] {
+        var out: [Int] = []
+        var hidingBelow: Int?   // level of the folded heading being skipped
+        for (i, cell) in cells.enumerated() {
+            if let hiding = hidingBelow {
+                if let l = cell.kind.headingLevel, l <= hiding { hidingBelow = nil } else { continue }
+            }
+            out.append(i)
+            if cell.isFolded, let l = cell.kind.headingLevel, !foldRange(of: i).isEmpty { hidingBelow = l }
+        }
+        return out
+    }
+
+    /// The folded headings that hide the cell at `index`, outermost first.
+    public func foldedAncestors(of index: Int) -> [Int] {
+        var out: [Int] = []
+        var level = cells.indices.contains(index) ? (cells[index].kind.headingLevel ?? 7) : 7
+        var i = index - 1
+        while i >= 0 {
+            if let l = cells[i].kind.headingLevel, l < level {
+                if cells[i].isFolded { out.insert(i, at: 0) }
+                level = l
+            }
+            i -= 1
+        }
+        return out
     }
 
     /// Code cells, in order (what "evaluate all" runs).

@@ -38,11 +38,19 @@ struct CellView: View {
     var isSelected = false
     /// A click on the cell's bar or gutter; `extend` when Shift was held.
     var onBarClick: (_ extend: Bool) -> Void = { _ in }
+    /// How many cells this folded heading hides (0 when not folded).
+    var foldedCount = 0
+    /// A heading with cells under it, which can fold.
+    var canFold = false
+    var onToggleFold: () -> Void = {}
+    var onToggleHidden: () -> Void = {}
     let focusRequest: Int
     let caretRequest: CaretRequest?
     let makeEditor: () -> CellTextView
 
     @Environment(\.worksheetScale) private var scale
+    /// The pointer is over the cell: its hide triangle shows.
+    @State private var hovering = false
 
     var body: some View {
         Group {
@@ -85,19 +93,48 @@ struct CellView: View {
                     .accessibilityValue(isSelected ? "selected" : "")
                     .accessibilityAddTraits(.isButton)
                     .accessibilityIdentifier("cell-bar-\(index)")
-                CellEditor(text: cell.input, kind: cell.kind, scale: scale, accessibilityID: "cell-input-\(index)",
-                           isFocused: isFocused, focusRequest: focusRequest,
-                           caretRequest: caretRequest, cellID: cell.id, makeView: makeEditor)
+                    // Outside the bar's accessibility element, so it is a button of its own.
+                    .overlay(alignment: .topLeading) {
+                        disclosure.padding(.top, Self.gutterOffset(for: cell.kind, scale: scale))
+                    }
+                if cell.isHidden {
+                    // A hidden cell: its first line only, outputs hidden (wxMaxima's hide).
+                    Text(hiddenSummary)
+                        .font(Font(CellEditor.font(for: cell.kind, scale: scale)))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .padding(.top, CellTextView.inset.height)
+                        .padding(.leading, WorksheetMetrics.linePadding)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture(perform: onToggleHidden)
+                        .help("Hidden: click to show the whole cell")
+                        .accessibilityIdentifier("cell-hidden-\(index)")
+                } else {
+                    CellEditor(text: cell.input, kind: cell.kind, scale: scale, accessibilityID: "cell-input-\(index)",
+                               isFocused: isFocused, focusRequest: focusRequest,
+                               caretRequest: caretRequest, cellID: cell.id, makeView: makeEditor)
+                }
             }
             .padding(.vertical, 3)
             .padding(.trailing, 6)
+            .onHover { hovering = $0 }
             .background(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 1.5)
                     .fill(isFocused || isSelected ? Color.accentColor : failed ? Color.red.opacity(0.7)
                           : Color.secondary.opacity(cell.kind == .code ? 0.25 : 0))
                     .frame(width: 3)
             }
-            ForEach(Array(cell.outputs.enumerated()), id: \.offset) { n, output in
+            if foldedCount > 0 {
+                Text(foldedCount == 1 ? "1 cell folded" : "\(foldedCount) cells folded")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, metrics.outputIndent)
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: onToggleFold)
+                    .accessibilityIdentifier("cell-folded-\(index)")
+            }
+            ForEach(Array((cell.isHidden ? [] : cell.outputs).enumerated()), id: \.offset) { n, output in
                 OutputView(output: output, cellID: cell.id)
                     .accessibilityIdentifier("cell-output-\(index)-\(n)")
             }
@@ -108,6 +145,30 @@ struct CellView: View {
                                systemImage: "chevron.right.circle")
             }
         }
+    }
+
+    /// The fold triangle of a heading, or the hide triangle of a code or
+    /// text cell, at the gutter's left edge (wxMaxima puts it on the bracket).
+    @ViewBuilder private var disclosure: some View {
+        if canFold || ([.code, .text].contains(cell.kind) && (hovering || cell.isHidden)) {
+            let open = canFold ? foldedCount == 0 : !cell.isHidden
+            Button(open ? "Collapse" : "Expand", systemImage: open ? "chevron.down" : "chevron.right",
+                   action: canFold ? onToggleFold : onToggleHidden)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .font(.system(size: 9 * scale, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .help(canFold ? (open ? "Fold this section" : "Unfold this section")
+                      : (open ? "Hide: show the first line only" : "Show the whole cell"))
+                .accessibilityIdentifier("cell-disclosure-\(index)")
+                .padding(.leading, 8)
+        }
+    }
+
+    private var hiddenSummary: String {
+        let first = cell.input.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false).first.map(String.init) ?? ""
+        let more = cell.input.contains("\n") || !cell.outputs.isEmpty
+        return first + (more ? " …" : "")
     }
 
     /// The last evaluation ended in an error (wxMaxima draws the cell's bracket red).

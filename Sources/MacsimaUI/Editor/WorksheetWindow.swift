@@ -19,13 +19,20 @@ struct WorksheetWindow: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 10) {
-                    ForEach(Array(document.worksheet.cells.enumerated()), id: \.element.id) { index, cell in
+                    let sheet = document.worksheet
+                    // Cells inside folded sections are left out.
+                    ForEach(sheet.visibleIndices.map { (sheet.cells[$0].id, $0) }, id: \.0) { _, index in
+                        let cell = sheet.cells[index]
                         CellView(
                             cell: cell,
                             index: index,
                             isFocused: controller.focusedCell == cell.id && controller.selectedCells.isEmpty,
                             isSelected: controller.selectedCells.contains(cell.id),
                             onBarClick: { extend in controller.clickBar(cell.id, extend: extend) },
+                            foldedCount: cell.isFolded ? sheet.foldRange(of: index).count : 0,
+                            canFold: cell.kind.isHeading && !sheet.foldRange(of: index).isEmpty,
+                            onToggleFold: { controller.toggleFold(cell.id) },
+                            onToggleHidden: { controller.toggleHidden(cell.id) },
                             focusRequest: controller.focusRequest,
                             caretRequest: controller.caretRequest,
                             makeEditor: { controller.editor(for: cell.id) }

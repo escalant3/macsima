@@ -38,7 +38,11 @@ func richWorksheet() -> Worksheet {
         Cell(kind: .pageBreak),
         Cell(kind: .image, input: "caption", outputs: [.image(data: png, format: "png", label: nil, attributes: ["ppi": "96"])]),
         Cell(kind: .raw, preserved: [#"<cell type="gadget"><editor type="text"><line>unknown</line></editor><img>kept.png</img></cell>"#]),
-        Cell(kind: .section, input: "Folded", preserved: [#"<fold><cell type="text"><editor type="text"><line>hidden</line></editor></cell></fold>"#]),
+        Cell(kind: .section, input: "Folded", isFolded: true),
+        Cell(kind: .text, input: "hidden"),
+        Cell(kind: .subsection, input: "Folded inside", isFolded: true),
+        Cell(kind: .code, input: "inner;", extraAttributes: ["hide": "true"]),
+        Cell(kind: .section, input: "After"),
         Cell(kind: .text, input: "bold text", preservedEditor: PreservedEditor(text: "bold text",
              xml: #"<editor type="text"><line bold="1:4">bold text</line></editor>"#)),
     ], preserved: [#"<watchlist><v>x</v></watchlist>"#], zoom: 120,
@@ -47,6 +51,33 @@ func richWorksheet() -> Worksheet {
 }
 
 struct WXMXRoundTripTests {
+    @Test func foldedSections() throws {
+        let w = richWorksheet()
+        let section = try #require(w.cells.firstIndex { $0.input == "Folded" })
+        let after = try #require(w.cells.firstIndex { $0.input == "After" })
+        #expect(w.foldRange(of: section) == (section + 1)..<after)
+        #expect(!w.visibleIndices.contains(section + 1) && w.visibleIndices.contains(after))
+        #expect(w.foldedAncestors(of: section + 3) == [section, section + 2])
+        // In the file, the section's cells sit inside its <fold>, the inner fold inside that.
+        let xml = WXMXWriter.contentXML(w)
+        let fold = try #require(xml.range(of: "<fold>"))
+        let afterCell = try #require(xml.range(of: "<line>After</line>"))
+        #expect(fold.lowerBound < xml.range(of: "<line>inner;</line>")!.lowerBound)
+        #expect(xml.range(of: "</fold></fold>") == nil || xml.range(of: "</fold>")!.lowerBound < afterCell.lowerBound)
+        #expect(xml.components(separatedBy: "<fold>").count == 3)
+    }
+
+    /// A folded section with a folded subsection inside and a hidden cell,
+    /// written by Macsima, loaded and re-saved by wxMaxima 26.09 in batch mode.
+    @Test func foldsWxMaximaWroteBack() throws {
+        let r = try WXMXReader.read(try Data(contentsOf: WXMXFixtures.dir.appending(path: "wxmaxima-written/folded-resaved.wxmx")))
+        let cells = r.worksheet.cells
+        #expect(cells.map(\.input) == ["Folded", "a:1;", "Inner", "b:a+1;", "After", "c:b+1;"])
+        #expect(cells.map(\.isFolded) == [true, false, true, false, false, false])
+        #expect(cells[5].isHidden && r.worksheet.visibleIndices == [0, 4, 5])
+        #expect(r.warnings.isEmpty)
+    }
+
     @Test func modelFileModelIsIdentical() throws {
         let original = richWorksheet()
         let data = try WXMXWriter.write(original)

@@ -102,6 +102,20 @@ elif script == "kinds-basics":
     check(len(new) == 1 and new[0]["focused"] and new[0]["outputs"][0].startswith("image - png"),
           "Insert Image adds an image cell after the focused one, captioned with the file name")
     check(len(dump("kinds", 3)["cells"]) == len(c1), "Cmd+Z removes it")
+elif script == "folds-basics":
+    d1 = dump("folds", 1)
+    check([c["input"] for c in d1["cells"]] == ["x:1;", "S1", "a:1;", "T", "b:2;", "S2", "c:3;"], "seven cells: two sections, a subsection")
+    check(d1["visible"] == [0, 1, 5, 6] and d1["cells"][1]["folded"], "folding S1 hides its cells, the subsection's too")
+    d2 = dump("folds", 2)
+    check([c["focused"] for c in d2["cells"]].index(True) == 5, "Down from the folded heading skips to S2")
+    d3 = dump("folds", 3)
+    check(d3["visible"] == [0, 1, 5] and [c["folded"] for c in d3["cells"]] == [False, True, False, True, False, True, False],
+          "Cmd+Opt+[ folds every heading with cells under it")
+    d4 = dump("folds", 4)
+    check(d4["visible"] == list(range(7)) and d4["cells"][6]["hidden"], "Cmd+Opt+] unfolds all; the triangle hides a code cell")
+    d5 = dump("folds", 5)
+    check(4 in d5["visible"] and not d5["cells"][1]["folded"] and not d5["cells"][3]["folded"],
+          "Find unfolds the sections around its match")
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:

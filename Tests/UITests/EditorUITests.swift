@@ -88,6 +88,26 @@ final class EditorUITests: XCTestCase {
         XCTAssertFalse(app.textViews["cell-input-2"].waitForExistence(timeout: 2))
     }
 
+    /// A real click on a section's triangle folds it; clicking the "folded"
+    /// line unfolds it.
+    @MainActor
+    func testFoldSection() throws {
+        waitForReady()
+        let first = app.textViews["cell-input-0"]
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        first.click()
+        app.typeKey("3", modifierFlags: .command)
+        app.typeText("Section")
+        app.typeKey("0", modifierFlags: .command)
+        app.typeText("inside;")
+        XCTAssertTrue(app.textViews["cell-input-2"].waitForExistence(timeout: 5))
+        app.descendants(matching: .any)["cell-disclosure-1"].click()
+        XCTAssertFalse(app.textViews["cell-input-2"].waitForExistence(timeout: 2))
+        app.descendants(matching: .any)["cell-folded-1"].click()
+        XCTAssertTrue(app.textViews["cell-input-2"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textViews["cell-input-2"].value as? String, "inside;")
+    }
+
     /// An animation plays when its Play button is clicked.
     @MainActor
     func testAnimationPlays() throws {

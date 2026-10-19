@@ -48,7 +48,7 @@ public enum WXMXReader {
         for child in root.children {
             switch child.name {
             case "cell":
-                worksheet.cells.append(reader.cell(child))
+                worksheet.cells += reader.cells(child)
             case nil:
                 if !child.textContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     worksheet.preserved.append(child.xml)
@@ -83,7 +83,16 @@ private struct Reader {
     /// Attributes of a cell element this app acts on itself.
     static let cellAttributes: Set<String> = ["uuid", "type", "sectioning_level"]
 
-    mutating func cell(_ node: XMLTreeNode) -> Cell {
+    /// A cell, followed by the cells folded under it (a heading's <fold>,
+    /// nested folds included), flattened into the cell list.
+    mutating func cells(_ node: XMLTreeNode) -> [Cell] {
+        var folded: [Cell] = []
+        var cell = cell(node, folded: &folded)
+        if !folded.isEmpty { cell.isFolded = true }
+        return [cell] + folded
+    }
+
+    mutating func cell(_ node: XMLTreeNode, folded: inout [Cell]) -> Cell {
         var attributes = node.attributes
         let type = attributes["type"] ?? ""
         let level = attributes["sectioning_level"]
@@ -124,7 +133,7 @@ private struct Reader {
         attributes["type"] = nil
         attributes["sectioning_level"] = nil
         var cell = Cell(id: id, kind: kind)
-        for key in attributes.keys where key != "uuid" {
+        for key in attributes.keys where key != "uuid" && key != "hide" {
             if key.hasPrefix("question") || key.hasPrefix("answer") { continue }
             warn("the cell attribute \"\(key)\" (written back, not used)")
         }
@@ -146,6 +155,8 @@ private struct Reader {
                 a["breakline"] = nil
                 let format = URL(filePath: file).pathExtension.lowercased()
                 cell.outputs = [.image(data: files.data[file]!, format: format.isEmpty ? "png" : format, label: nil, attributes: a)]
+            case "fold" where kind.isHeading && child.elementChildren.allSatisfy({ $0.name == "cell" }):
+                for inner in child.elementChildren { folded += cells(inner) }
             case "fold":
                 cell.preserved.append(child.xml)
                 warn("folded cells (not shown, written back)")

@@ -26,7 +26,7 @@ feature.
 | Other archive files (images of kept cells, animation frames, gnuplot data `.gz`) | kept as attachments | written back under the same name | full (kept) | |
 | Untrusted input | caps: `content.xml` 64 MB, any file 128 MB, total 512 MB, 10,000 files; `..`, absolute and backslash paths rejected; XML nested deeper than 512 levels rejected | | full | |
 | Zip timestamps | | ZIPFoundation 0.9.19 writes them two hours off from local time here (looks like UTC); harmless, wxMaxima ignores them | partial | |
-| `.wxm` plain-text format | no | no | missing (out of scope for Phase 2) | Save as `.wxmx` |
+| `.wxm` plain-text format | WorksheetKit reads it (cells, answers, hide, folds; images left out), used for pasting cells | WorksheetKit writes it, for copying cells; opening and saving `.wxm` files comes in Phase 3 step 13 | partial | Save as `.wxmx` |
 
 ## Document
 
@@ -52,8 +52,8 @@ feature.
 | `cell type="pagebreak"` | yes, shown as a dashed rule | yes | full | |
 | `cell type="image"` | yes: the caption is editable, the image (PNG, JPEG, GIF, SVG, `.svgz`) shown below; Cell › Insert Image… makes one | yes, as wxMaxima writes them (caption editor, then `img`); an image cell whose image is missing stays a kept raw cell | full | |
 | Unknown cell types | kept as raw cells, warned | written back verbatim | partial | |
-| `fold` (folded cells under a heading) | kept, not shown; a placeholder says so | written back | partial | Folding sections you want to edit in Macsima |
-| `hide="true"` (hidden output) | kept, not applied | written back | partial | Hiding cells |
+| `fold` (folded cells under a heading) | yes: the cells join the list after their heading, which shows folded; nested folds too | yes, a folded heading's section inside its `<fold>`; wxMaxima 26.09 reads it back (fixture `folded-resaved.wxmx`) | full | |
+| `hide="true"` (hidden output) | yes: the cell shows its first line, outputs hidden | yes | full | |
 | `hideToolTip` | kept | written back | full (kept) | |
 | `questionN`/`answerN`, `auto_answer` (known answers) | kept, not used | written back | partial | |
 | Unknown cell attributes and child elements | kept, warned | written back | full (kept) | |

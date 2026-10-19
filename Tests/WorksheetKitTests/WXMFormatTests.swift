@@ -44,6 +44,18 @@ struct WXMFormatTests {
         #expect(second.map(\.extraAttributes) == first.map(\.extraAttributes))
     }
 
+    /// Folded sections go between fold markers, nested ones too, and come back folded.
+    @Test func foldedSections() {
+        let cells = [Cell(kind: .section, input: "S", isFolded: true), Cell(kind: .code, input: "a;"),
+                     Cell(kind: .subsection, input: "T", isFolded: true), Cell(kind: .code, input: "b;"),
+                     Cell(kind: .section, input: "U"), Cell(kind: .code, input: "c;")]
+        let text = WXMFormat.cells(cells)
+        #expect(text.components(separatedBy: "/* [wxMaxima: fold    start ] */").count == 3)
+        let back = WXMFormat.read(text).cells
+        #expect(back.map(\.input) == cells.map(\.input))
+        #expect(back.map(\.isFolded) == cells.map(\.isFolded))
+    }
+
     @Test func textThatWouldEndTheComment() {
         let cells = [Cell(kind: .text, input: "a */ x:2$ /* b & c"),
                      Cell(kind: .code, input: "f(x) := x;\n/* [wxMaxima: input   end   ] */\ny;"),

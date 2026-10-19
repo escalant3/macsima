@@ -114,6 +114,7 @@ public final class WorksheetController {
     /// in the window takes it at once, so the next keystroke lands there; a
     /// lazy cell not created yet takes it when it arrives.
     public func focus(_ id: UUID, caret place: CaretPlace) {
+        reveal(id)
         caretRequest = CaretRequest(cell: id, place: place, serial: (caretRequest?.serial ?? 0) + 1)
         if let editor = editors[id], let window = editor.window {
             editor.pendingCaret = place
@@ -181,7 +182,7 @@ public final class WorksheetController {
         let cells = document.worksheet.cells
         guard let index = cells.firstIndex(where: { $0.id == id }) else { return false }
         let range = up ? Array(cells[..<index].reversed()) : Array(cells[(index + 1)...])
-        guard let target = range.first(where: { $0.hasEditor }) else { return false }
+        guard let target = range.first(where: { $0.hasEditor && isVisible($0.id) }) else { return false }
         focus(target.id, caret: up ? .lastLine(x: x) : .firstLine(x: x))
         return true
     }
@@ -240,6 +241,62 @@ public final class WorksheetController {
         document.deleteCell(id, undo: undoManager)
         let cells = document.worksheet.cells
         focusedCell = cells.isEmpty ? nil : cells[min(index, cells.count - 1)].id
+    }
+
+    // MARK: - Folding and hiding
+
+    /// Folds or unfolds the heading `id`'s section (wxMaxima's triangle on
+    /// a heading's bracket). Not undoable, as in wxMaxima; marks the document edited.
+    public func toggleFold(_ id: UUID) {
+        guard let i = document.worksheet.index(of: id), document.worksheet.cells[i].kind.isHeading,
+              !document.worksheet.foldRange(of: i).isEmpty else { return }
+        document.worksheet.cells[i].isFolded.toggle()
+        markEdited()
+    }
+
+    /// Folds every heading with something under it, or unfolds all.
+    public func setAllFolded(_ folded: Bool) {
+        var changed = false
+        for i in document.worksheet.cells.indices where document.worksheet.cells[i].kind.isHeading
+            && document.worksheet.cells[i].isFolded != folded && (!folded || !document.worksheet.foldRange(of: i).isEmpty) {
+            document.worksheet.cells[i].isFolded = folded
+            changed = true
+        }
+        if changed {
+            if folded, let focused = focusedCell, let i = document.worksheet.index(of: focused),
+               !document.worksheet.visibleIndices.contains(i) {
+                // The focused cell went out of sight: focus its outermost heading.
+                focusedCell = document.worksheet.foldedAncestors(of: i).first.map { document.worksheet.cells[$0].id }
+            }
+            markEdited()
+        }
+    }
+
+    /// Shows a code or text cell as its first line only, outputs hidden (wxMaxima's hide).
+    public func toggleHidden(_ id: UUID) {
+        guard let i = document.worksheet.index(of: id), [.code, .text].contains(document.worksheet.cells[i].kind) else { return }
+        document.worksheet.cells[i].isHidden.toggle()
+        markEdited()
+    }
+
+    /// Unfolds the headings that hide `id`, and shows the cell whole if it
+    /// was hidden, so it can be seen and edited.
+    func reveal(_ id: UUID) {
+        guard let i = document.worksheet.index(of: id) else { return }
+        let ancestors = document.worksheet.foldedAncestors(of: i)
+        guard !ancestors.isEmpty || document.worksheet.cells[i].isHidden else { return }
+        for a in ancestors { document.worksheet.cells[a].isFolded = false }
+        document.worksheet.cells[i].isHidden = false
+        markEdited()
+    }
+
+    var focusedCellIsHeading: Bool {
+        focusedCell.flatMap { document.worksheet[$0] }?.kind.isHeading ?? false
+    }
+
+    func isVisible(_ id: UUID) -> Bool {
+        guard let i = document.worksheet.index(of: id) else { return false }
+        return document.worksheet.foldedAncestors(of: i).isEmpty
     }
 
     // MARK: - Zoom
@@ -366,7 +423,7 @@ public final class WorksheetController {
         evaluate(id)
         let cells = document.worksheet.cells
         guard let index = cells.firstIndex(where: { $0.id == id }) else { return }
-        if let next = cells[(index + 1)...].first(where: \.hasEditor) {
+        if let next = cells[(index + 1)...].first(where: { $0.hasEditor && isVisible($0.id) }) {
             focusedCell = next.id
         } else {
             focusedCell = document.insertCell(.code, after: cells.last?.id, undo: undoManager)

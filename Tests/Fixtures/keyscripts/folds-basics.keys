@@ -1,0 +1,35 @@
+# Folding sections and hiding cells (Phase 3, step 8).
+wait 3
+type x:1;
+key 3 cmd
+type S1
+key 0 cmd
+type a:1;
+key 4 cmd
+type T
+key 0 cmd
+type b:2;
+key 3 cmd
+type S2
+key 0 cmd
+type c:3;
+toggle-fold 1
+dump .build/keyscripts/folds-1.json
+scroll-to 1
+key down
+dump .build/keyscripts/folds-2.json
+toggle-fold 1
+key [ cmd option
+dump .build/keyscripts/folds-3.json
+shot .build/keyscripts/folds-3.png
+key ] cmd option
+toggle-fold 6
+dump .build/keyscripts/folds-4.json
+toggle-fold 6
+key [ cmd option
+key f cmd
+type b:2
+key return
+key escape
+dump .build/keyscripts/folds-5.json
+quit

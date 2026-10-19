@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -156,6 +156,13 @@ enum KeyScriptDriver {
         case "insert-image":
             // `insert-image <path>`: Cell › Insert Image… without the open panel.
             WorksheetController.keyController?.insertImage(from: URL(filePath: rest))
+        case "toggle-fold":
+            // `toggle-fold <cell>` (0-based): the triangle in a cell's gutter.
+            if let c = Int(rest), let controller = WorksheetController.keyController,
+               c < controller.document.worksheet.cells.count {
+                let cell = controller.document.worksheet.cells[c]
+                if cell.kind.isHeading { controller.toggleFold(cell.id) } else { controller.toggleHidden(cell.id) }
+            }
         case "copy-output":
             // `copy-output <cell> <output> input|latex|mathml|image` (0-based), as the output's menu does.
             let parts = rest.split(separator: " ").map(String.init)
@@ -216,7 +223,7 @@ enum KeyScriptDriver {
     ]
     private static let keyCodes: [String: UInt16] = [
         "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1, "f": 3, "g": 5, "e": 14, "/": 44, "=": 24, "-": 27, "w": 13,
-        "c": 8, "x": 7, "v": 9, "a": 0,
+        "c": 8, "x": 7, "v": 9, "a": 0, "[": 33, "]": 30,
     ]
 
     /// The key window, or else the frontmost document window (the app may
@@ -293,6 +300,7 @@ enum KeyScriptDriver {
         let cells = controller.document.worksheet.cells.map { cell -> [String: Any] in
             ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.map(describe),
              "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell,
+             "folded": cell.isFolded, "hidden": cell.isHidden,
              "editorText": controller.existingEditor(for: cell.id)?.string ?? NSNull(),
              "inWindow": controller.existingEditor(for: cell.id)?.window != nil,
              "backgrounds": controller.existingEditor(for: cell.id).map { describe($0)["backgrounds"] ?? [] } ?? [],
@@ -305,6 +313,7 @@ enum KeyScriptDriver {
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]
         info["zoom"] = controller.document.worksheet.zoom
         let ids = controller.document.worksheet.cells.map(\.id)
+        info["visible"] = controller.document.worksheet.visibleIndices
         info["selectedCells"] = controller.selectedCells.compactMap { ids.firstIndex(of: $0) }
         info["firstResponder"] = NSApp.keyWindow?.firstResponder.map { String(describing: type(of: $0)) } ?? ""
         info["renders"] = MathSnapshotRenderer.shared.recent.map { r -> [String: Any] in

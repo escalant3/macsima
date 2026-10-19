@@ -41,6 +41,21 @@ struct WorksheetCommands: Commands {
                 }
             }
             .disabled(controller?.focusedCell == nil)
+            Divider()
+            Button("Fold or Unfold Section") {
+                if let c = controller, let id = c.focusedCell { c.toggleFold(id) }
+            }
+            .disabled(!(controller?.focusedCellIsHeading ?? false))
+            Button("Hide or Show Cell") {
+                if let c = controller, let id = c.focusedCell { c.toggleHidden(id) }
+            }
+            .disabled(controller?.focusedCell == nil || (controller?.focusedCellIsHeading ?? false))
+            // wxMaxima's Ctrl+Alt+[ and Ctrl+Alt+], with Command for Control.
+            Button("Fold All") { controller?.setAllFolded(true) }
+                .keyboardShortcut("[", modifiers: [.command, .option])
+            Button("Unfold All") { controller?.setAllFolded(false) }
+                .keyboardShortcut("]", modifiers: [.command, .option])
+            Divider()
             Button("Select All Cells") { controller?.selectAllCells() }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
             Button("Delete Cell") { controller?.deleteFocusedCell() }

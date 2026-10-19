@@ -79,6 +79,7 @@ public final class FindController {
     public func replaceCurrent() {
         guard let controller, let current, current < matches.count else { return }
         let match = matches[current]
+        controller.reveal(match.cell)
         let editor = controller.editor(for: match.cell)
         editor.breakUndoCoalescing()
         editor.replace(match.range, with: replacement)
@@ -145,6 +146,7 @@ public final class FindController {
     private func reveal() {
         guard let controller, let current, current < matches.count else { return }
         let match = matches[current]
+        controller.reveal(match.cell)
         let editor = controller.editor(for: match.cell)
         editor.setSelectedRange(match.range)
         controller.scroll(to: match.cell) { editor.scrollRangeToVisible(match.range) }
