@@ -34,6 +34,13 @@ enum KeyScriptDriver {
             if TestGuard.refuseIfForeign(allowed: "/.build/keyscripts/", log: log) { return }
             NSApp.activate()
             documentWindow?.makeKeyAndOrderFront(nil)
+            // Synthesized keys only reach an active app: say when another app
+            // takes over (someone using the Mac while a script runs).
+            NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification,
+                                                   object: nil, queue: .main) { _ in
+                let front = NSWorkspace.shared.frontmostApplication?.localizedName ?? "?"
+                FileHandle.standardError.write(Data("KeyScriptDriver: app lost focus to \(front)\n".utf8))
+            }
             log("app active: \(NSApp.isActive), key window: \(NSApp.keyWindow != nil)")
             for raw in script.split(separator: "\n").map(String.init) {
                 let line = raw.trimmingCharacters(in: .whitespaces)

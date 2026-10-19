@@ -119,7 +119,7 @@ struct MathOutputItem: View {
         .accessibilityLabel(out.plainText)
         .onTapGesture { live.toggle() }
         .contextMenu {
-            Button("Copy as Text") { Self.copy(out.plainText) }
+            Button("Copy as Maxima Input") { Self.copy(out.plainText) }
             Button("Copy MathML") { Self.copy(out.mathML) }
             Button(live ? "Show as Image" : "Select Math") { live.toggle() }
         }

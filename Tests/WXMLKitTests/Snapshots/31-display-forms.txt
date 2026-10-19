@@ -2,84 +2,84 @@
 in:    <math><lbl altCopy="%o1">(%o1) </lbl><sm needsparen="false"><mrow><mi lisp="*var-tag*">k</mi><mo>=</mo><mn>1</mn></mrow><mrow><s>inf</s></mrow><mrow><mfrac lisp="wxxml-mquotient"><mrow><mn>1</mn></mrow><mrow><msup><mrow><mi lisp="*var-tag*">k</mi></mrow><mn>2</mn></msup></mrow></mfrac></mrow></sm></math>
 label: %o1
 image: -
-text:  k=1inf(1)/(k^(2))
+text:  'sum(1/k^2,k,1,inf)
 out:   <math display="block"><mrow><munderover><mo>&#x2211;</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi mathvariant="normal">&#x221E;</mi></munderover><mfrac><mn>1</mn><msup><mi>k</mi><mn>2</mn></msup></mfrac></mrow></math>
 
 ### 2
 in:    <math><lbl altCopy="%o2">(%o2) </lbl><sm type="prod" needsparen="false"><mrow><mi lisp="*var-tag*">k</mi><mo>=</mo><mn>1</mn></mrow><mrow><mi lisp="*var-tag*">n</mi></mrow><mrow><mi lisp="*var-tag*">k</mi></mrow></sm></math>
 label: %o2
 image: -
-text:  k=1nk
+text:  'product(k,k,1,n)
 out:   <math display="block"><mrow><munderover><mo>&#x220F;</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>k</mi></mrow></math>
 
 ### 3
 in:    <math><lbl altCopy="%o3">(%o3) </lbl><in def="false"><mrow><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></mrow><mrow><s>d</s><mi lisp="*var-tag*">x</mi></mrow></in></math>
 label: %o3
 image: -
-text:  f(x)dx
+text:  'integrate(f(x),x)
 out:   <math display="block"><mrow><mo>&#x222B;</mo><mrow><mi>f</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><mspace width="0.2em"/><mrow><mi mathvariant="normal">d</mi><mi>x</mi></mrow></mrow></math>
 
 ### 4
 in:    <math><lbl altCopy="%o4">(%o4) </lbl><in><mrow><mn>0</mn></mrow><mrow><mn>1</mn></mrow><mrow><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></mrow><mrow><s>d</s><mi lisp="*var-tag*">x</mi></mrow></in></math>
 label: %o4
 image: -
-text:  01f(x)dx
+text:  'integrate(f(x),x,0,1)
 out:   <math display="block"><mrow><msubsup><mo>&#x222B;</mo><mn>0</mn><mn>1</mn></msubsup><mrow><mi>f</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><mspace width="0.2em"/><mrow><mi mathvariant="normal">d</mi><mi>x</mi></mrow></mrow></math>
 
 ### 5
 in:    <math><lbl altCopy="%o5">(%o5) </lbl><lm><fnm>lim</fnm><mrow><mi lisp="*var-tag*">x</mi><mo>-></mo><mn>0</mn></mrow><mrow><mfrac lisp="wxxml-mquotient"><mrow><fn lisp="wxxml-function"><fnm lisp="wxxml-function">sin</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></mrow><mrow><mi lisp="*var-tag*">x</mi></mrow></mfrac></mrow></lm></math>
 label: %o5
 image: -
-text:  limx->0(sin(x))/(x)
+text:  'limit(sin(x)/x,x,0)
 out:   <math display="block"><mrow><munder><mo>lim</mo><mrow><mi>x</mi><mo>→</mo><mn>0</mn></mrow></munder><mfrac><mrow><mi>sin</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><mi>x</mi></mfrac></mrow></math>
 
 ### 6
 in:    <math><lbl altCopy="%o6">(%o6) </lbl><lm><fnm>lim</fnm><mrow><mi lisp="*var-tag*">x</mi><mo>-></mo><mn>0</mn><mo>+</mo></mrow><mrow><mfrac lisp="wxxml-mquotient"><mrow><mn>1</mn></mrow><mrow><mi lisp="*var-tag*">x</mi></mrow></mfrac></mrow></lm></math>
 label: %o6
 image: -
-text:  limx->0+(1)/(x)
+text:  'limit(1/x,x,0,plus)
 out:   <math display="block"><mrow><munder><mo>lim</mo><mrow><mi>x</mi><mo>→</mo><mn>0</mn><mo>+</mo></mrow></munder><mfrac><mn>1</mn><mi>x</mi></mfrac></mrow></math>
 
 ### 7
 in:    <math><lbl altCopy="%o7">(%o7) </lbl><d lisp="wxxml-derivative"><mfrac lisp="wxxml-mquotient"><mrow><s lisp="wxxml-tag">d</s></mrow><mrow><s lisp="wxxml-tag">d</s><h>*</h><mi lisp="*var-tag*">x</mi></mrow></mfrac><h>*</h><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></d></math>
 label: %o7
 image: -
-text:  (d)/(d*x)*f(x)
+text:  'diff(f(x),x)
 out:   <math display="block"><mrow><mfrac><mi mathvariant="normal">d</mi><mrow><mi mathvariant="normal">d</mi><mi>x</mi></mrow></mfrac><mspace width="0.17em"/><mrow><mi>f</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow></mrow></math>
 
 ### 8
 in:    <math><lbl altCopy="%o8">(%o8) </lbl><d lisp="wxxml-derivative"><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><s lisp="wxxml-tag">d</s></mrow><mn>2</mn></msup></mrow><mrow><s lisp="wxxml-tag">d</s><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></mrow></mfrac><h>*</h><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></d></math>
 label: %o8
 image: -
-text:  (d^(2))/(d*x^(2))*f(x)
+text:  'diff(f(x),x,2)
 out:   <math display="block"><mrow><mfrac><msup><mi mathvariant="normal">d</mi><mn>2</mn></msup><mrow><mi mathvariant="normal">d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mspace width="0.17em"/><mrow><mi>f</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow></mrow></math>
 
 ### 9
 in:    <math><lbl altCopy="%o9">(%o9) </lbl><d lisp="wxxml-derivative"><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><s lisp="wxxml-tag">d</s></mrow><mn>3</mn></msup></mrow><mrow><s lisp="wxxml-tag">d</s><h>*</h><mi lisp="*var-tag*">x</mi><h>*</h><s lisp="wxxml-tag">d</s><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>2</mn></msup></mrow></mfrac><h>*</h><fn lisp="wxxml-function"><fnm lisp="wxxml-function">g</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow><mo>,</mo><mrow><mi lisp="*var-tag*">y</mi></mrow></p></mrow></fn></d></math>
 label: %o9
 image: -
-text:  (d^(3))/(d*x*d*y^(2))*g(x,y)
+text:  'diff(g(x,y),x,1,y,2)
 out:   <math display="block"><mrow><mfrac><msup><mi mathvariant="normal">d</mi><mn>3</mn></msup><mrow><mi mathvariant="normal">d</mi><mi>x</mi><mspace width="0.17em"/><mi mathvariant="normal">d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mspace width="0.17em"/><mrow><mi>g</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mrow><mi>x</mi><mo>,</mo><mi>y</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></math>
 
 ### 10
 in:    <math><lbl altCopy="%o10">(%o10) </lbl><at><mrow><d lisp="wxxml-derivative"><mfrac lisp="wxxml-mquotient"><mrow><s lisp="wxxml-tag">d</s></mrow><mrow><s lisp="wxxml-tag">d</s><h>*</h><mi lisp="*var-tag*">x</mi></mrow></mfrac><h>*</h><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></d></mrow><mrow><mi lisp="*var-tag*">x</mi><mo>=</mo><mn>0</mn></mrow></at></math>
 label: %o10
 image: -
-text:  (d)/(d*x)*f(x)x=0
+text:  at('diff(f(x),x),x=0)
 out:   <math display="block"><msub><mrow><mrow><mfrac><mi mathvariant="normal">d</mi><mrow><mi mathvariant="normal">d</mi><mi>x</mi></mrow></mfrac><mspace width="0.17em"/><mrow><mi>f</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow></mrow><mo stretchy="true">|</mo></mrow><mrow><mi>x</mi><mo>=</mo><mn>0</mn></mrow></msub></math>
 
 ### 11
 in:    <math><lbl altCopy="%o11">(%o11) </lbl><mrow><hl><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup><mo>+</mo><mn>1</mn></hl></mrow></math>
 label: %o11
 image: -
-text:  x^(2)+1
+text:  box(x^2+1)
 out:   <math display="block"><menclose notation="box"><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mn>1</mn></mrow></menclose></math>
 
 ### 12
 in:    <math><lbl altCopy="%o12">(%o12) </lbl><mrow><hl boxname="&quot;tag&quot;"><mi lisp="*var-tag*">y</mi></hl></mrow></math>
 label: %o12
 image: -
-text:  y
+text:  box(y,"tag")
 out:   <math display="block"><menclose notation="box"><mi>y</mi></menclose></math>
 
 ### 13
@@ -93,7 +93,7 @@ out:   <math display="block"><msub><mi>x</mi><mn>1</mn></msub></math>
 in:    <math><lbl altCopy="%o14">(%o14) </lbl><ie><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><mi lisp="*var-tag*">i</mi><mi>,</mi><mi lisp="*var-tag*">j</mi></mrow><mn>2</mn></ie></math>
 label: %o14
 image: -
-text:  xi,j2
+text:  x[i,j]^2
 out:   <math display="block"><msubsup><mi>x</mi><mrow><mi>i</mi><mo>,</mo><mi>j</mi></mrow><mn>2</mn></msubsup></math>
 
 ### 15
@@ -121,14 +121,14 @@ out:   <math display="block"><msqrt><mpadded width="0"><mphantom><mo stretchy="f
 in:    <math><lbl altCopy="%o19">(%o19) </lbl><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><mfrac lisp="wxxml-mquotient"><mrow><mn>1</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></msup></math>
 label: %o19
 image: -
-text:  x^((1)/(3))
+text:  x^(1/3)
 out:   <math display="block"><msup><mi>x</mi><mfrac><mn>1</mn><mn>3</mn></mfrac></msup></math>
 
 ### 19
 in:    <math><lbl altCopy="%o20">(%o20) </lbl><msup><mrow><s>%e</s></mrow><mrow><mi lisp="*var-tag*">x</mi></mrow></msup></math>
 label: %o20
 image: -
-text:  %e^(x)
+text:  %e^x
 out:   <math display="block"><msup><mi mathvariant="normal">e</mi><mi>x</mi></msup></math>
 
 ### 20
@@ -156,21 +156,21 @@ out:   <math display="block"><mrow><mo stretchy="false">{</mo><mi>a</mi><mo>,</m
 in:    <math><lbl altCopy="%o24">(%o24) </lbl><tb bracketParens="true"><mtr><mtd><mi lisp="*var-tag*">a</mi></mtd><mtd><mi lisp="*var-tag*">b</mi></mtd></mtr><mtr><mtd><mi lisp="*var-tag*">c</mi></mtd><mtd><mi lisp="*var-tag*">d</mi></mtd></mtr></tb></math>
 label: %o24
 image: -
-text:  abcd
+text:  matrix([a,b],[c,d])
 out:   <math display="block"><mrow><mo>[</mo><mtable><mtr><mtd><mrow displaystyle="true"><mi>a</mi></mrow></mtd><mtd><mrow displaystyle="true"><mi>b</mi></mrow></mtd></mtr><mtr><mtd><mrow displaystyle="true"><mi>c</mi></mrow></mtd><mtd><mrow displaystyle="true"><mi>d</mi></mrow></mtd></mtr></mtable><mo>]</mo></mrow></math>
 
 ### 24
 in:    <math><lbl altCopy="%o25">(%o25) </lbl><tb bracketParens="true"><mtr><mtd><mfrac lisp="wxxml-mquotient"><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac></mtd><mtd><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></mtd></mtr><mtr><mtd><q><mn>2</mn></q></mtd><mtd><s>%pi</s></mtd></mtr></tb></math>
 label: %o25
 image: -
-text:  (1)/(2)x^(2)sqrt(2)%pi
+text:  matrix([1/2,x^2],[sqrt(2),%pi])
 out:   <math display="block"><mrow><mo>[</mo><mtable><mtr><mtd><mrow displaystyle="true"><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></mtd><mtd><mrow displaystyle="true"><msup><mi>x</mi><mn>2</mn></msup></mrow></mtd></mtr><mtr><mtd><mrow displaystyle="true"><msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mn>2</mn></msqrt></mrow></mtd><mtd><mrow displaystyle="true"><mi>&#x03C0;</mi></mrow></mtd></mtr></mtable><mo>]</mo></mrow></math>
 
 ### 25
 in:    <math><lbl altCopy="%o26">(%o26) </lbl><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn><mo>:=</mo><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></math>
 label: %o26
 image: -
-text:  f(x):=x^(2)
+text:  f(x):=x^2
 out:   <math display="block"><mrow><mrow><mi>f</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><mo>:=</mo><msup><mi>x</mi><mn>2</mn></msup></mrow></math>
 
 ### 26
@@ -219,7 +219,7 @@ out:   <math display="block"><mrow><mi>θ</mi><mo>+</mo><mi>β</mi><mo>+</mo><mi
 in:    <math><lbl altCopy="%o33">(%o33) </lbl><mrow><mn>1.5</mn><h>*</h><msup><mn>10</mn><mn>-10</mn></msup></mrow></math>
 label: %o33
 image: -
-text:  1.5*10^(-10)
+text:  1.5*10^-10
 out:   <math display="block"><mrow><mn>1.5</mn><mo>&#x22C5;</mo><msup><mn>10</mn><mn>-10</mn></msup></mrow></math>
 
 ### 33
@@ -233,14 +233,14 @@ out:   <math display="block"><mn>2.5b3</mn></math>
 in:    <math><lbl altCopy="%o35">(%o35) </lbl><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mrow><mi lisp="*var-tag*">z</mi></mrow></msup></mrow></msup></math>
 label: %o35
 image: -
-text:  x^(y^(z))
+text:  x^y^z
 out:   <math display="block"><msup><mi>x</mi><msup><mi>y</mi><mi>z</mi></msup></msup></math>
 
 ### 35
 in:    <math><lbl altCopy="%o36">(%o36) </lbl><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><s>%e</s></mrow><mrow><mi>-</mi><mrow lisp="wxxml-paren"><p lisp="wxxml-paren"><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></mrow><mrow><mn>2</mn></mrow></mfrac></p></mrow></mrow></msup></mrow><mrow><q><mn>2</mn></q><h>*</h><q><s>%pi</s></q></mrow></mfrac></math>
 label: %o36
 image: -
-text:  (%e^(-((x^(2))/(2))))/(sqrt(2)*sqrt(%pi))
+text:  %e^-(x^2/2)/(sqrt(2)*sqrt(%pi))
 out:   <math display="block"><mfrac><msup><mi mathvariant="normal">e</mi><mrow><mo>−</mo><mrow><mo>(</mo><mfrac><msup><mi>x</mi><mn>2</mn></msup><mn>2</mn></mfrac><mo>)</mo></mrow></mrow></msup><mrow><msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mn>2</mn></msqrt><mspace width="0.17em"/><msqrt><mpadded width="0"><mphantom><mo stretchy="false">(</mo></mphantom></mpadded><mi>&#x03C0;</mi></msqrt></mrow></mfrac></math>
 
 ### 36
@@ -254,7 +254,7 @@ out:   <math display="block"><mrow><mi>a</mi><mo>.</mo><mi>b</mi></mrow></math>
 in:    <math><lbl altCopy="%o38">(%o38) </lbl><msup mat="true"><mrow><mi lisp="*var-tag*">a</mi></mrow><mn>2</mn></msup></math>
 label: %o38
 image: -
-text:  a^(2)
+text:  a^^2
 out:   <math display="block"><msup><mi>a</mi><mrow><mo>&#x27E8;</mo><mn>2</mn><mo>&#x27E9;</mo></mrow></msup></math>
 
 ### 38
@@ -268,7 +268,7 @@ out:   <math display="block"><mrow><msub><mi>f</mi><mi>x</mi></msub><mo>&#x2061;
 in:    <math><lbl altCopy="%o40">(%o40) </lbl><fn lisp="wxxml-function"><g>lambda</g><mrow><p><mrow><mrow list="true"><t lisp="mlist" listdelim="true">[</t><mrow><mi lisp="*var-tag*">x</mi></mrow><t lisp="mlist" listdelim="true">]</t></mrow></mrow><mo>,</mo><mrow><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></mrow></p></mrow></fn></math>
 label: %o40
 image: -
-text:  lambda([x],x^(2))
+text:  lambda([x],x^2)
 out:   <math display="block"><mrow><mi>λ</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><mo stretchy="false">[</mo><mi>x</mi><mo stretchy="false">]</mo></mrow><mo>,</mo><msup><mi>x</mi><mn>2</mn></msup></mrow><mo stretchy="false">)</mo></mrow></mrow></math>
 
 ### 40
@@ -303,7 +303,7 @@ out:   <math display="block"><mrow><mrow><mi mathvariant="normal">&#x0393;</mi><
 in:    <math><lbl altCopy="%o45">(%o45) </lbl><mo>-</mo><msup><mrow><mrow lisp="wxxml-paren"><p lisp="wxxml-paren"><d lisp="wxxml-derivative"><mfrac lisp="wxxml-mquotient"><mrow><s lisp="wxxml-tag">d</s></mrow><mrow><s lisp="wxxml-tag">d</s><h>*</h><mi lisp="*var-tag*">x</mi></mrow></mfrac><h>*</h><mi lisp="*var-tag*">y</mi></d></p></mrow></mrow><mn>2</mn></msup></math>
 label: %o45
 image: -
-text:  -((d)/(d*x)*y)^(2)
+text:  -('diff(y,x))^2
 out:   <math display="block"><mrow><mo>−</mo><msup><mrow><mo>(</mo><mrow><mfrac><mi mathvariant="normal">d</mi><mrow><mi mathvariant="normal">d</mi><mi>x</mi></mrow></mfrac><mspace width="0.17em"/><mi>y</mi></mrow><mo>)</mo></mrow><mn>2</mn></msup></mrow></math>
 
 ### 45
@@ -317,5 +317,5 @@ out:   <math display="block"><mn>265252859812191058636308480000000</mn></math>
 in:    <math><lbl altCopy="%o47">(%o47) </lbl><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mrow><mn>12</mn></mrow></msup><mo>+</mo><mn>12</mn><h>*</h><mi lisp="*var-tag*">x</mi><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mrow><mn>11</mn></mrow></msup><mo>+</mo><mn>66</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mrow><mn>10</mn></mrow></msup><mo>+</mo><mn>220</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>3</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>9</mn></msup><mo>+</mo><mn>495</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>4</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>8</mn></msup><mo>+</mo><mn>792</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>5</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>7</mn></msup><mo>+</mo><mn>924</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>6</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>6</mn></msup><mo>+</mo><mn>792</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>7</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>5</mn></msup><mo>+</mo><mn>495</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>8</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>4</mn></msup><mo>+</mo><mn>220</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>9</mn></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>3</mn></msup><mo>+</mo><mn>66</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><mn>10</mn></mrow></msup><h>*</h><msup><mrow><mi lisp="*var-tag*">y</mi></mrow><mn>2</mn></msup><mo>+</mo><mn>12</mn><h>*</h><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><mn>11</mn></mrow></msup><h>*</h><mi lisp="*var-tag*">y</mi><mo>+</mo><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><mn>12</mn></mrow></msup></math>
 label: %o47
 image: -
-text:  y^(12)+12*x*y^(11)+66*x^(2)*y^(10)+220*x^(3)*y^(9)+495*x^(4)*y^(8)+792*x^(5)*y^(7)+924*x^(6)*y^(6)+792*x^(7)*y^(5)+495*x^(8)*y^(4)+220*x^(9)*y^(3)+66*x^(10)*y^(2)+12*x^(11)*y+x^(12)
+text:  y^12+12*x*y^11+66*x^2*y^10+220*x^3*y^9+495*x^4*y^8+792*x^5*y^7+924*x^6*y^6+792*x^7*y^5+495*x^8*y^4+220*x^9*y^3+66*x^10*y^2+12*x^11*y+x^12
 out:   <math display="block"><mrow><msup><mi>y</mi><mn>12</mn></msup><mo>+</mo><mn>12</mn><mspace width="0.17em"/><mi>x</mi><mspace width="0.17em"/><msup><mi>y</mi><mn>11</mn></msup><mo>+</mo><mn>66</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>2</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>10</mn></msup><mo>+</mo><mn>220</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>3</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>9</mn></msup><mo>+</mo><mn>495</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>4</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>8</mn></msup><mo>+</mo><mn>792</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>5</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>7</mn></msup><mo>+</mo><mn>924</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>6</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>6</mn></msup><mo>+</mo><mn>792</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>7</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>5</mn></msup><mo>+</mo><mn>495</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>8</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>4</mn></msup><mo>+</mo><mn>220</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>9</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>3</mn></msup><mo>+</mo><mn>66</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>10</mn></msup><mspace width="0.17em"/><msup><mi>y</mi><mn>2</mn></msup><mo>+</mo><mn>12</mn><mspace width="0.17em"/><msup><mi>x</mi><mn>11</mn></msup><mspace width="0.17em"/><mi>y</mi><mo>+</mo><msup><mi>x</mi><mn>12</mn></msup></mrow></math>

@@ -2,5 +2,5 @@
 in:    <math><lbl altCopy="%o1">(%o1)/T/ </lbl><mn>1</mn><mo>+</mo><mi lisp="*var-tag*">x</mi><mo>+</mo><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></mrow><mrow><mn>2</mn></mrow></mfrac><mo>+</mo><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>3</mn></msup></mrow><mrow><mn>6</mn></mrow></mfrac><mo>+</mo><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>4</mn></msup></mrow><mrow><mn>24</mn></mrow></mfrac><mo>+</mo><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>5</mn></msup></mrow><mrow><mn>120</mn></mrow></mfrac><mo>+</mo><mo>...</mo></math>
 label: %o1
 image: -
-text:  1+x+(x^(2))/(2)+(x^(3))/(6)+(x^(4))/(24)+(x^(5))/(120)+...
+text:  1+x+x^2/2+x^3/6+x^4/24+x^5/120
 out:   <math display="block"><mrow><mn>1</mn><mo>+</mo><mi>x</mi><mo>+</mo><mfrac><msup><mi>x</mi><mn>2</mn></msup><mn>2</mn></mfrac><mo>+</mo><mfrac><msup><mi>x</mi><mn>3</mn></msup><mn>6</mn></mfrac><mo>+</mo><mfrac><msup><mi>x</mi><mn>4</mn></msup><mn>24</mn></mfrac><mo>+</mo><mfrac><msup><mi>x</mi><mn>5</mn></msup><mn>120</mn></mfrac><mo>+</mo><mo>...</mo></mrow></math>

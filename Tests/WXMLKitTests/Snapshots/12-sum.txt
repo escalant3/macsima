@@ -2,5 +2,5 @@
 in:    <math><lbl altCopy="%o1">(%o1) </lbl><mfrac lisp="wxxml-mquotient"><mrow><msup><mrow><s>%pi</s></mrow><mn>2</mn></msup></mrow><mrow><mn>6</mn></mrow></mfrac></math>
 label: %o1
 image: -
-text:  (%pi^(2))/(6)
+text:  %pi^2/6
 out:   <math display="block"><mfrac><msup><mi>&#x03C0;</mi><mn>2</mn></msup><mn>6</mn></mfrac></math>

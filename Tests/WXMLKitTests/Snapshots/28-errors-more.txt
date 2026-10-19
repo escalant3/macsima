@@ -2,7 +2,7 @@
 in:    <math>value is <msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup></math>
 label: -
 image: -
-text:  value is x^(2)
+text:  value isx^2
 out:   <math display="block"><mrow><mtext>value is&#xA0;</mtext><msup><mi>x</mi><mn>2</mn></msup></mrow></math>
 
 ### 2

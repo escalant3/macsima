@@ -23,7 +23,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 | Feature | wxMaxima | Macsima now | Status | Phase |
 | --- | --- | --- | --- | --- |
 | Animations (`slide`) | Plays frame lists, with sliders | The frames are kept and saved back; the output shows their file names as text | missing | 3 |
-| Copy math as Maxima input | Uses `altCopy` and its own text forms | "Copy as Text" gives a rough linear form, fine for simple results and crude for sums, integrals and limits (for example `k=1inf(1)/(k^(2))`) | partial | 3 |
+| Copy math as Maxima input | Uses `altCopy` and its own text forms (each cell's `ToString`) | "Copy as Maxima Input" (Phase 3 step 7): a port of wxMaxima's `ToString`, using `altCopy`. Sums, products, integrals and limits come out quoted (`'sum(1/k^2,k,1,inf)`), one-sided limits as `plus`/`minus`, matrices as `matrix([..],[..])`. A test reads every output of ten fixtures back into Maxima and checks it equals the original | done | |
 | Selecting text inside math | Directly in the worksheet | Click an output to swap in a live web view, then select | partial | 3 |
 | Folded sections | Fold and unfold under headings | Folded cells from files are kept and saved back; a placeholder marks them. No folding in the editor. | missing | 3 |
 | Hidden output (`hide`) | Hides a cell's output | Kept and saved back, not applied | missing | 3 |

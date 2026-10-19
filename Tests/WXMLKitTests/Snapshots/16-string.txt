@@ -2,5 +2,5 @@
 in:    <math><lbl altCopy="%o1">(%o1) </lbl><st>a string</st></math>
 label: %o1
 image: -
-text:  a string
+text:  "a string"
 out:   <math display="block"><mtext>a string</mtext></math>

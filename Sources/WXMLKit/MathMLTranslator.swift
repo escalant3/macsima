@@ -17,7 +17,7 @@ public struct MathOutput: Equatable, Sendable {
     public var imagePaths: [String]
     /// Tags the translator does not know; rendered as their text content.
     public var unknownTags: [String]
-    /// A linear text form for copying.
+    /// The output as Maxima input (MaximaInputText), for copying.
     public var plainText: String
     /// False when the XML did not parse; `mathML` then holds the raw text.
     public var wellFormed: Bool
@@ -47,7 +47,7 @@ public enum MathMLTranslator {
         var context = Context()
         let body = context.emit(root)
         let math = body.isEmpty ? "" : "<math display=\"block\">\(body)</math>"
-        let plain = PlainText.of(root).trimmingCharacters(in: .whitespaces)
+        let plain = MaximaInputText.of(root, quoteStrings: context.label != nil).trimmingCharacters(in: .whitespaces)
         return MathOutput(label: context.label, mathML: math,
                           imagePaths: context.imagePaths, unknownTags: context.unknown.sorted(),
                           plainText: plain, wellFormed: true)
@@ -382,30 +382,4 @@ enum Greek {
                      "Tau": "Τ", "Upsilon": "Υ", "Phi": "Φ", "Chi": "Χ", "Psi": "Ψ", "Omega": "Ω"]
         return lower.merging(upper) { a, _ in a }
     }()
-}
-
-/// A linear text form, for copy and for logs.
-enum PlainText {
-    static func of(_ node: MathNode) -> String {
-        guard case .element(let name, let attrs, let children) = node else { return node.textContent }
-        let kids = node.elementChildren
-        func join(_ nodes: [MathNode]) -> String { nodes.map(of).joined() }
-        switch name {
-        case "lbl", "img": return ""
-        case "h": return "*"
-        case "mspace": return " "
-        case "mfrac" where kids.count == 2 && attrs["line"] == "no":
-            return "binomial(\(of(kids[0])),\(of(kids[1])))"
-        case "mfrac" where kids.count == 2: return "(\(of(kids[0])))/(\(of(kids[1])))"
-        case "msup" where kids.count == 2: return "\(of(kids[0]))^(\(of(kids[1])))"
-        case "munder" where kids.count == 2: return "\(of(kids[0]))[\(of(kids[1]))]"
-        case "q": return "sqrt(\(join(children)))"
-        case "p": return attrs["print"] == "no" ? join(children) : "(\(join(children)))"
-        case "a": return "abs(\(join(children)))"
-        case "cj": return "conjugate(\(join(children)))"
-        default:
-            if name != "mrow", name != "math", name != "mth", let alt = attrs["altCopy"] { return alt }
-            return join(children)
-        }
-    }
 }

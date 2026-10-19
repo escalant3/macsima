@@ -32,7 +32,7 @@ elif script == "eval-basics":
     d1 = dump("eval", 1)["cells"]
     check([c["label"] for c in d1] == [1, 2, 3, 4, -1], "input labels 1..4, then the new empty cell")
     check(d1[0]["outputs"] == ["math %o1 -cos(x)"], "integrate gives -cos(x)")
-    check(d1[1]["outputs"][0].startswith("image %t2 png") and d1[1]["outputs"][1:] == ["math %o2 "],
+    check(d1[1]["outputs"][0].startswith("image %t2 png") and d1[1]["outputs"][1:] == ['math %o2 ""'],
           "wxplot2d gives a PNG read into the model, then its empty (%o2)")
     check(d1[2]["outputs"][0].startswith("error maxima expt: undefined"), "1/0 shows the error with its text")
     check(d1[3]["outputs"] == ["question Is y positive, negative or zero? answer=pos;", "math %o4 pos"],

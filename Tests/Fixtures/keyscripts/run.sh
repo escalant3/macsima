@@ -17,11 +17,12 @@ if [ $# -gt 1 ]; then
   open_file="$PWD/.build/keyscripts/$name.wxmx"
 fi
 caffeinate -u -t 1
-"$app" $open_file -ApplePersistenceIgnoreState YES -MacsimaKeyScript "Tests/Fixtures/keyscripts/$name.keys" 2>/dev/null &
+"$app" $open_file -ApplePersistenceIgnoreState YES -MacsimaKeyScript "Tests/Fixtures/keyscripts/$name.keys" 2>".build/keyscripts/$name.log" &
 pid=$!
 caffeinate -d -i -w $pid &
 sleep 1
 osascript -e 'tell application "Macsima" to activate' >/dev/null
 for _ in $(seq 1 120); do sleep 1; kill -0 $pid 2>/dev/null || break; done
 kill $pid 2>/dev/null || true
+grep "lost focus" ".build/keyscripts/$name.log" >&2 || true
 python3 "Tests/Fixtures/keyscripts/check.py" "$name"
