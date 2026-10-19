@@ -7,6 +7,12 @@ import MaximaKit
 /// the app quits, so quitting never leaves a Maxima process behind.
 @MainActor
 public final class MacsimaAppDelegate: NSObject, NSApplicationDelegate {
+    public func applicationWillFinishLaunching(_ notification: Notification) {
+        // Start with an untitled worksheet, as wxMaxima does, instead of
+        // macOS's Open panel; untitled worksheets are saved later with Cmd+S.
+        UserDefaults.standard.register(defaults: ["NSShowAppCentricOpenPanelInsteadOfUntitledFile": false])
+    }
+
     public func applicationDidFinishLaunching(_ notification: Notification) {
         OrphanGuard.install()
     }
