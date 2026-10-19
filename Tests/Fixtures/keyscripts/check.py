@@ -163,6 +163,10 @@ elif script == "zoom-basics":
     with zipfile.ZipFile(".build/keyscripts/zoom-basics.wxmx") as f:
         doc = re.search(r"<wxMaximaDocument[^>]*>", f.read("content.xml").decode()).group(0)
     check(z(4) == 110 and 'zoom="110"' in doc, f"Actual Size, Cmd+=, Cmd+S: the file says {doc}")
+elif script == "checkpoint-a":
+    import os
+    check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),
+          "the screenshots were taken")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

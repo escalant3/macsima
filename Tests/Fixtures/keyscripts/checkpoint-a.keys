@@ -1,0 +1,16 @@
+# Screenshots for Phase 3 checkpoint A (docs/phase3-screenshots/).
+wait 3
+appearance light
+type f(x):=block([a], a:x^2, a+1)
+shot docs/phase3-screenshots/03-bracket-match.png
+key 0 cmd
+type g(x):=x+sin(x);
+key 1 cmd
+type A text cell that mentions x too.
+key f cmd
+type x
+wait 1
+shot docs/phase3-screenshots/04-find.png
+key escape
+appearance system
+quit
