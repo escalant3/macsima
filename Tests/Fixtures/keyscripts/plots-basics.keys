@@ -1,0 +1,15 @@
+# Animations, wxdraw and SVG plots in the window (Phase 3, step 8).
+wait 3
+resize 900 1000
+type with_slider(a,[1,2,3],sin(a*x),[x,0,%pi]);
+key return shift
+wait 3
+type wxdraw2d(explicit(x^2,x,-1,1));
+key return shift
+wait 4
+type wxplot_usesvg:true$ wxplot2d(cos(x),[x,0,%pi]);
+key return shift
+wait 3
+dump .build/keyscripts/plots-1.json
+shot .build/keyscripts/plots-1.png
+quit

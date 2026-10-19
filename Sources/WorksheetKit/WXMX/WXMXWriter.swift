@@ -158,7 +158,22 @@ public enum WXMXWriter {
                 if label == nil { a["breakline"] = "true" }
                 out += XMLTreeNode.element(name: "img", attributes: a, children: [.text(name)]).xml
                 return out
+            case .animation(let frames, let format, let label, let attributes):
+                var names = ""
+                for frame in frames {
+                    let name = imageName(format)
+                    images.append((name, frame))
+                    names += name + ";"
+                }
+                var a = attributes
+                if label == nil { a["breakline"] = "true" }
+                return (label.map(Self.labelXML) ?? "") + XMLTreeNode.element(name: "slide", attributes: a, children: [.text(names)]).xml
             }
+        }
+
+        /// The label of an image or animation, as wxMaxima writes it.
+        static func labelXML(_ label: String) -> String {
+            "<lbl altCopy=\"(\(XMLTreeNode.escapeAttribute(label)))&#x09;\" breakline=\"true\">(\(XMLTreeNode.escapeText(label))) </lbl>"
         }
 
         /// The math chunk's content with `breakline="true"` on its first

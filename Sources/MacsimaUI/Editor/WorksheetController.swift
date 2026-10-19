@@ -45,6 +45,8 @@ public final class WorksheetController {
     public private(set) var sessionState: SessionState = .dead
     /// Why Maxima is not running, or other news for the status line.
     public private(set) var statusMessage: String?
+    /// The status message came from Maxima's `statusbar` tag.
+    @ObservationIgnored private var statusFromMaxima = false
     /// Cells sent to Maxima and not finished yet.
     public private(set) var running: Set<UUID> = []
     /// The cell whose question is waiting for an answer.
@@ -321,6 +323,7 @@ public final class WorksheetController {
             if let id = UUID(uuidString: cellID) { enqueue(id, .append(.math(xml: Self.storedMath(content)))) }
         case .tag("statusbar", let content):
             statusMessage = content
+            statusFromMaxima = true
         case .tag("wxxml-symbols", let content):
             MaximaSymbols.shared.ingestInBackground(content)
         case .interruptChannelReady, .tag, .output:
@@ -445,6 +448,20 @@ public final class WorksheetController {
                     enqueue(id, .append(.error(kind: nil, message: "The plot file \(path) was gone before it could be read.")))
                 }
             }
+            if let animation = out.animation {
+                let frames = animation.frames.compactMap { FileManager.default.contents(atPath: $0) }
+                if frames.count == animation.frames.count, !frames.isEmpty {
+                    let format = URL(filePath: animation.frames[0]).pathExtension.lowercased()
+                    var attributes = animation.attributes
+                    attributes["del"] = nil
+                    enqueue(id, .append(.animation(frames: frames, format: format, label: out.label, attributes: attributes)))
+                } else {
+                    enqueue(id, .append(.error(kind: nil, message: "The animation's frames were gone before they could be read.")))
+                }
+                return
+            }
+            // The empty line Maxima prints after an animation (ldisp's newline).
+            if out.label?.hasPrefix("%t") == true, out.imagePaths.isEmpty, Self.isBlank(xml) { return }
             // A label with nothing after it (the empty result of a plot) is kept, as wxMaxima keeps it.
             if !out.mathML.isEmpty || (out.imagePaths.isEmpty && out.label != nil) {
                 enqueue(id, .append(.math(xml: Self.storedMath(xml))))
@@ -473,6 +490,7 @@ public final class WorksheetController {
             enqueue(id, .appendText(content))
         case .tag("statusbar", let content):
             statusMessage = content
+            statusFromMaxima = true
         case .tag:
             break
         case .finished(let outcome):
@@ -483,6 +501,12 @@ public final class WorksheetController {
             enqueue(id, .cleanUp)
             flush()
             running.remove(id)
+            // Maxima's progress text ("Preparing Frame #3") is done once
+            // nothing runs; wxMaxima shows "Ready" there.
+            if running.isEmpty, statusFromMaxima {
+                statusMessage = nil
+                statusFromMaxima = false
+            }
         }
     }
 
@@ -509,6 +533,13 @@ public final class WorksheetController {
     /// Math as the model keeps it: one `<math>` element in canonical XML,
     /// so it comes back byte for byte from a saved .wxmx. Background output
     /// arrives as `<mth>`, prompts may hold several nodes.
+    /// Math holding nothing but its label and blank text.
+    static func isBlank(_ xml: String) -> Bool {
+        let withoutLabel = xml.replacingOccurrences(of: #"<lbl[^>]*>.*?</lbl>"#, with: "", options: .regularExpression)
+        let text = withoutLabel.replacingOccurrences(of: #"<[^>]*>"#, with: "", options: .regularExpression)
+        return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     static func storedMath(_ xml: String) -> String {
         guard let nodes = try? XMLTree.parseFragment(xml) else { return xml }
         let content: [XMLTreeNode]

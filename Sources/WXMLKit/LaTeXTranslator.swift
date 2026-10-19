@@ -89,7 +89,7 @@ public enum LaTeXTranslator {
         let tall = MathMLTranslator.isTallNode(node)
 
         switch name {
-        case "lbl", "img", "editor", "line":
+        case "lbl", "img", "slide", "editor", "line":
             return ""
         case "h":
             // Hidden multiplication: a thin space, a dot between numbers (row below).

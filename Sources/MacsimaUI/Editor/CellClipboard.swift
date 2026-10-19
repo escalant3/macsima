@@ -67,6 +67,7 @@ enum CellClipboard {
                     case .text(let t) where !t.isEmpty: lines.append(t)
                     case .error(_, let message): lines.append(message)
                     case .image(_, _, let label, _): lines.append((label.map { "(\($0)) " } ?? "") + "(Graphics)")
+                    case .animation(_, _, let label, _): lines.append((label.map { "(\($0)) " } ?? "") + "(Animation)")
                     case .question(let prompt, let answer):
                         lines.append(MathMLTranslator.translate(prompt).plainText + (answer.map { " " + $0 } ?? ""))
                     default: break

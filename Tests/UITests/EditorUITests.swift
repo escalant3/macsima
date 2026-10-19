@@ -88,6 +88,24 @@ final class EditorUITests: XCTestCase {
         XCTAssertFalse(app.textViews["cell-input-2"].waitForExistence(timeout: 2))
     }
 
+    /// An animation plays when its Play button is clicked.
+    @MainActor
+    func testAnimationPlays() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("wxanimate_framerate:10$ with_slider(a,[1,2,3,4],a*x,[x,0,1]);")
+        app.typeKey(.return, modifierFlags: .shift)
+        let frame = app.descendants(matching: .any)["animation-frame"]
+        XCTAssertTrue(frame.waitForExistence(timeout: 20))
+        XCTAssertEqual(frame.value as? String ?? frame.label, "1 / 4")
+        app.descendants(matching: .any)["animation-play"].click()
+        let moved = NSPredicate(format: "value != '1 / 4' OR label != '1 / 4'")
+        expectation(for: moved, evaluatedWith: frame)
+        waitForExpectations(timeout: 5)
+    }
+
     @MainActor
     func testArrowKeysMoveBetweenCells() throws {
         waitForReady()

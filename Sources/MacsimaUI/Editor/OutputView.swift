@@ -26,6 +26,10 @@ struct OutputView: View {
             if let image = NSImage(data: data) {
                 ImageOutputView(image: image, label: label)
             }
+        case .animation(let frames, _, let label, let attributes):
+            // A container, so its controls keep their own identifiers.
+            AnimationOutputView(frames: frames, label: label, attributes: attributes)
+                .accessibilityElement(children: .contain)
         case .question(let prompt, let answer):
             // The answer follows the question on its line, as in wxMaxima.
             HStack(alignment: .center, spacing: 8) {

@@ -21,7 +21,11 @@ caffeinate -u -t 1
 pid=$!
 caffeinate -d -i -w $pid &
 sleep 1
-osascript -e 'tell application "Macsima" to activate' >/dev/null
+# The app may take a moment to register; try for a few seconds.
+for _ in 1 2 3 4 5; do
+  osascript -e 'tell application "Macsima" to activate' >/dev/null 2>&1 && break
+  sleep 1
+done
 for _ in $(seq 1 120); do sleep 1; kill -0 $pid 2>/dev/null || break; done
 kill $pid 2>/dev/null || true
 grep "lost focus" ".build/keyscripts/$name.log" >&2 || true

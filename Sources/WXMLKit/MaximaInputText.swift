@@ -56,7 +56,7 @@ public enum MaximaInputText {
 
         if name != "lbl", let alt = attrs["altCopy"] { return alt }
         switch name {
-        case "lbl", "img", "editor", "line", "mprescripts", "none":
+        case "lbl", "img", "slide", "editor", "line", "mprescripts", "none":
             return ""
         case "h":
             return "*"

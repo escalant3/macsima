@@ -225,6 +225,22 @@ private struct Reader {
                 return [.image(data: data, format: format.isEmpty ? "png" : format, label: label, attributes: imgAttributes)]
             }
         }
+        // Animations: <lbl>(%tN) </lbl><slide>image2.png;image3.png;</slide>.
+        if let slideIndex = chunk.firstIndex(where: { $0.name == "slide" }),
+           chunk.enumerated().allSatisfy({ $0.offset == slideIndex || $0.element.name == "lbl" }) {
+            let slide = chunk[slideIndex]
+            let names = slide.textContent.split(separator: ";").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            if !names.isEmpty, names.allSatisfy({ files.data[$0] != nil }) {
+                names.forEach { usedFiles.insert($0) }
+                let label = chunk.first { $0.name == "lbl" }.map(Self.label)
+                var a = slide.attributes
+                a["lisp"] = nil
+                let format = URL(filePath: names[0]).pathExtension.lowercased()
+                return [.animation(frames: names.map { files.data[$0]! }, format: format.isEmpty ? "png" : format,
+                                   label: label, attributes: a)]
+            }
+        }
         // A question and its answer: the prompt, then <editor type="input">.
         // (Not when a label is in the chunk: then the editor belongs to some
         // other layout, as in wxMaxima's hand-made test benches; kept as math.)

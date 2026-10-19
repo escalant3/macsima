@@ -30,6 +30,10 @@ public enum Output: Equatable, Sendable {
     /// An image (a plot) with its bytes, so it outlives Maxima's temp file.
     /// `attributes` keeps what a `.wxmx` said about it (`ppi`, gnuplot data).
     case image(data: Data, format: String, label: String?, attributes: [String: String] = [:])
+    /// An animation (`with_slider`, `wxanimate`): its frames' bytes, in order.
+    /// `attributes` keeps the `slide` element's (`fr` frame rate, `running`,
+    /// `frame`, gnuplot sources).
+    case animation(frames: [Data], format: String, label: String?, attributes: [String: String] = [:])
     /// A question Maxima asked (raw prompt XML) and the answer, once given.
     case question(prompt: String, answer: String?)
 }

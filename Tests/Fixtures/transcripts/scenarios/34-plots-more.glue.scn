@@ -1,0 +1,9 @@
+# Phase 3: animations, SVG plots and wxdraw.
+with_slider(a,[1,2,3],sin(a*x),[x,0,%pi]);
+wxanimate_framerate:5$
+wxanimate(a,[1,2],sin(a*x),[x,0,%pi]);
+wxdraw2d(explicit(x^2,x,-1,1));
+wxplot_usesvg:true$
+wxplot2d(sin(x),[x,0,%pi]);
+wxdraw2d(explicit(x^3,x,-1,1));
+with_slider_draw(a,[1,2],explicit(a*x,x,0,1));

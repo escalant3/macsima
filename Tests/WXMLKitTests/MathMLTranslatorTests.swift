@@ -167,8 +167,8 @@ struct MathMLTranslatorTests {
     }
 
     @Test func unknownTagsKeepTheirText() {
-        let out = MathMLTranslator.translate("<math><mi>a</mi><slide><mi>frame</mi></slide></math>")
-        #expect(out.unknownTags == ["slide"])
+        let out = MathMLTranslator.translate("<math><mi>a</mi><gadget><mi>frame</mi></gadget></math>")
+        #expect(out.unknownTags == ["gadget"])
         #expect(out.mathML.contains("frame"))
     }
 

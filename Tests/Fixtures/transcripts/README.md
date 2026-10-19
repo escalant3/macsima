@@ -72,3 +72,4 @@ Things to know when using these as test fixtures:
 | 30 | debugger (glue only, Phase 1) | `debugmode(true)$`, `error("x");`, `:top`, `2+2;` |
 | 32 | lexing (raw only, Phase 3) | nested comments, `\"` and `\\` in strings, `a\+b`, numbers (`1e3`, `.5`, `1.`, `2b3`, `1.5B-2`, `1.5d0`), `?atom`, `x_1%2`, `if`: what the editor's tokenizer follows |
 | 33 | long outputs (glue only, Phase 3) | 12 outputs wider than a window: expansions, a long list, a rational function, the roots of a cubic, an integral, `sin` of a polynomial, a Taylor series, a 2×30 matrix, an equation, a `block` definition, a product, powers of `sqrt(2)`: line breaking |
+| 34 | plots and animations (glue only, Phase 3) | `with_slider`, `wxanimate` with `wxanimate_framerate:5`, `wxdraw2d`, then `wxplot_usesvg:true` and an SVG `wxplot2d` and `wxdraw2d`, `with_slider_draw` (lists its `.gnuplot` and `.data` files among the frames): the `slide` tag; frame files in the order shown |

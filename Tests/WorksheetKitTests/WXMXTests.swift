@@ -211,6 +211,20 @@ struct WXMXSampleTests {
         #expect(questions.contains("y;") && questions.contains("n;"))
     }
 
+    /// wxMaxima's animations: their frames come from the archive, in order.
+    @Test func animations() throws {
+        func animations(_ name: String) throws -> [(Int, String?, [String: String])] {
+            let r = try WXMXReader.read(try Data(contentsOf: Self.dir.appending(path: "\(name).wxmx")))
+            return r.worksheet.cells.flatMap(\.outputs).compactMap { o in
+                if case .animation(let frames, let format, _, let a) = o { (frames.count, format, a) } else { nil }
+            }.map { ($0.0, $0.1, $0.2) }
+        }
+        let a = try animations("all-celltypes")
+        #expect(a.count == 1 && a[0].0 == 4 && a[0].1 == "png" && a[0].2["fr"] == "2" && a[0].2["running"] == "true")
+        let b = try animations("testbench_simple")
+        #expect(b.map(\.0) == [60, 60, 4, 10] && b[1].2["running"] == "false")
+    }
+
     @Test func allCellTypes() throws {
         let r = try WXMXReader.read(try Data(contentsOf: Self.dir.appending(path: "all-celltypes.wxmx")))
         let kinds = Set(r.worksheet.cells.map(\.kind))
@@ -237,6 +251,7 @@ struct WXMXResavedByWxMaximaTests {
         case .text: "text"
         case .error: "error"
         case .image: "image"
+        case .animation: "animation"
         case .question: "question"
         }
     }

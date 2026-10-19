@@ -1,0 +1,113 @@
+### 1
+in:    <math><lbl altCopy="%t1">(%t1) </lbl><slide running="false" del="yes" lisp="wxxml-tag">/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_3_859479.png;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_2_385629.png;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_1_113500.png;</slide></math>
+label: %t1
+image: -
+text:  
+out:   
+
+### 2
+in:    <math><lbl altCopy="%t2">(%t2) </lbl><st>
+</st></math>
+label: %t2
+image: -
+text:  "
+"
+out:   <math display="block"><mtext>
+</mtext></math>
+
+### 3
+in:    <math><lbl altCopy="%o2">(%o2) </lbl><st></st></math>
+label: %o2
+image: -
+text:  ""
+out:   
+
+### 4
+in:    <math><lbl altCopy="%t4">(%t4) </lbl><slide fr="5" running="false" del="yes" lisp="wxxml-tag">/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_5_156966.png;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_4_923731.png;</slide></math>
+label: %t4
+image: -
+text:  
+out:   
+
+### 5
+in:    <math><lbl altCopy="%t5">(%t5) </lbl><st>
+</st></math>
+label: %t5
+image: -
+text:  "
+"
+out:   <math display="block"><mtext>
+</mtext></math>
+
+### 6
+in:    <math><lbl altCopy="%o5">(%o5) </lbl><st></st></math>
+label: %o5
+image: -
+text:  ""
+out:   
+
+### 7
+in:    <math><lbl altCopy="%t6">(%t6) </lbl><img del="yes" gnuplotsource="/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_1_642172.gnuplot" gnuplotdata="/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_2_976716.data" lisp="wxxml-tag">/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_6_282054.png</img></math>
+label: %t6
+image: /var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_6_282054.png
+text:  
+out:   
+
+### 8
+in:    <math><lbl altCopy="%o6">(%o6) </lbl><st></st></math>
+label: %o6
+image: -
+text:  ""
+out:   
+
+### 9
+in:    <math><lbl altCopy="%t8">(%t8) </lbl><img lisp="wxxml-tag">/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_7_947118.svg</img></math>
+label: %t8
+image: /var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_7_947118.svg
+text:  
+out:   
+
+### 10
+in:    <math><lbl altCopy="%o8">(%o8) </lbl><st></st></math>
+label: %o8
+image: -
+text:  ""
+out:   
+
+### 11
+in:    <math><lbl altCopy="%t9">(%t9) </lbl><img del="yes" gnuplotsource="/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_3_759175.gnuplot" gnuplotdata="/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_4_515238.data" lisp="wxxml-tag">/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_8_533617.svg</img></math>
+label: %t9
+image: /var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_8_533617.svg
+text:  
+out:   
+
+### 12
+in:    <math><lbl altCopy="%o9">(%o9) </lbl><st></st></math>
+label: %o9
+image: -
+text:  ""
+out:   
+
+### 13
+in:    <math><lbl altCopy="%t10">(%t10) </lbl><slide fr="5" running="false" del="yes" lisp="wxxml-tag">/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_8_353646.data;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_7_696528.gnuplot;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_10_144720.svg;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_6_157069.data;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_5_960647.gnuplot;/var/folders/2m/71p1893d5lg9636hvzvmqh2m0000gn/T/maxout_95872_9_866985.svg;</slide></math>
+label: %t10
+image: -
+text:  
+out:   
+
+### 14
+in:    <math><lbl altCopy="%t11">(%t11) </lbl><st>
+</st></math>
+label: %t11
+image: -
+text:  "
+"
+out:   <math display="block"><mtext>
+</mtext></math>
+
+### 15
+in:    <math><lbl altCopy="%o11">(%o11) </lbl><st></st></math>
+label: %o11
+image: -
+text:  ""
+out:   

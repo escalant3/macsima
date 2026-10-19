@@ -8,13 +8,16 @@
 import Foundation
 
 /// One translated math chunk.
-public struct MathOutput: Equatable, Sendable {
+public struct MathOutput: Sendable {
     /// The output label without parentheses, such as `%o3` or `%t1`.
     public var label: String?
     /// Standard MathML (`<math>…</math>`), or empty when the chunk held only an image.
     public var mathML: String
     /// Files named by `img` tags (plots).
     public var imagePaths: [String]
+    /// An animation's frame files (`slide`, from `with_slider` and
+    /// `wxanimate`) and the element's attributes; nil when there is none.
+    public var animation: (frames: [String], attributes: [String: String])?
     /// Tags the translator does not know; rendered as their text content.
     public var unknownTags: [String]
     /// The output as Maxima input (MaximaInputText), for copying.
@@ -33,7 +36,7 @@ public enum MathMLTranslator {
     public static let knownTags: Set<String> = [
         "math", "mth", "mrow", "lbl", "mi", "mn", "mo", "st", "t", "fnm", "fn", "p", "q", "mfrac",
         "msup", "msub", "munder", "ie", "mmultiscripts", "mprescripts", "none", "tb", "mtr", "mtd",
-        "sm", "in", "lm", "d", "at", "hl", "cj", "a", "g", "s", "h", "mspace", "img",
+        "sm", "in", "lm", "d", "at", "hl", "cj", "a", "g", "s", "h", "mspace", "img", "slide",
         // The names wxMaxima writes in .wxmx files for the same constructs.
         "r", "v", "n", "f", "e", "i", "limit", "editor", "line",
     ]
@@ -42,14 +45,14 @@ public enum MathMLTranslator {
         guard let root = MathXMLParser.parse(xml) else {
             let text = stripTags(xml)
             return MathOutput(label: nil, mathML: "<math><mtext>\(escape(text))</mtext></math>", imagePaths: [],
-                              unknownTags: [], plainText: text, wellFormed: false)
+                              animation: nil, unknownTags: [], plainText: text, wellFormed: false)
         }
         var context = Context()
         let body = context.emit(root)
         let math = body.isEmpty ? "" : "<math display=\"block\">\(body)</math>"
         let plain = MaximaInputText.of(root, quoteStrings: context.label != nil).trimmingCharacters(in: .whitespaces)
         return MathOutput(label: context.label, mathML: math,
-                          imagePaths: context.imagePaths, unknownTags: context.unknown.sorted(),
+                          imagePaths: context.imagePaths, animation: context.animation, unknownTags: context.unknown.sorted(),
                           plainText: plain, wellFormed: true)
     }
 
@@ -72,6 +75,7 @@ private struct Context {
     var depth = 0
     var label: String?
     var imagePaths: [String] = []
+    var animation: (frames: [String], attributes: [String: String])?
     var unknown: Set<String> = []
 
     mutating func emit(_ node: MathNode) -> String {
@@ -242,9 +246,26 @@ private struct Context {
         case "img":
             imagePaths.append(node.textContent.trimmingCharacters(in: .whitespacesAndNewlines))
             return ""
+        case "slide":
+            animation = Self.animation(node)
+            return ""
         default:
             return unknownElement(node)
         }
+    }
+
+    /// An animation's frame files, separated by ";". with_slider_draw also
+    /// lists its gnuplot sources and data there; only images are frames.
+    /// Not inlined: emit() recurses up to maxDepth levels, so its stack
+    /// frame must stay small.
+    @inline(never)
+    static func animation(_ node: MathNode) -> (frames: [String], attributes: [String: String]) {
+        let frames = node.textContent.split(separator: ";")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { ["png", "jpg", "jpeg", "gif", "svg"].contains(URL(filePath: $0).pathExtension.lowercased()) }
+        var a = node.attributes
+        a["lisp"] = nil
+        return (frames, a)
     }
 
     static let thinSpace = "<mspace width=\"0.17em\"/>"

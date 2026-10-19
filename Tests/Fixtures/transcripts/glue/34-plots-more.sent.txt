@@ -1,0 +1,13 @@
+<:lisp-quiet wxMathML.lisp, 87652 bytes>
+:lisp-quiet (setf $gnuplot_command "/opt/homebrew/bin/gnuplot")
+:lisp-quiet (when (fboundp 'wx-open-interrupt-channel) (wx-open-interrupt-channel "127.0.0.1" 51779 "PHASE0-TEST-TOKEN"))
+:lisp-quiet (ignore-errors (setf (symbol-value '*lisp-quiet-suppressed-prompt*) "<PROMPT>(%i1)</PROMPT>"))
+:lisp-quiet (setf *prompt-suffix* "</PROMPT>") (setf *prompt-prefix* "<PROMPT>") (setf $in_netmath nil) (setf $show_openplot t) 
+with_slider(a,[1,2,3],sin(a*x),[x,0,%pi]);
+wxanimate_framerate:5$
+wxanimate(a,[1,2],sin(a*x),[x,0,%pi]);
+wxdraw2d(explicit(x^2,x,-1,1));
+wxplot_usesvg:true$
+wxplot2d(sin(x),[x,0,%pi]);
+wxdraw2d(explicit(x^3,x,-1,1));
+with_slider_draw(a,[1,2],explicit(a*x,x,0,1));

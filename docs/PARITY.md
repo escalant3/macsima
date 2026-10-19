@@ -11,7 +11,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 | Error handling | Optionally aborts on error, marks the failing statement and spot in the editor | The rest of the cell is skipped and the error shows with its text. The failing statement and the syntax error's spot are marked in the editor; see Error marker below. No abort-on-error setting yet. | partial | setting: 3 (step 14) |
 | Questions and debugger | Answer cells for questions; the `(dbm:N)` debugger and LDB are special cases | Questions show inline with an answer field, and answers are saved the way wxMaxima saves them. The debugger prompt shows as a question; no debugger UI, no LDB. | partial | 3 |
 | 2D math | Its own layout engine, selection and copy via `altCopy` | MathML through WebKit, rendered to images by one shared web view. Clicking an output gives a live, selectable view; long outputs break into lines (step 6). The context menu copies as Maxima input, LaTeX, MathML or a picture (step 7) | partial: see the second table | 3 |
-| Plots | PNG or SVG from `img`, animations from `slide` | PNG plots (pngcairo when gnuplot has it), read into the document at once. No SVG; animations not shown. | partial | 3 |
+| Plots | PNG or SVG from `img`, animations from `slide` | PNG and SVG plots (`wxplot_usesvg:true`), `wxdraw2d` (`wxdraw3d` not tried), read into the document at once; animations with play, pause and a frame slider (Phase 3 step 8) | done | |
 | Autocomplete | `wxxml-symbols` and the user's own definitions | none | missing | 3 |
 | Variables and status | Watch panel, status bar, CPU polling | Toolbar state (Ready, Evaluating…, waiting for an answer) and a status line for Maxima's own messages (`statusbar`, start-up problems). No watch panel. | partial | 3 |
 | Help | Topic names, the HTML manual | none | missing | 3 |
@@ -22,7 +22,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 
 | Feature | wxMaxima | Macsima now | Status | Phase |
 | --- | --- | --- | --- | --- |
-| Animations (`slide`) | Plays frame lists, with sliders | The frames are kept and saved back; the output shows their file names as text | missing | 3 |
+| Animations (`slide`) | Plays frame lists, with sliders | `with_slider`, `wxanimate`, `with_slider_draw` and animations in `.wxmx` files: the frames are read into the document; Play/Pause, a slider and the frame number; plays at `wxanimate_framerate` (the `fr` attribute), autoplays with `running="true"`. Saved back as wxMaxima writes them (Phase 3 step 8). No GIF export | done | GIF export: later |
 | Copy math as Maxima input | Uses `altCopy` and its own text forms (each cell's `ToString`) | "Copy as Maxima Input" (Phase 3 step 7): a port of wxMaxima's `ToString`, using `altCopy`. Sums, products, integrals and limits come out quoted (`'sum(1/k^2,k,1,inf)`), one-sided limits as `plus`/`minus`, matrices as `matrix([..],[..])`. A test reads every output of ten fixtures back into Maxima and checks it equals the original | done | |
 | Copy math as LaTeX and as a picture | Copy as LaTeX (each cell's `ToTeX`), MathML, RTF, bitmap, SVG | Copy as LaTeX: a translator over the same tree, following wxMaxima's `ToTeX` but plainer (`x^{2}`, `\pi`); every output of the glue and `.wxmx` fixtures compiles with LuaLaTeX (a test). Copy as Image: PNG and TIFF of the math alone. No RTF or SVG | done | RTF, SVG: later |
 | Selecting whole cells; copy, cut, paste | Click or drag over cell brackets, Shift+arrows across cells; copies cells as `.wxm` (`text/x-wxmaxima-batch`), XML and text, pastes cells | Click a cell's gutter, Shift-click to extend, Shift+Up/Down past a cell's start or end, Select All Cells (Cmd+Shift+A). Copy, Cut, Paste, Delete (one undo step each). The pasteboard gets a `.wxmx` of the cells (outputs and images kept), `.wxm` text under wxMaxima's type and plain text; pasting reads either, also into an editor (Phase 3 step 7). No dragging across brackets; pasting between Macsima and wxMaxima untested | done | drag-select: later |
@@ -54,8 +54,8 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 
 ## Math XML translator (WXMLKit)
 
-Tags the translator doesn't know render as their text content (never dropped) and are listed here. Across the 679 math chunks in the `.wxmx` fixtures and all transcript chunks, `slide` is the only one.
+Tags the translator doesn't know render as their text content (never dropped) and are listed here. Across the 679 math chunks in the `.wxmx` fixtures and all transcript chunks, `slide` was the only one; it is handled since Phase 3 step 8.
 
 | Tag | Emitted by wxMathML.lisp for | Status |
 | --- | --- | --- |
-| `slide` | animations (`wxanimate`, `with_slider_draw`) | missing: text only |
+| `slide` | animations (`wxanimate`, `with_slider_draw`) | done (Phase 3 step 8) |

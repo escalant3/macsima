@@ -84,6 +84,14 @@ elif script == "cells-basics":
     check(dump("cells", 7)["selectedCells"] == [0, 1], "Shift+Up at the start of a cell selects it and the one above")
     d8 = dump("cells", 8)
     check(d8["selectedCells"] == [] and d8["firstResponder"] == "CellTextView", "Down goes back to editing")
+elif script == "plots-basics":
+    c = dump("plots", 1)["cells"]
+    d = dump("plots", 1)
+    check(c[0]["outputs"] == ["animation %t1 png 3 frames fr=-", 'math %o2 ""'],
+          "with_slider gives a 3-frame animation, without the empty (%t2) line: " + str(c[0]["outputs"]))
+    check(c[1]["outputs"][0].startswith("image %t3 png"), "wxdraw2d gives a PNG plot")
+    check(any(o.startswith("image %t5 svg") for o in c[2]["outputs"]), "with wxplot_usesvg, an SVG plot: " + str(c[2]["outputs"]))
+    check(d["status"] == "", "Maxima's progress text is gone once evaluation ends: " + repr(d["status"]))
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:
