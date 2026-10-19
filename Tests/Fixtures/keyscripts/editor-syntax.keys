@@ -1,0 +1,7 @@
+# Editor features (Phase 3, step 3): syntax highlighting first. Dumps go to
+# .build/keyscripts/ and are checked by run.sh.
+wait 2
+type /* note */ f(x):=if x>1.5e3 then sin(x) else "big"; ?car $
+dump .build/keyscripts/editor-syntax-1.json
+shot .build/keyscripts/editor-syntax-1.png
+quit

@@ -145,6 +145,8 @@ public final class WorksheetController {
             if let id = UUID(uuidString: cellID) { enqueue(id, .append(.math(xml: Self.storedMath(content)))) }
         case .tag("statusbar", let content):
             statusMessage = content
+        case .tag("wxxml-symbols", let content):
+            MaximaSymbols.shared.ingest(content)
         case .interruptChannelReady, .tag, .output:
             break
         }

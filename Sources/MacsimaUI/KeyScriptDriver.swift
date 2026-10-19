@@ -161,10 +161,34 @@ enum KeyScriptDriver {
             ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.map(describe),
              "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell]
         }
-        let info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
+        var info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]
+        if let editor = NSApp.keyWindow?.firstResponder as? CellTextView {
+            info["editor"] = describe(editor)
+        }
         let data = try? JSONSerialization.data(withJSONObject: info, options: [.prettyPrinted, .sortedKeys])
         try? data?.write(to: URL(filePath: path))
+    }
+
+    /// The focused editor: its selection and its coloured ranges as
+    /// `text=colorName` (rendering attributes, which the model doesn't hold).
+    private static func describe(_ editor: CellTextView) -> [String: Any] {
+        var colors: [String] = []
+        if let layout = editor.textLayoutManager, let content = layout.textContentManager {
+            let ns = editor.string as NSString
+            layout.enumerateRenderingAttributes(from: layout.documentRange.location, reverse: false) { _, attributes, range in
+                if let color = attributes[.foregroundColor] as? NSColor {
+                    let from = content.offset(from: layout.documentRange.location, to: range.location)
+                    let length = content.offset(from: range.location, to: range.endLocation)
+                    let text = ns.substring(with: NSRange(location: from, length: length))
+                    let name = color.type == .catalog ? color.colorNameComponent : "\(color)"
+                    colors.append("\(text)=\(name)")
+                }
+                return true
+            }
+        }
+        let selection = editor.selectedRange()
+        return ["colors": colors, "selection": [selection.location, selection.length]]
     }
 
     /// A short description of an output for dumps: kind, then the gist.

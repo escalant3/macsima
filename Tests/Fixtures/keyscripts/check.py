@@ -79,6 +79,12 @@ elif script == "advance-existing":
     check(focused(2) == [3], "evaluating 1+1; skips the page break and moves to the next heading")
     check(c2[1]["outputs"] == ["math %o1 2"], "1+1; was evaluated")
     check(len(c2) == 6, "no cell was added when a next cell exists")
+elif script == "editor-syntax":
+    e1 = dump("editor-syntax", 1)["editor"]["colors"]
+    check(e1 == ["/* note */=systemGrayColor", "if=systemPurpleColor", "1.5e3=systemBlueColor",
+                 "then=systemPurpleColor", "sin=systemTealColor", "else=systemPurpleColor",
+                 '"big"=systemRedColor', ";=secondaryLabelColor", "?car=systemOrangeColor", "$=secondaryLabelColor"],
+          f"comment, keywords, number, built-in, string, terminators and Lisp symbol coloured: {e1}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

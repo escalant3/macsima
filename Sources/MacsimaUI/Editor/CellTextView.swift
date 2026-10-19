@@ -14,6 +14,10 @@ final class CellTextView: NSTextView {
     /// Set when the controller asked for this cell's focus before the view
     /// was in a window (a lazy cell scrolled into view): taken on arrival.
     var wantsFocus = false
+    /// Colours the text as Maxima code (code cells only).
+    var highlightsSyntax = false {
+        didSet { if highlightsSyntax != oldValue { rehighlight() } }
+    }
 
     /// Space around the text; the 5 pt line padding comes on top.
     static let inset = NSSize(width: 0, height: 2)
@@ -40,6 +44,17 @@ final class CellTextView: NSTextView {
         isAutomaticTextReplacementEnabled = false
         isAutomaticSpellingCorrectionEnabled = false
         smartInsertDeleteEnabled = false
+        NotificationCenter.default.addObserver(self, selector: #selector(symbolsChanged),
+                                               name: MaximaSymbols.didChange, object: nil)
+    }
+
+    @objc private func symbolsChanged() { rehighlight() }
+
+    func rehighlight() { SyntaxHighlighter.apply(to: self, enabled: highlightsSyntax) }
+
+    override func didChangeText() {
+        super.didChangeText()
+        rehighlight()
     }
 
     @available(*, unavailable)
@@ -109,6 +124,7 @@ struct CellEditor: NSViewRepresentable {
         view.delegate = context.coordinator
         view.string = text
         apply(to: view, context: context)
+        view.rehighlight()
         return view
     }
 
@@ -118,6 +134,7 @@ struct CellEditor: NSViewRepresentable {
         // Replace): typing already wrote the same text into the model.
         if view.string != text, !view.hasMarkedText() {
             view.string = text
+            view.rehighlight()
             view.invalidateIntrinsicContentSize()
         }
         apply(to: view, context: context)
@@ -126,6 +143,7 @@ struct CellEditor: NSViewRepresentable {
     private func apply(to view: CellTextView, context: Context) {
         let font = Self.font(for: kind)
         if view.font != font { view.font = font }
+        view.highlightsSyntax = kind == .code
         view.setAccessibilityIdentifier(accessibilityID)
         view.onFocus = onFocus
         view.onEvaluate = onEvaluate
