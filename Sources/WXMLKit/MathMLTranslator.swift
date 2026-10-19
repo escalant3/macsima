@@ -124,6 +124,12 @@ private struct Context {
             }
             return "<mo>\(esc(Self.operatorText(text)))</mo>"
         case "fn":
+            // The glue prints some names as bare text (return(x) is
+            // <fn>return<mrow>...</mrow></fn>), which wxMaxima reads as a text cell.
+            let content = children.filter { $0.name != nil || !$0.textContent.trimmingCharacters(in: .whitespaces).isEmpty }
+            if case .text(let text)? = content.first {
+                return "<mrow>\(identifier(text.trimmingCharacters(in: .whitespaces)))<mo>&#x2061;</mo>\(content.dropFirst().map { emit($0) }.joined())</mrow>"
+            }
             guard let head = kids.first else { return row(children) }
             let name = head.name == "g" ? greek(head.textContent, asFunction: true) : emit(head)
             return "<mrow>\(name)<mo>&#x2061;</mo>\(kids.dropFirst().map { emit($0) }.joined())</mrow>"

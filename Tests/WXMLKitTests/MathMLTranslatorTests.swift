@@ -160,6 +160,12 @@ struct MathMLTranslatorTests {
         #expect(denominator == #"<math display="block"><mrow><mi mathvariant="normal">d</mi><mi>x</mi><mspace width="0.17em"/><mi mathvariant="normal">d</mi><mi>y</mi></mrow></math>"#)
     }
 
+    @Test func functionNamedByText() {
+        // return(c) as the glue prints it (fixture 33, #10): the name is bare text.
+        let out = ml(#"<math><fn lisp="wxxml-function">return<mrow><p><mrow><mi>c</mi></mrow></p></mrow></fn></math>"#)
+        #expect(out.hasPrefix(#"<math display="block"><mrow><mi>return</mi><mo>&#x2061;</mo>"#))
+    }
+
     @Test func unknownTagsKeepTheirText() {
         let out = MathMLTranslator.translate("<math><mi>a</mi><slide><mi>frame</mi></slide></math>")
         #expect(out.unknownTags == ["slide"])
