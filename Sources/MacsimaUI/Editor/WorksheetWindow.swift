@@ -26,7 +26,7 @@ struct WorksheetWindow: View {
                             text: Binding(get: { cell.input }, set: { document.setInput(cell.id, $0) }),
                             focus: $focus,
                             isFocused: focus == cell.id,
-                            onEvaluate: { controller.evaluate(cell.id) }
+                            onEvaluate: { controller.evaluateAndAdvance(cell.id) }
                         )
                         .id(cell.id)
                     }
@@ -81,6 +81,10 @@ struct WorksheetWindow: View {
             if controller.focusedCell == nil { controller.focusedCell = document.worksheet.cells.first?.id }
         }
         .onChange(of: undoManager) { _, new in controller.undoManager = new }
+        .onChange(of: controller.asking) { _, asking in
+            // The answer field had the focus; give it back to the current cell.
+            if asking == nil { focus = controller.focusedCell }
+        }
         .onChange(of: document.worksheet.cells.map(\.id)) { old, new in
             // The focused cell went away (undo, delete): focus its neighbour.
             guard let id = controller.focusedCell, !new.contains(id) else { return }

@@ -11,7 +11,7 @@ struct WorksheetCommands: Commands {
 
     var body: some Commands {
         CommandMenu("Cell") {
-            Button("Evaluate Cell") { if let id = controller?.focusedCell { controller?.evaluate(id) } }
+            Button("Evaluate Cell") { if let id = controller?.focusedCell { controller?.evaluateAndAdvance(id) } }
                 .keyboardShortcut(.return, modifiers: .shift)
                 .disabled(controller?.focusedCell == nil)
             Button("Evaluate All Cells") { controller?.evaluateAll() }

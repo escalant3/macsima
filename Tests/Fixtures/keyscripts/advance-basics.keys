@@ -1,0 +1,12 @@
+# Launch (no Open panel: an untitled worksheet), then Shift+Return moves on
+# like wxMaxima: to a new code cell at the end, or to the next existing cell.
+wait 3
+dump .build/keyscripts/advance-1.json
+type 2+2;
+key return shift
+wait 2
+type 3+3;
+key return shift
+wait 2
+dump .build/keyscripts/advance-2.json
+quit

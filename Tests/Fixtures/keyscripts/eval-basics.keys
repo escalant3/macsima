@@ -4,15 +4,12 @@ wait 3
 type integrate(sin(x), x);
 key return shift
 wait 2
-key 0 cmd
 type wxplot2d(sin(x), [x, 0, %pi]);
 key return shift
 wait 4
-key 0 cmd
 type 1/0; 2+2;
 key return shift
 wait 2
-key 0 cmd
 type asksign(y);
 key return shift
 wait 2
@@ -21,7 +18,6 @@ key return
 wait 2
 dump .build/keyscripts/eval-1.json
 shot .build/keyscripts/eval-1.png
-key 0 cmd
 type integrate(x^30*exp(-x^2)*sin(x)^20, x);
 key return shift
 wait 2

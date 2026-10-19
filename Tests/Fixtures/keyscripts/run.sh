@@ -17,7 +17,7 @@ if [ $# -gt 1 ]; then
   open_file="$PWD/.build/keyscripts/$name.wxmx"
 fi
 caffeinate -u -t 1
-"$app" $open_file -NSShowAppCentricOpenPanelInsteadOfUntitledFile NO -MacsimaKeyScript "Tests/Fixtures/keyscripts/$name.keys" 2>/dev/null &
+"$app" $open_file -ApplePersistenceIgnoreState YES -MacsimaKeyScript "Tests/Fixtures/keyscripts/$name.keys" 2>/dev/null &
 pid=$!
 caffeinate -d -i -w $pid &
 sleep 1

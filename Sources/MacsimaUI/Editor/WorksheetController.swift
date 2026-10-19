@@ -132,6 +132,19 @@ public final class WorksheetController {
 
     // MARK: - Evaluation
 
+    /// Shift+Return: evaluates the cell, then moves on as wxMaxima does: to
+    /// the next cell that has an editor, or to a new code cell at the end.
+    public func evaluateAndAdvance(_ id: UUID) {
+        evaluate(id)
+        let cells = document.worksheet.cells
+        guard let index = cells.firstIndex(where: { $0.id == id }) else { return }
+        if let next = cells[(index + 1)...].first(where: { ![.raw, .pageBreak, .image].contains($0.kind) }) {
+            focusedCell = next.id
+        } else {
+            focusedCell = document.insertCell(.code, after: cells.last?.id, undo: undoManager)
+        }
+    }
+
     public func evaluate(_ id: UUID) {
         guard let cell = document.worksheet[id], cell.kind == .code, let session else { return }
         let text = cell.input

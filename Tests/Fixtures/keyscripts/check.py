@@ -17,28 +17,32 @@ def check(ok, what):
 
 script = sys.argv[1]
 if script == "editor-basics":
-    base = [("code", "x+1;\ny", False), ("text", "Some prose.", False), ("title", "A title", False),
-            ("section", "A section", False)]
-    check(cells("editor", 1) == [("code", "x+1;\ny", True)], "Return inserts a newline, Shift+Return does not")
+    # Shift+Return evaluates and moves to a new code cell (as in wxMaxima).
+    first = [("code", "x+1;\ny", False), ("code", "", False)]
+    base = first + [("text", "Some prose.", False), ("title", "A title", False), ("section", "A section", False)]
+    check(cells("editor", 1) == [("code", "x+1;\ny", False), ("code", "", True)],
+          "Return inserts a newline; Shift+Return does not, and moves to a new cell")
     check(cells("editor", 2) == base + [("subsection", "A subsection", False), ("code", "diff(x^3,x);", True)],
           "Cmd+1..4 and Cmd+0 insert text, title, section, subsection and code cells")
     got = cells("editor", 3)
-    check(len(got) == 6 and got[5] == ("code", "", True), "Cmd+Z undoes the typing")
+    check(len(got) == 7 and got[6] == ("code", "", True), "Cmd+Z undoes the typing")
     check(cells("editor", 4) == base + [("subsection", "A subsection", True)], "Cmd+Z again undoes the insert")
-    check(cells("editor", 5) == base[:3] + [("section", "A section", True)], "Cmd+Shift+Delete deletes the cell")
+    check(cells("editor", 5) == base[:4] + [("section", "A section", True)], "Cmd+Shift+Delete deletes the cell")
 elif script == "eval-basics":
     d1 = dump("eval", 1)["cells"]
-    check([c["label"] for c in d1] == [1, 2, 3, 4], "input labels 1..4")
+    check([c["label"] for c in d1] == [1, 2, 3, 4, -1], "input labels 1..4, then the new empty cell")
     check(d1[0]["outputs"] == ["math %o1 -cos(x)"], "integrate gives -cos(x)")
-    check(len(d1[1]["outputs"]) == 1 and d1[1]["outputs"][0].startswith("image %t2 png"), "wxplot2d gives a PNG read into the model")
+    check(d1[1]["outputs"][0].startswith("image %t2 png") and d1[1]["outputs"][1:] == ["math %o2 "],
+          "wxplot2d gives a PNG read into the model, then its empty (%o2)")
     check(d1[2]["outputs"][0].startswith("error maxima expt: undefined"), "1/0 shows the error with its text")
-    check(d1[3]["outputs"] == ["question Is y positive, negative or zero? answer=pos", "math %o4 pos"],
+    check(d1[3]["outputs"] == ["question Is y positive, negative or zero? answer=pos;", "math %o4 pos"],
           "asksign answered inline")
     d2, d3 = dump("eval", 2), dump("eval", 3)
     check(d2["state"] == "busy" and d2["running"] == 1, "the long integral is running")
     check(d3["state"] == "idle" and d3["cells"][4]["outputs"] == ["error interrupted Interrupted"], "Cmd+. interrupts it")
     d4 = dump("eval", 4)
-    check([c["label"] for c in d4["cells"]] == [1, 2, 3, 4, -1], "after Restart, Cmd+R relabels from 1 in order")
+    check([c["label"] for c in d4["cells"]][:4] == [1, 2, 3, 4] and d4["cells"][4]["label"] == -1,
+          "after Restart, Cmd+R relabels from 1 in order (and stops at the question)")
     check(d4["state"] == "question" and d4["status"] == "", "evaluation stops at the question; no status after a restart")
 elif script == "save-basics":
     import zipfile, re
@@ -58,6 +62,23 @@ elif script == "save-basics":
     d = dump("save", 1)
     check(len(d["cells"]) == 13 and d["cells"][0]["input"] == "Reference title (edited in Macsima)",
           "the window shows 13 cells and the edited title")
+elif script == "advance-basics":
+    d1 = dump("advance", 1)
+    check(len(d1["cells"]) == 1 and d1["cells"][0]["kind"] == "code" and d1["cells"][0]["focused"],
+          "the app starts with an untitled worksheet, not the Open panel")
+    c = dump("advance", 2)["cells"]
+    check([(x["input"], x["label"]) for x in c] == [("2+2;", 1), ("3+3;", 2), ("", -1)],
+          "Shift+Return on the last cell moves to a new code cell; typing goes there")
+    check(c[2]["focused"], "the new cell has the focus")
+    check(any("math %o2 6" in o for o in c[1]["outputs"]), "the second cell was evaluated: 6")
+elif script == "advance-existing":
+    def focused(n):
+        return [i for i, c in enumerate(dump("advance-existing", n)["cells"]) if c["focused"]]
+    check(focused(1) == [1], "from the first heading, Shift+Return moves to the next cell (1+1;)")
+    c2 = dump("advance-existing", 2)["cells"]
+    check(focused(2) == [3], "evaluating 1+1; skips the page break and moves to the next heading")
+    check(c2[1]["outputs"] == ["math %o1 2"], "1+1; was evaluated")
+    check(len(c2) == 6, "no cell was added when a next cell exists")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

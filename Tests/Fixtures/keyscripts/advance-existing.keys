@@ -1,0 +1,10 @@
+# Shift+Return moves to the next existing cell and skips page breaks.
+# Run: Tests/Fixtures/keyscripts/run.sh advance-existing Tests/Fixtures/wxmx/macsima-written/09-pagebreak-empty.wxmx
+wait 4
+key return shift
+wait 1
+dump .build/keyscripts/advance-existing-1.json
+key return shift
+wait 2
+dump .build/keyscripts/advance-existing-2.json
+quit
