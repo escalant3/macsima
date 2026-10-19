@@ -136,6 +136,23 @@ elif script == "errors-basics":
     c2 = dump("errors", 2)
     check(c2["cells"][1]["errorMarks"]["current"] is False and c2["editor"]["backgrounds"] == [],
           f"typing in the cell hides its marks: {c2['editor']['backgrounds']}")
+elif script == "close-basics":
+    procs = lambda n: [l for l in open(f".build/keyscripts/close-{n}.txt").read().splitlines() if l.strip()]
+    check(len(procs(1)) == 2, f"two windows, two Maxima processes: {procs(1)}")
+    check(len(procs(2)) == 1, f"closing one window shuts its Maxima down, the other keeps running: {procs(2)}")
+    c3 = dump("close", 3)["cells"]
+    check(c3[0]["input"] == "1+1;", f"the other window is still there: {[c['input'] for c in c3]}")
+elif script == "close-saved":
+    import zipfile
+    procs = lambda n: [l for l in open(f".build/keyscripts/close-saved-{n}.txt").read().splitlines() if l.strip()]
+    c1 = dump("close-saved", 1)["cells"]
+    check(c1[0]["input"] == "Before the breakx" and len(procs(1)) == 1,
+          "Cmd+W asks; Cancel keeps the window, its edit and its Maxima")
+    with zipfile.ZipFile(".build/keyscripts/close-saved.wxmx") as z:
+        content = z.read("content.xml").decode()
+    check("<line>Before the break</line>" in content and "breakx" not in content,
+          "Revert Changes closes the window and leaves the file as it was saved")
+    check(procs(2) == [], f"and shuts that window's Maxima down: {procs(2)}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

@@ -48,6 +48,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 | Moving between cells with the arrow keys | Up and Down move the cursor through inputs and outputs, across cells | Up on a cell's first line and Down on its last move to the neighbouring cell with an editor, in the same column (Phase 3 step 3). Outputs are skipped: they can't take the focus | partial | outputs: 3 (with cross-cell selection, step 7) |
 | After Shift+Return | The cursor moves to the next cell, or to a new cell at the end | The same (a Phase 2 follow-up, 2026-10-19) | done | |
 | Starting the app | Opens an untitled worksheet | The same; untitled worksheets are saved later with Cmd+S (a Phase 2 follow-up, 2026-10-19) | done | |
+| Closing a window | Asks to save unsaved changes; stops that window's Maxima | Asks: a new worksheet gets macOS's Delete / Cancel / Save panel, a saved one Save / Revert Changes / Cancel (the app sets macOS's "ask to keep changes when closing", which a system-wide choice overrides). macOS autosave stays on. The window's Maxima stops when it closes, the others keep running (Phase 3 step 5) | done | |
 
 ## Math XML translator (WXMLKit)
 

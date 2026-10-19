@@ -84,6 +84,10 @@ feature.
 | Highlighting (`hl` boxes) | yes, as a box | written back | full | |
 | `boxname` on `hl` | kept, not shown | written back | partial | |
 
+## Saving
+
+- **Autosave in place.** Macsima is a macOS document app: while you edit a worksheet that has a file, macOS saves it in the background, with Macsima's writer, into that same file. A `.wxmx` written by wxMaxima is therefore rewritten by Macsima as soon as you edit it, even before you press Cmd+S; everything in the tables above that is "kept" survives that. Closing asks to Save, Revert Changes (back to the version you opened) or Cancel, and File › Revert To lists older versions. Open a copy if the original must stay byte for byte as wxMaxima wrote it.
+
 ## Behaviour notes from the comparison with wxMaxima 26.09
 
 - **Batch mode.** `wxmaxima -b` evaluates a file and saves it, but does not exit. It stops at errors and questions without saving. It also hangs on a `:lisp-quiet` line in a cell, because it waits for a prompt that never comes; Macsima fixed the same hang in Phase 2. Avoid `:lisp-quiet` in cells you want wxMaxima to evaluate in batch mode.

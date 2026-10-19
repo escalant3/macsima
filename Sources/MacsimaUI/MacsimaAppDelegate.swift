@@ -10,7 +10,11 @@ public final class MacsimaAppDelegate: NSObject, NSApplicationDelegate {
     public func applicationWillFinishLaunching(_ notification: Notification) {
         // Start with an untitled worksheet, as wxMaxima does, instead of
         // macOS's Open panel; untitled worksheets are saved later with Cmd+S.
-        UserDefaults.standard.register(defaults: ["NSShowAppCentricOpenPanelInsteadOfUntitledFile": false])
+        // Closing an edited worksheet asks to keep or revert the changes
+        // (macOS's "Ask to keep changes when closing documents", for this app;
+        // a system-wide choice still wins). Autosave stays on.
+        UserDefaults.standard.register(defaults: ["NSShowAppCentricOpenPanelInsteadOfUntitledFile": false,
+                                                  "NSCloseAlwaysConfirmsChanges": true])
     }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {

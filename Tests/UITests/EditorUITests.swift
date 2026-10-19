@@ -110,4 +110,23 @@ final class EditorUITests: XCTestCase {
         app.typeText("z")
         XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "x^2+z;")
     }
+
+    @MainActor
+    func testClosingAnEditedWorksheetAsks() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("1+1;")
+        app.typeKey("w", modifierFlags: .command)
+        // A new worksheet: macOS's save panel, with Delete, Cancel and Save.
+        let sheet = app.sheets.firstMatch
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5), "closing an edited worksheet asks")
+        sheet.buttons.matching(identifier: "Cancel").firstMatch.click()
+        XCTAssertTrue(input.exists, "Cancel keeps the window")
+        app.typeKey("w", modifierFlags: .command)
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
+        sheet.buttons["Delete"].click()
+        XCTAssertFalse(input.waitForExistence(timeout: 2), "Delete closes it")
+    }
 }

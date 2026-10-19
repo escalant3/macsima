@@ -216,6 +216,22 @@ public final class WorksheetController {
         }
     }
 
+    @ObservationIgnored private var closeObserver: NSObjectProtocol?
+
+    /// Shuts Maxima down when `window` closes. A window closes after its
+    /// document agreed (the save sheet); SwiftUI's onDisappear also fires for
+    /// windows that only hide, a background tab for one.
+    func watchClose(of window: NSWindow) {
+        guard closeObserver == nil else { return }
+        closeObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                Task { await self.shutdown() }
+            }
+        }
+    }
+
     /// Shuts Maxima down (window closing or app quitting).
     public func shutdown() async {
         guard let session else { return }

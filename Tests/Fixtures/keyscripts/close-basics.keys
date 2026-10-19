@@ -1,0 +1,13 @@
+# Closing a window (Phase 3, step 5): closing one of two windows shuts down
+# its Maxima while the other window's keeps running. (The save sheet of an
+# edited worksheet is out of process; the XCUITests press its buttons.)
+wait 3
+type 1+1;
+key n cmd
+wait 4
+procs .build/keyscripts/close-1.txt
+key w cmd
+wait 3
+procs .build/keyscripts/close-2.txt
+dump .build/keyscripts/close-3.json
+quit

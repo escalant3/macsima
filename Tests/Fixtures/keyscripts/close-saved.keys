@@ -1,0 +1,18 @@
+# Closing an edited saved worksheet (Phase 3, step 5) asks Save, Revert
+# Changes or Cancel. Run with a file:
+#   Tests/Fixtures/keyscripts/run.sh close-saved Tests/Fixtures/wxmx/macsima-written/09-pagebreak-empty.wxmx
+wait 3
+type x
+key w cmd
+wait 1
+shot .build/keyscripts/close-saved.png
+sheet Cancel
+wait 1
+dump .build/keyscripts/close-saved-1.json
+procs .build/keyscripts/close-saved-1.txt
+key w cmd
+wait 1
+sheet Revert Changes
+wait 3
+procs .build/keyscripts/close-saved-2.txt
+quit

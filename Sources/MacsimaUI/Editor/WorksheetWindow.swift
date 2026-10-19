@@ -56,6 +56,7 @@ struct WorksheetWindow: View {
         .background {
             WindowReader { window in
                 controller.window = window
+                controller.watchClose(of: window)
                 controller.markEdited = { [weak window] in
                     (window?.windowController?.document as? NSDocument)?.updateChangeCount(.changeDone)
                 }
@@ -76,7 +77,6 @@ struct WorksheetWindow: View {
         .toolbar { WorksheetToolbar(controller: controller) }
         .environment(controller)
         .task { await controller.start() }
-        .onDisappear { Task { await controller.shutdown() } }
         .focusedSceneValue(controller)
         .onAppear {
             controller.becameKey()

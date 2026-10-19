@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `find-replacement <text>`, `find-replace-all`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -95,6 +95,34 @@ enum KeyScriptDriver {
             if let item = findMenuItem(rest, in: NSApp.mainMenu) {
                 log("menu-info \(rest): \(item.keyEquivalent.debugDescription) mask \(item.keyEquivalentModifierMask.rawValue) enabled \(item.isEnabled)")
             }
+        case "sheet":
+            // Presses a button of the sheet on the document window (the
+            // save sheet when closing an edited worksheet).
+            guard let sheet = NSApp.orderedWindows.compactMap(\.attachedSheet).first ?? NSApp.keyWindow?.attachedSheet else {
+                log("no sheet"); return
+            }
+            let buttons = allButtons(in: sheet.contentView)
+            if let button = buttons.first(where: { $0.title == rest }) {
+                button.performClick(nil)
+            } else {
+                log("no button \(rest) in the sheet: \(buttons.map(\.title))")
+            }
+        case "procs":
+            // The app's child processes (one Maxima per window), one per line.
+            let p = Process()
+            p.executableURL = URL(filePath: "/bin/ps")
+            p.arguments = ["-A", "-o", "ppid=,pid=,command="]
+            let pipe = Pipe()
+            p.standardOutput = pipe
+            try? p.run()
+            let output = pipe.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            let own = String(getpid())
+            let lines = String(decoding: output, as: UTF8.self).split(separator: "\n").filter {
+                $0.split(separator: " ", omittingEmptySubsequences: true).first.map(String.init) == own
+                    && !$0.contains("/bin/ps")
+            }
+            try? lines.joined(separator: "\n").write(toFile: rest, atomically: true, encoding: .utf8)
         case "find-replacement":
             // The replacement field's text (typing goes to the query field).
             WorksheetController.keyController?.find.replacement = rest
@@ -189,6 +217,12 @@ enum KeyScriptDriver {
         menu.delegate?.menuNeedsUpdate?(menu)
         menu.update()
         for item in menu.items { refreshMenus(item.submenu) }
+    }
+
+    private static func allButtons(in view: NSView?) -> [NSButton] {
+        guard let view else { return [] }
+        if let button = view as? NSButton { return [button] }
+        return view.subviews.flatMap { allButtons(in: $0) }
     }
 
     private static func findMenuItem(_ title: String, in menu: NSMenu?) -> NSMenuItem? {
