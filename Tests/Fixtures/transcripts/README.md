@@ -70,3 +70,4 @@ Things to know when using these as test fixtures:
 | 29 | Lisp mode (glue only, Phase 1) | `to_lisp();`, `(+ 1 2)`, `(to-maxima)`, `2+2;` |
 | 31 | display forms (glue only, Phase 2) | 47 statements, one per 2D construct: noun sum, product, integrals, limits, derivatives, `at`, `box`, subscripts, conjugate, abs, roots, lists, sets, matrices, operators, Greek, floats, a long expansion |
 | 30 | debugger (glue only, Phase 1) | `debugmode(true)$`, `error("x");`, `:top`, `2+2;` |
+| 32 | lexing (raw only, Phase 3) | nested comments, `\"` and `\\` in strings, `a\+b`, numbers (`1e3`, `.5`, `1.`, `2b3`, `1.5B-2`, `1.5d0`), `?atom`, `x_1%2`, `if`: what the editor's tokenizer follows |

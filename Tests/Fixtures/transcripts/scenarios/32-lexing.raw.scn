@@ -1,0 +1,19 @@
+# Phase 3: how Maxima lexes what the editor highlights (comments, strings, escapes, numbers).
+display2d:false$
+/* outer /* inner */ still a comment */ 1;
+"a\"b";
+slength("a\"b");
+slength("a\\b");
+a\+b;
+slength(string(a\+b));
+1e3;
+1.5e-3;
+.5;
+1.;
+2b3;
+1.5B-2;
+1.5d0;
+?atom(1);
+x_1%2;
+%pi;
+if 1>0 then 2 else 3;
