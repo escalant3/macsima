@@ -58,6 +58,13 @@ elif script == "wrap-basics":
     wide = renders(2, "%o1")
     check(dump("wrap", 2)["windowWidth"] == 1100 and len(wide) > 0 and wide[-1]["wrap"] > narrow["%o1"]["wrap"]
           and wide[-1]["height"] < narrow["%o1"]["height"], "after widening the window, %o1 is broken again into fewer lines")
+elif script == "copy-basics":
+    c1, c2, c3, c4 = (dump("copy", n) for n in range(1, 5))
+    check(c1["string"] == "'sum(1/k^2,k,1,inf)", "Copy as Maxima Input: 'sum(1/k^2,k,1,inf)")
+    check(c2["string"] == r"\sum_{k = 1}^{\infty} \frac{1}{{k}^{2}}", "Copy as LaTeX: " + str(c2["string"]))
+    check(str(c3["string"]).startswith("<math") and "&#x2211;" in c3["string"], "Copy MathML: a <math> element with the sum sign")
+    check("public.png" in c4["types"] and "public.tiff" in c4["types"] and 30 < c4.get("image", [0, 0])[0] < 200,
+          "Copy as Image: PNG and TIFF of the math alone (no label column): " + str(c4.get("image")))
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:

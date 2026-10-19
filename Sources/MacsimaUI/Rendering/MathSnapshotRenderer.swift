@@ -52,15 +52,16 @@ public final class MathSnapshotRenderer {
     /// `scale` is the worksheet's zoom: the math is laid out again at that
     /// size, so zoomed math stays sharp. Math wider than `width` (points,
     /// label column included) is broken into lines; nil never breaks.
+    /// `labelColumn` false renders the math alone, for copying (not cached).
     public func render(mathML: String, label: String?, dark: Bool, scale: CGFloat = 1,
-                       width: CGFloat? = nil) async -> Rendered? {
+                       width: CGFloat? = nil, labelColumn: Bool = true) async -> Rendered? {
         var wrap = effectiveWidth(width, mathML, label, dark, scale)
-        var key = Self.key(mathML, label, dark, scale, wrap)
+        var key = Self.key(mathML, label, dark, scale, wrap) + (labelColumn ? "" : "|bare")
         if let hit = cache[key] { return hit }
         while busy { await withCheckedContinuation { waiting.append($0) } }
         // Another render may have found the math's width meanwhile.
         wrap = effectiveWidth(width, mathML, label, dark, scale)
-        key = Self.key(mathML, label, dark, scale, wrap)
+        key = Self.key(mathML, label, dark, scale, wrap) + (labelColumn ? "" : "|bare")
         if let hit = cache[key] { wakeNext(); return hit }
         busy = true
         defer { busy = false; wakeNext() }
@@ -76,10 +77,11 @@ public final class MathSnapshotRenderer {
                 latest = size
                 if !resumed { resumed = true; c.resume() }
             }
-            web.show(mathML: mathML, label: label, scale: scale, wrap: wrap.map { .width($0) } ?? .none)
+            web.show(mathML: mathML, label: label, scale: scale, wrap: wrap.map { .width($0) } ?? .none,
+                     labelColumn: labelColumn)
         }
         let natural = web.naturalWidth
-        naturalWidths[Self.key(mathML, label, dark, scale, nil)] = natural
+        if labelColumn { naturalWidths[Self.key(mathML, label, dark, scale, nil)] = natural }
         let size = CGSize(width: max(1, latest.width), height: max(1, latest.height))
         web.frame.size = size
         let config = WKSnapshotConfiguration()
@@ -88,7 +90,7 @@ public final class MathSnapshotRenderer {
         let rendered = Rendered(image: image, size: size)
         cache[key] = rendered
         // Math that fitted is the same picture at any width.
-        if let wrap, natural <= wrap { cache[Self.key(mathML, label, dark, scale, nil)] = rendered }
+        if labelColumn, let wrap, natural <= wrap { cache[Self.key(mathML, label, dark, scale, nil)] = rendered }
         renderCount += 1
         recent.append((label, wrap, size))
         if recent.count > 100 { recent.removeFirst() }

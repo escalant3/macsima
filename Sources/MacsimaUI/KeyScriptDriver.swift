@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -32,6 +32,7 @@ enum KeyScriptDriver {
             // Never type into the user's own documents (a restored window, say):
             // only untitled worksheets and files under .build/keyscripts.
             if TestGuard.refuseIfForeign(allowed: "/.build/keyscripts/", log: log) { return }
+            OutputCopy.pasteboard = TestGuard.pasteboard
             NSApp.activate()
             documentWindow?.makeKeyAndOrderFront(nil)
             // Synthesized keys only reach an active app: say when another app
@@ -139,6 +140,26 @@ enum KeyScriptDriver {
             WorksheetController.keyController?.find.replacement = rest
         case "find-replace-all":
             WorksheetController.keyController?.find.replaceAll()
+        case "copy-output":
+            // `copy-output <cell> <output> input|latex|mathml|image` (0-based), as the output's menu does.
+            let parts = rest.split(separator: " ").map(String.init)
+            if parts.count == 3, let c = Int(parts[0]), let o = Int(parts[1]), let kind = OutputCopy.Kind(rawValue: parts[2]),
+               let cells = WorksheetController.keyController?.document.worksheet.cells, c < cells.count, o < cells[c].outputs.count,
+               case .math(let xml) = cells[c].outputs[o] {
+                OutputCopy.copy(xml, as: kind, scale: WorksheetController.keyController?.scale ?? 1)
+            } else {
+                log("copy-output: no math output \(rest)")
+            }
+        case "pasteboard":
+            // The pasteboard's types, text and picture size, as JSON.
+            let pb = OutputCopy.pasteboard
+            var info: [String: Any] = ["types": pb.types?.map(\.rawValue) ?? [], "string": pb.string(forType: .string) ?? NSNull()]
+            if let png = pb.data(forType: .png), let image = NSImage(data: png) {
+                info["image"] = [Int(image.size.width), Int(image.size.height)]
+            }
+            if let data = try? JSONSerialization.data(withJSONObject: info, options: [.prettyPrinted, .sortedKeys]) {
+                try? data.write(to: URL(filePath: rest))
+            }
         case "resize":
             // The key window's content size in points: `resize <width> <height>`.
             let size = rest.split(separator: " ").compactMap { Double($0) }

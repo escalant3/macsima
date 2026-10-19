@@ -40,12 +40,14 @@ public enum MathHTML {
     /// and the gap grow with it, except the text view's fixed 5 pt line
     /// padding, which is part of the gap. `wrap` says where long math
     /// breaks into lines (MathLineBreaking).
+    /// `labelColumn` false leaves out the label column (a copied picture).
     public static func page(mathML: String, label: String?, token: Int = 0, scale: CGFloat = 1,
-                            wrap: MathWrap = .none) -> String {
+                            wrap: MathWrap = .none, labelColumn: Bool = true) -> String {
         func px(_ v: CGFloat) -> String { String(format: "%.2fpx", v * scale) }
         let gap = String(format: "%.2fpx", CGFloat(gutterSpacing) * scale + CGFloat(Self.gap - gutterSpacing))
         // The label column is always there, so unlabelled math (questions) lines up too.
-        let labelHTML = "<span class=\"lbl\">\(label.map { "(\(escape($0)))" } ?? "")</span>"
+        let labelHTML = labelColumn ? "<span class=\"lbl\">\(label.map { "(\(escape($0)))" } ?? "")</span>"
+            : "<span class=\"lbl\" style=\"display: none\"></span>"
         return """
         <!doctype html><html><head><meta charset="utf-8"><style>
         :root { color-scheme: light dark; }

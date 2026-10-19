@@ -1,0 +1,18 @@
+# Copying an output as Maxima input, LaTeX, MathML and a picture (Phase 3, step 7).
+wait 3
+type 'sum(1/k^2,k,1,inf);
+key return shift
+wait 2
+copy-output 0 0 input
+wait 1
+pasteboard .build/keyscripts/copy-1.json
+copy-output 0 0 latex
+wait 1
+pasteboard .build/keyscripts/copy-2.json
+copy-output 0 0 mathml
+wait 1
+pasteboard .build/keyscripts/copy-3.json
+copy-output 0 0 image
+wait 2
+pasteboard .build/keyscripts/copy-4.json
+quit

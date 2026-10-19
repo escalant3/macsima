@@ -26,9 +26,14 @@ enum TestGuard {
         return true
     }
 
+    /// The pasteboard automated runs copy to and paste from, instead of the
+    /// user's clipboard.
+    static let pasteboard = NSPasteboard(name: NSPasteboard.Name("local.macsima.test"))
+
     /// For UI tests: checks once the launch's documents are open.
     static func startIfUITest() {
         guard isUITest else { return }
+        OutputCopy.pasteboard = pasteboard
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1))
             _ = refuseIfForeign(allowed: "/.build/") { FileHandle.standardError.write(Data("TestGuard: \($0)\n".utf8)) }

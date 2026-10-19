@@ -370,6 +370,13 @@ private struct Context {
     func esc(_ s: String) -> String { MathMLTranslator.escape(s) }
 }
 
+extension MathMLTranslator {
+    /// Content taller than a line of text (fractions, matrices, sums, ...).
+    static func isTallNode(_ node: MathNode) -> Bool { Context.isTall(node) }
+    /// A number, or a power of a number.
+    static func isNumber(_ node: MathNode) -> Bool { Context.isNumber(node) }
+}
+
 enum Greek {
     static let letters: [String: String] = {
         let lower = ["alpha": "α", "beta": "β", "gamma": "γ", "delta": "δ", "epsilon": "ε", "zeta": "ζ",

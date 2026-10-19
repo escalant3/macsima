@@ -119,15 +119,64 @@ struct MathOutputItem: View {
         .accessibilityLabel(out.plainText)
         .onTapGesture { live.toggle() }
         .contextMenu {
-            Button("Copy as Maxima Input") { Self.copy(out.plainText) }
-            Button("Copy MathML") { Self.copy(out.mathML) }
+            ForEach(OutputCopy.Kind.allCases, id: \.self) { kind in
+                Button(kind.title) { OutputCopy.copy(xml, as: kind, scale: scale) }
+            }
+            Divider()
             Button(live ? "Show as Image" : "Select Math") { live.toggle() }
+        }
+    }
+}
+
+/// Copying one math output: as Maxima input, LaTeX, MathML or a picture.
+@MainActor
+enum OutputCopy {
+    /// Where copies go: the general pasteboard, or a private one while a
+    /// key script or UI test runs, so they leave the user's clipboard alone.
+    static var pasteboard = NSPasteboard.general
+
+    enum Kind: String, CaseIterable {
+        case input, latex, mathml, image
+
+        var title: String {
+            switch self {
+            case .input: "Copy as Maxima Input"
+            case .latex: "Copy as LaTeX"
+            case .mathml: "Copy MathML"
+            case .image: "Copy as Image"
+            }
+        }
+    }
+
+    static func copy(_ xml: String, as kind: Kind, scale: CGFloat) {
+        let out = TranslationCache.shared.translate(xml)
+        switch kind {
+        case .input: copy(out.plainText)
+        case .latex: copy(LaTeXTranslator.translate(xml) ?? out.plainText)
+        case .mathml: copy(out.mathML)
+        case .image: copyImage(mathML: out.mathML, scale: scale)
         }
     }
 
     static func copy(_ text: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+    }
+
+    /// The math alone, without its label, dark on a clear background (for
+    /// pasting into documents), as PNG and TIFF.
+    static func copyImage(mathML: String, scale: CGFloat) {
+        Task { @MainActor in
+            guard let rendered = await MathSnapshotRenderer.shared.render(mathML: mathML, label: nil, dark: false,
+                                                                         scale: scale, labelColumn: false)
+            else { return }
+            pasteboard.clearContents()
+            pasteboard.writeObjects([rendered.image])
+            if let tiff = rendered.image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+               let png = rep.representation(using: .png, properties: [:]) {
+                pasteboard.setData(png, forType: .png)
+            }
+        }
     }
 }
 

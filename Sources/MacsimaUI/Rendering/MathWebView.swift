@@ -58,10 +58,11 @@ public final class MathWKWebView: WKWebView {
         }
     }
 
-    public func show(mathML: String, label: String?, scale: CGFloat = 1, wrap: MathWrap = .none) {
+    public func show(mathML: String, label: String?, scale: CGFloat = 1, wrap: MathWrap = .none,
+                     labelColumn: Bool = true) {
         pageToken += 1
-        loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken, scale: scale, wrap: wrap),
-                       baseURL: nil)
+        loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken, scale: scale, wrap: wrap,
+                                     labelColumn: labelColumn), baseURL: nil)
     }
 
     private final class SizeHandler: NSObject, WKScriptMessageHandler {
