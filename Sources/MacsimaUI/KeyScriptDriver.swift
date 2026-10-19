@@ -8,11 +8,13 @@ import WorksheetKit
 /// Drives the app from a script of key events, for checking the editor
 /// without Accessibility permission: synthesized NSEvents are posted to the
 /// app's own event queue, the same path as typing (text views, onKeyPress,
-/// menu key equivalents, undo grouping). Launch with `-MacsimaKeyScript <file>`. Debug builds only.
+/// menu key equivalents, undo grouping). `key` events with a key code are
+/// made from CGEvents, as the keyboard makes them; XCUITest (Tests/UITests)
+/// covers real keystrokes. Launch with `-MacsimaKeyScript <file>`. Debug builds only.
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `find-replacement <text>`, `find-replace-all`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -48,7 +50,7 @@ enum KeyScriptDriver {
         case "type":
             // Paced like typing, so SwiftUI can push each edit through the binding.
             for ch in rest {
-                send(String(ch), keyCode: 0, flags: [])
+                send(String(ch), ignoring: String(ch), keyCode: 0, flags: [])
                 try? await Task.sleep(for: .milliseconds(25))
             }
         case "key":
@@ -58,12 +60,20 @@ enum KeyScriptDriver {
             if parts.contains("cmd") { flags.insert(.command) }
             if parts.contains("shift") { flags.insert(.shift) }
             if parts.contains("option") { flags.insert(.option) }
-            let (chars, code) = keys[name] ?? (name, keyCodes[name] ?? 0)
+            var (chars, code) = keys[name] ?? (name, keyCodes[name] ?? 0)
+            var ignoring = chars
+            // As a keyboard sends a shifted letter (seen with XCUITest's real
+            // Cmd+Shift+G): charactersIgnoringModifiers keeps Shift ("G"),
+            // while characters is lowercase when Command is down.
+            if flags.contains(.shift), name.count == 1 {
+                ignoring = chars.uppercased()
+                chars = flags.contains(.command) ? chars.lowercased() : chars.uppercased()
+            }
             if !flags.intersection([.command, .control]).isEmpty {
                 refreshMenus(NSApp.mainMenu)
                 try? await Task.sleep(for: .milliseconds(100))
             }
-            send(chars, keyCode: code, flags: flags)
+            send(chars, ignoring: ignoring, keyCode: code, flags: flags)
         case "menu":
             refreshMenus(NSApp.mainMenu)
             try? await Task.sleep(for: .milliseconds(100))
@@ -74,6 +84,22 @@ enum KeyScriptDriver {
             }
         case "wait":
             try? await Task.sleep(for: .milliseconds(Int((Double(rest) ?? 1) * 1000)))
+        case "responder":
+            // Debugging aid: who has the keyboard focus.
+            let responder = NSApp.keyWindow?.firstResponder
+            let text = (responder as? NSTextView)?.string ?? ""
+            log("responder \(rest): \(responder.map { String(describing: type(of: $0)) } ?? "nil") \(text.prefix(20).debugDescription)")
+        case "menu-info":
+            // Debugging aid: a menu item's key equivalent.
+            refreshMenus(NSApp.mainMenu)
+            if let item = findMenuItem(rest, in: NSApp.mainMenu) {
+                log("menu-info \(rest): \(item.keyEquivalent.debugDescription) mask \(item.keyEquivalentModifierMask.rawValue) enabled \(item.isEnabled)")
+            }
+        case "find-replacement":
+            // The replacement field's text (typing goes to the query field).
+            WorksheetController.keyController?.find.replacement = rest
+        case "find-replace-all":
+            WorksheetController.keyController?.find.replaceAll()
         case "dump":
             dump(to: rest)
         case "shot":
@@ -107,7 +133,7 @@ enum KeyScriptDriver {
         "right": (String(UnicodeScalar(NSRightArrowFunctionKey)!), 124),
     ]
     private static let keyCodes: [String: UInt16] = [
-        "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1,
+        "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1, "f": 3, "g": 5, "e": 14,
     ]
 
     /// The key window, or else the frontmost document window (the app may
@@ -118,14 +144,15 @@ enum KeyScriptDriver {
 
     /// Delivers like NSApplication.sendEvent does for an active app: menu key
     /// equivalents first, then the window's first responder.
-    private static func send(_ characters: String, keyCode: UInt16, flags: NSEvent.ModifierFlags) {
+    private static func send(_ characters: String, ignoring: String, keyCode: UInt16, flags: NSEvent.ModifierFlags) {
         guard let window = documentWindow else { log("no window"); return }
-        let ignoring = flags.contains(.shift) ? characters.lowercased() : characters
         for type in [NSEvent.EventType.keyDown, .keyUp] {
-            guard let event = NSEvent.keyEvent(
-                with: type, location: .zero, modifierFlags: flags, timestamp: ProcessInfo.processInfo.systemUptime,
-                windowNumber: window.windowNumber, context: nil, characters: characters,
-                charactersIgnoringModifiers: ignoring, isARepeat: false, keyCode: keyCode) else { continue }
+            guard let event = keyCode != 0 && keyCode != 51
+                    ? hardwareLikeEvent(keyCode: keyCode, down: type == .keyDown, flags: flags)
+                    : NSEvent.keyEvent(
+                        with: type, location: .zero, modifierFlags: flags, timestamp: ProcessInfo.processInfo.systemUptime,
+                        windowNumber: window.windowNumber, context: nil, characters: characters,
+                        charactersIgnoringModifiers: ignoring, isARepeat: false, keyCode: keyCode) else { continue }
             if NSApp.isActive {
                 // Through the app's event queue, so every event completes a real
                 // event-loop cycle (AppKit closes undo groups at the end of one;
@@ -138,6 +165,21 @@ enum KeyScriptDriver {
                 window.sendEvent(event)
             }
         }
+    }
+
+    /// A key event made from a CGEvent, as the keyboard makes them: AppKit
+    /// translates the key code through the keyboard layout, which menu
+    /// matching needs for shifted keys (Cmd+Shift+G matched nothing when the
+    /// event was made from characters alone).
+    private static func hardwareLikeEvent(keyCode: UInt16, down: Bool, flags: NSEvent.ModifierFlags) -> NSEvent? {
+        guard let cg = CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: down) else { return nil }
+        var cgFlags: CGEventFlags = []
+        if flags.contains(.command) { cgFlags.insert(.maskCommand) }
+        if flags.contains(.shift) { cgFlags.insert(.maskShift) }
+        if flags.contains(.option) { cgFlags.insert(.maskAlternate) }
+        if flags.contains(.control) { cgFlags.insert(.maskControl) }
+        cg.flags = cgFlags
+        return NSEvent(cgEvent: cg)
     }
 
     /// What AppKit does before showing a menu or matching a key equivalent:
@@ -167,6 +209,13 @@ enum KeyScriptDriver {
         }
         var info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]
+        let find = controller.find
+        info["find"] = ["visible": find.isVisible, "query": find.query, "status": find.status,
+                        "current": find.current ?? -1, "count": find.matches.count] as [String: Any]
+        if let current = find.current, current < find.matches.count,
+           let editor = controller.existingEditor(for: find.matches[current].cell) {
+            info["findSelection"] = [editor.selectedRange().location, editor.selectedRange().length]
+        }
         if let editor = NSApp.keyWindow?.firstResponder as? CellTextView {
             info["editor"] = describe(editor)
         }

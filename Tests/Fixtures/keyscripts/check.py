@@ -103,6 +103,18 @@ elif script == "undo-scroll":
     c2 = dump("undo-scroll", 2)["cells"]
     check(c2[0]["input"] == "1+1;" and c2[60]["focused"],
           f"Cmd+Z in the last cell undoes the typing in the first, which scrolled away: {c2[0]['input']!r}")
+elif script == "find-basics":
+    f = lambda n: dump("find", n)["find"]
+    inputs = lambda n: [c["input"] for c in dump("find", n)["cells"]]
+    check(f(1)["count"] == 5 and f(1)["status"] == "1 of 5",
+          f"Cmd+F, typing x: 5 matches over three cells, case-insensitive, wrapping to the first: {f(1)}")
+    check(dump("find", 1)["findSelection"] == [2, 1], "the first match is selected in its cell")
+    check(f(2)["status"] == "2 of 5", f"Cmd+G goes to the next match: {f(2)['status']}")
+    check(f(3)["status"] == "5 of 5", f"Cmd+Shift+G twice goes back, wrapping: {f(3)['status']}")
+    check(inputs(4) == ["a:y+1;\ny^2", "f(y):=y;", "a word with y"], f"Replace All in every cell: {inputs(4)}")
+    check(f(4)["status"] == "No matches", "no matches left")
+    check(not f(5)["visible"], "Esc closes the bar")
+    check(inputs(6) == ["a:x+1;\nx^2", "f(x):=X;", "a word with x"], f"one Cmd+Z undoes Replace All: {inputs(6)}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

@@ -1,0 +1,28 @@
+# Find and Replace across cells (Phase 3, step 3e). Dumps go to
+# .build/keyscripts/ and are checked by run.sh.
+wait 2
+type a:x+1;
+key return
+type x^2
+key 0 cmd
+type f(x):=X;
+key 1 cmd
+type a word with x
+key f cmd
+type x
+dump .build/keyscripts/find-1.json
+key g cmd
+dump .build/keyscripts/find-2.json
+key g cmd shift
+key g cmd shift
+dump .build/keyscripts/find-3.json
+key f cmd option
+find-replacement y
+find-replace-all
+dump .build/keyscripts/find-4.json
+shot .build/keyscripts/find.png
+key escape
+dump .build/keyscripts/find-5.json
+key z cmd
+dump .build/keyscripts/find-6.json
+quit
