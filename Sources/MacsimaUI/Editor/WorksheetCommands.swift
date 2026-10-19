@@ -30,6 +30,7 @@ struct WorksheetCommands: Commands {
                 .keyboardShortcut("3", modifiers: .command)
             Button("Insert Subsection Cell") { controller?.insertCell(.subsection) }
                 .keyboardShortcut("4", modifiers: .command)
+            Button("Insert Image…") { controller?.chooseImage() }
             Divider()
             Button("Comment or Uncomment") { controller?.toggleComment() }
                 .keyboardShortcut("/", modifiers: .command)

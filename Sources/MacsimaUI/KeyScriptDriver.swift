@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -147,6 +147,15 @@ enum KeyScriptDriver {
                c < controller.document.worksheet.cells.count {
                 controller.clickBar(controller.document.worksheet.cells[c].id, extend: parts.contains("shift"))
             }
+        case "scroll-to":
+            // `scroll-to <cell>` (0-based): focuses the cell, scrolling it into view.
+            if let c = Int(rest), let controller = WorksheetController.keyController,
+               c < controller.document.worksheet.cells.count {
+                controller.focusedCell = controller.document.worksheet.cells[c].id
+            }
+        case "insert-image":
+            // `insert-image <path>`: Cell › Insert Image… without the open panel.
+            WorksheetController.keyController?.insertImage(from: URL(filePath: rest))
         case "copy-output":
             // `copy-output <cell> <output> input|latex|mathml|image` (0-based), as the output's menu does.
             let parts = rest.split(separator: " ").map(String.init)

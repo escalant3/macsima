@@ -97,6 +97,9 @@ public enum WXMXWriter {
             case .code:
                 out += "<input>\n" + editor(cell, type: "input", level: nil) + "</input>"
                 if !outputXML.isEmpty { out += "\n<output>\n<mth>" + outputXML + "\n</mth></output>" }
+            case .image:
+                // The caption, then the image (wxMaxima's ImgCell, breakline first).
+                out += editor(cell, type: "input", level: nil) + outputXML
             default:
                 out += editor(cell, type: type, level: level)
             }

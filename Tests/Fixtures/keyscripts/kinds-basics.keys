@@ -1,0 +1,19 @@
+# Image cells and page breaks, from wxMaxima's all-celltypes sample (Phase 3, step 8).
+wait 4
+resize 900 900
+scroll-to 52
+wait 2
+# Again: the lazy stack guesses the heights of cells it hasn't laid out yet.
+scroll-to 110
+wait 1
+scroll-to 52
+wait 2
+dump .build/keyscripts/kinds-1.json
+shot .build/keyscripts/kinds-1.png
+insert-image docs/phase2-snapshots/01-integral-result.png
+wait 2
+dump .build/keyscripts/kinds-2.json
+shot .build/keyscripts/kinds-2.png
+key z cmd
+dump .build/keyscripts/kinds-3.json
+quit

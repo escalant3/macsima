@@ -8,6 +8,11 @@
 # display is kept awake: a sleeping display makes the window inactive.
 set -eu
 name=$1
+# Synthesized keys and window screenshots need an unlocked screen.
+if ioreg -n Root -d1 -a | grep -A1 CGSSessionScreenIsLocked | grep -q '<true/>'; then
+  echo "SKIPPED: the screen is locked (key scripts need it unlocked)"
+  exit 2
+fi
 app=.build/xcode/Build/Products/Debug/Macsima.app/Contents/MacOS/Macsima
 mkdir -p .build/keyscripts
 rm -f .build/keyscripts/"${name%%-*}"-*.json

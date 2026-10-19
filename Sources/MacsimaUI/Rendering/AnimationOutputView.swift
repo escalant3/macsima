@@ -10,6 +10,7 @@ import SwiftUI
 /// `running="true"`.
 struct AnimationOutputView: View {
     let frames: [Data]
+    var format = "png"
     let label: String?
     let attributes: [String: String]
 
@@ -52,7 +53,7 @@ struct AnimationOutputView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .task {
-            images = frames.compactMap(NSImage.init(data:))
+            images = frames.compactMap { ImageDecoding.image($0, format: format) }
             index = min(Int(attributes["frame"] ?? "") ?? 0, max(images.count - 1, 0))
             playing = attributes["running"] == "true"
         }

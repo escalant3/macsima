@@ -36,7 +36,8 @@ func richWorksheet() -> Worksheet {
         ]),
         Cell(kind: .code, input: ""),
         Cell(kind: .pageBreak),
-        Cell(kind: .raw, preserved: [#"<cell type="image"><editor type="text"><line>caption</line></editor><img>kept.png</img></cell>"#]),
+        Cell(kind: .image, input: "caption", outputs: [.image(data: png, format: "png", label: nil, attributes: ["ppi": "96"])]),
+        Cell(kind: .raw, preserved: [#"<cell type="gadget"><editor type="text"><line>unknown</line></editor><img>kept.png</img></cell>"#]),
         Cell(kind: .section, input: "Folded", preserved: [#"<fold><cell type="text"><editor type="text"><line>hidden</line></editor></cell></fold>"#]),
         Cell(kind: .text, input: "bold text", preservedEditor: PreservedEditor(text: "bold text",
              xml: #"<editor type="text"><line bold="1:4">bold text</line></editor>"#)),
@@ -228,8 +229,11 @@ struct WXMXSampleTests {
     @Test func allCellTypes() throws {
         let r = try WXMXReader.read(try Data(contentsOf: Self.dir.appending(path: "all-celltypes.wxmx")))
         let kinds = Set(r.worksheet.cells.map(\.kind))
-        #expect(kinds.isSuperset(of: [.code, .text, .section, .subsection, .subsubsection, .heading5, .heading6, .pageBreak, .raw]))
-        #expect(r.warnings.contains { $0.contains("image") })
+        #expect(kinds.isSuperset(of: [.code, .text, .section, .subsection, .subsubsection, .heading5, .heading6, .pageBreak, .image]))
+        let image = r.worksheet.cells.first { $0.kind == .image }
+        #expect(image?.input == "Poldino the guinea pig")
+        if case .image(let data, let format, nil, _)? = image?.outputs.first { #expect(format == "jpg" && data.count > 1000) }
+        else { Issue.record("the image cell has no image") }
     }
 }
 

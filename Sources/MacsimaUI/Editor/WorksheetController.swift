@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 import AppKit
+import UniformTypeIdentifiers
 import MaximaKit
 import SwiftUI
 import WorksheetKit
@@ -206,6 +207,32 @@ public final class WorksheetController {
         let id = document.insertCell(kind, after: focusedCell ?? document.worksheet.cells.last?.id,
                                      undo: undoManager)
         focusedCell = id
+    }
+
+    /// Cell › Insert Image…: an image cell after the focused cell, its
+    /// caption the file's name (as wxMaxima's).
+    public func insertImage(from url: URL) {
+        guard let data = try? Data(contentsOf: url), ImageDecoding.image(data, format: url.pathExtension) != nil else {
+            statusMessage = "\(url.lastPathComponent) is not an image Macsima can show."
+            return
+        }
+        let format = url.pathExtension.lowercased()
+        let cell = Cell(kind: .image, input: url.lastPathComponent,
+                        outputs: [.image(data: data, format: format.isEmpty ? "png" : format, label: nil)])
+        let after = focusedCell.flatMap { document.worksheet.index(of: $0) }.map { $0 + 1 } ?? document.worksheet.cells.count
+        document.insertCells([cell], at: after, undo: undoManager, name: "Insert Image")
+        focusedCell = cell.id
+    }
+
+    public func chooseImage() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.png, .jpeg, .gif, .svg, .tiff]
+        panel.allowsMultipleSelection = false
+        guard let window else { return }
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            MainActor.assumeIsolated { self?.insertImage(from: url) }
+        }
     }
 
     public func deleteFocusedCell() {
@@ -612,7 +639,7 @@ public final class WorksheetController {
 
 extension Cell {
     /// The cell shows a text editor (page breaks, image and unknown cells don't).
-    var hasEditor: Bool { ![.raw, .pageBreak, .image].contains(kind) }
+    var hasEditor: Bool { ![.raw, .pageBreak].contains(kind) }
 }
 
 /// Where a cell's last evaluation failed: the statements Maxima reported an

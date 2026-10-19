@@ -49,8 +49,8 @@ feature.
 | `title`, `section`, `subsection` (`sectioning_level` 1, 2, 3) | yes | yes | full | |
 | `subsection` with `sectioning_level` 4, 5, 6 (subsubsection, heading 5, heading 6) | yes | yes, the way wxMaxima writes them | full | |
 | `cell type="subsubsection"` (older files) | yes | written as `subsection` level 4 | full | |
-| `cell type="pagebreak"` | yes, shown as a placeholder | yes | full | |
-| `cell type="image"` | kept (shown as a placeholder) | written back verbatim with its image | partial | Image cells |
+| `cell type="pagebreak"` | yes, shown as a dashed rule | yes | full | |
+| `cell type="image"` | yes: the caption is editable, the image (PNG, JPEG, GIF, SVG, `.svgz`) shown below; Cell › Insert Image… makes one | yes, as wxMaxima writes them (caption editor, then `img`); an image cell whose image is missing stays a kept raw cell | full | |
 | Unknown cell types | kept as raw cells, warned | written back verbatim | partial | |
 | `fold` (folded cells under a heading) | kept, not shown; a placeholder says so | written back | partial | Folding sections you want to edit in Macsima |
 | `hide="true"` (hidden output) | kept, not applied | written back | partial | Hiding cells |

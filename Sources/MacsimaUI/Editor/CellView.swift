@@ -48,10 +48,10 @@ struct CellView: View {
         Group {
             switch cell.kind {
             case .pageBreak:
-                PlaceholderRow(text: "Page break", systemImage: "rectangle.split.1x2")
+                PageBreakRow()
                     .contentShape(Rectangle())
                     .onTapGesture { onBarClick(NSEvent.modifierFlags.contains(.shift)) }
-            case .raw, .image:
+            case .raw:
                 PlaceholderRow(text: "A cell this app cannot show yet. It is kept and saved back unchanged.",
                                systemImage: "shippingbox")
                     .contentShape(Rectangle())
@@ -124,6 +124,34 @@ struct CellView: View {
     static func gutterOffset(for kind: CellKind, scale: CGFloat) -> CGFloat {
         let label = NSFont.monospacedSystemFont(ofSize: WorksheetMetrics(scale: scale).gutterFontSize, weight: .regular)
         return CellTextView.inset.height + CellEditor.font(for: kind, scale: scale).ascender - label.ascender
+    }
+}
+
+/// A page break: a dashed rule across the worksheet, as wxMaxima draws it.
+struct PageBreakRow: View {
+    @Environment(\.worksheetScale) private var scale
+
+    var body: some View {
+        HStack(spacing: 8) {
+            rule
+            Text("Page break").font(.caption).foregroundStyle(.secondary)
+            rule
+        }
+        .padding(.leading, WorksheetMetrics(scale: scale).outputIndent)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var rule: some View {
+        Line().stroke(.secondary.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+            .frame(height: 1)
+    }
+
+    private struct Line: Shape {
+        func path(in rect: CGRect) -> Path {
+            Path { $0.move(to: CGPoint(x: 0, y: rect.midY)); $0.addLine(to: CGPoint(x: rect.maxX, y: rect.midY)) }
+        }
     }
 }
 

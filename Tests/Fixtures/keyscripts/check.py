@@ -92,6 +92,16 @@ elif script == "plots-basics":
     check(c[1]["outputs"][0].startswith("image %t3 png"), "wxdraw2d gives a PNG plot")
     check(any(o.startswith("image %t5 svg") for o in c[2]["outputs"]), "with wxplot_usesvg, an SVG plot: " + str(c[2]["outputs"]))
     check(d["status"] == "", "Maxima's progress text is gone once evaluation ends: " + repr(d["status"]))
+elif script == "kinds-basics":
+    c1 = dump("kinds", 1)["cells"]
+    image = [c for c in c1 if c["kind"] == "image"]
+    check(len(image) == 1 and image[0]["input"] == "Poldino the guinea pig" and image[0]["outputs"][0].startswith("image - jpg"),
+          "the image cell shows its caption and its JPEG")
+    c2 = dump("kinds", 2)["cells"]
+    new = [c for c in c2 if c["kind"] == "image" and c["input"] == "01-integral-result.png"]
+    check(len(new) == 1 and new[0]["focused"] and new[0]["outputs"][0].startswith("image - png"),
+          "Insert Image adds an image cell after the focused one, captioned with the file name")
+    check(len(dump("kinds", 3)["cells"]) == len(c1), "Cmd+Z removes it")
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:

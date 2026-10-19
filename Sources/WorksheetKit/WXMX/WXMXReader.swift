@@ -107,9 +107,18 @@ private struct Reader {
             default: kind = type == "subsubsection" ? .subsubsection : .subsection
             }
         case "pagebreak": kind = .pageBreak
+        case "image": kind = .image
         default: kind = nil
         }
-        guard let kind, kind != .image else { return raw(node, id: id, why: "a cell of type \"\(type)\" this app cannot show") }
+        guard let kind else { return raw(node, id: id, why: "a cell of type \"\(type)\" this app cannot show") }
+        // An image cell: a caption, then <img>imageN.ext</img> from the archive.
+        if kind == .image {
+            let imgs = node.elementChildren.filter { $0.name == "img" }
+            guard imgs.count == 1, let img = imgs.first,
+                  let data = files.data[img.textContent.trimmingCharacters(in: .whitespacesAndNewlines)],
+                  node.elementChildren.allSatisfy({ $0.name == "img" || $0.name == "editor" })
+            else { return raw(node, id: id, why: "an image cell whose image is missing (kept)") }
+        }
 
         // sectioning_level is implied by the kind; other attributes are kept.
         attributes["type"] = nil
@@ -130,6 +139,13 @@ private struct Reader {
                 cell.outputs += outputs(child, attributes: &attributes)
             case nil:
                 break
+            case "img" where kind == .image:
+                let file = child.textContent.trimmingCharacters(in: .whitespacesAndNewlines)
+                usedFiles.insert(file)
+                var a = child.attributes
+                a["breakline"] = nil
+                let format = URL(filePath: file).pathExtension.lowercased()
+                cell.outputs = [.image(data: files.data[file]!, format: format.isEmpty ? "png" : format, label: nil, attributes: a)]
             case "fold":
                 cell.preserved.append(child.xml)
                 warn("folded cells (not shown, written back)")
