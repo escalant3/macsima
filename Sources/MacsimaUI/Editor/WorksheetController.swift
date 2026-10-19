@@ -164,6 +164,10 @@ public final class WorksheetController {
         editor.onLeave = { [weak self] up, x in self?.leave(id, up: up, x: x) ?? false }
         editor.onSelectCells = { [weak self] up in self?.startCellSelection(from: id, up: up) }
         editor.onPasteCells = { [weak self] in self?.pasteCells(after: id) ?? false }
+        editor.onFormatsChange = { [weak self] formats in
+            guard let self, self.document.worksheet[id]?.textFormats != formats else { return }
+            self.document.worksheet.update(id) { $0.textFormats = formats }
+        }
         editor.isFocusedCell = { [weak self] in self?.focusedCell == id && self?.selectedCells.isEmpty == true }
         editor.onRemovedWhileFocused = { [weak self] in
             // Output above pushed the cell out of view: follow it, as
@@ -298,6 +302,17 @@ public final class WorksheetController {
         guard let i = document.worksheet.index(of: id) else { return false }
         return document.worksheet.foldedAncestors(of: i).isEmpty
     }
+
+    // MARK: - Text formats
+
+    /// Format › Bold and the like, in the focused text cell.
+    public func toggleFormat(_ flag: TextFormat) {
+        guard let id = focusedCell, document.worksheet[id]?.kind == .text, let editor = editors[id],
+              let base = editor.baseFont else { return }
+        editor.toggleFormat(flag, base: base)
+    }
+
+    var focusedCellIsText: Bool { focusedCell.flatMap { document.worksheet[$0] }?.kind == .text }
 
     // MARK: - Zoom
 

@@ -70,6 +70,9 @@ public struct Cell: Identifiable, Equatable, Sendable {
     /// The editor XML as read, while it carries formatting this app cannot
     /// edit; written back as long as `input` still equals `text`.
     public var preservedEditor: PreservedEditor?
+    /// Bold, italic, ... per Unicode scalar of `input` (text cells; empty
+    /// when plain).
+    public var textFormats: TextFormats = []
     /// A heading whose section is folded: the cells after it, up to the next
     /// heading of its level or higher, are hidden (wxMaxima keeps them in a
     /// `<fold>` inside the heading).
@@ -84,7 +87,7 @@ public struct Cell: Identifiable, Equatable, Sendable {
 
     public init(id: UUID = UUID(), kind: CellKind, input: String = "", outputs: [Output] = [],
                 inputLabel: Int? = nil, preserved: [String] = [], extraAttributes: [String: String] = [:],
-                preservedEditor: PreservedEditor? = nil, isFolded: Bool = false) {
+                preservedEditor: PreservedEditor? = nil, isFolded: Bool = false, textFormats: TextFormats = []) {
         self.id = id
         self.kind = kind
         self.input = input
@@ -94,6 +97,7 @@ public struct Cell: Identifiable, Equatable, Sendable {
         self.extraAttributes = extraAttributes
         self.preservedEditor = preservedEditor
         self.isFolded = isFolded
+        self.textFormats = textFormats
     }
 }
 

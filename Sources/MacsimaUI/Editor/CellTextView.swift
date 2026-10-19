@@ -25,6 +25,20 @@ final class CellTextView: NSTextView {
     private var hadFocusWhenRemoved = false
     /// The editor left the window while it had the keyboard.
     var onRemovedWhileFocused: (() -> Void)?
+    /// A text cell: bold, italic, ... (TextCellFormatting.swift).
+    var formatsText = false {
+        didSet {
+            guard formatsText != oldValue else { return }
+            // Rich text keeps per-character formats; paste stays plain (readablePasteboardTypes).
+            isRichText = formatsText
+        }
+    }
+    /// A text cell's font without formats, at the worksheet's zoom.
+    var baseFont: NSFont?
+    /// The formats the storage shows changed (typing, undo, Format menu).
+    var onFormatsChange: ((TextFormats) -> Void)?
+    /// Set while the model's formats are being applied, which is no change to report.
+    var applyingFormats = false
     /// True while this editor's cell is the worksheet's focused cell.
     var isFocusedCell: (() -> Bool)?
     /// Paste when the pasteboard holds cells: inserts them after this cell.
@@ -77,7 +91,10 @@ final class CellTextView: NSTextView {
     }
 
     @objc private func storageEdited(_ notification: Notification) {
-        guard let storage = textStorage, storage.editedMask.contains(.editedCharacters) else { return }
+        guard let storage = textStorage else { return }
+        // Formats changed by typing, undo or Format › Bold go to the model.
+        if formatsText, !applyingFormats { onFormatsChange?(storageFormats()) }
+        guard storage.editedMask.contains(.editedCharacters) else { return }
         onTextChange?(storage.string)
         // After the edit is done: the layout follows the storage.
         DispatchQueue.main.async { [weak self] in
@@ -191,6 +208,9 @@ final class CellTextView: NSTextView {
     }
 
     override var undoManager: UndoManager? { undoSource?() ?? super.undoManager }
+
+    /// Plain text only, also in rich text cells: formats come from the Format menu.
+    override var readablePasteboardTypes: [NSPasteboard.PasteboardType] { [.string] }
 
     /// Takes the model's text when it changed without this view (a file
     /// revert, say). The view's own undo actions no longer fit the text, so
@@ -403,6 +423,8 @@ struct CellEditor: NSViewRepresentable {
     /// The worksheet's zoom.
     let scale: CGFloat
     let accessibilityID: String
+    /// Bold, italic, ... of a text cell's text.
+    var formats: TextFormats = []
     /// This cell is the controller's focused cell.
     let isFocused: Bool
     /// Changes with every focus request (`WorksheetController.focusRequest`).
@@ -426,7 +448,13 @@ struct CellEditor: NSViewRepresentable {
     private func update(_ view: CellTextView) {
         view.sync(text)
         let font = Self.font(for: kind, scale: scale)
-        if view.font != font {
+        view.formatsText = kind == .text
+        if kind == .text {
+            // Fonts come with the formats; setting the view's font would undo them.
+            view.baseFont = font
+            view.applyFormats(formats, base: font)
+            if view.string.isEmpty { view.typingAttributes = CellTextView.attributes([], base: font) }
+        } else if view.font != font {
             view.font = font
             view.invalidateIntrinsicContentSize()
         }

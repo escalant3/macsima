@@ -151,7 +151,10 @@ public enum WXMXWriter {
             if let level { head += " sectioning_level=\"\(level)\"" }
             // One <line>, with newlines as character references (as wxMaxima writes it).
             let text = XMLTreeNode.escapeText(cell.input).replacingOccurrences(of: "\n", with: "&#x0A;")
-            return head + ">\n<line>" + text + "</line>\n</editor>\n"
+            // Formats as wxMaxima writes them: ranges counted from the text's start.
+            let formats = cell.textFormats.count == cell.input.unicodeScalars.count ? cell.textFormats : []
+            let attributes = TextFormatting.attributes(formats).map { " \($0.0)=\"\($0.1)\"" }.joined()
+            return head + ">\n<line\(attributes)>" + text + "</line>\n</editor>\n"
         }
 
         mutating func output(_ output: Output) -> String {

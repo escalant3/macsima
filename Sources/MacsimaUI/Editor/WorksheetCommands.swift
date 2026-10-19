@@ -85,12 +85,40 @@ struct WorksheetCommands: Commands {
                 .keyboardShortcut("-", modifiers: .command)
             Button("Actual Size") { controller?.actualSize() }
         }
+        // Text cells: bold, italic, ... (wxMaxima's formats, GH #492).
+        CommandMenu("Format") {
+            ForEach(FormatCommand.all, id: \.title) { command in
+                let button = Button(command.title) { controller?.toggleFormat(command.flag) }
+                    .disabled(!(controller?.focusedCellIsText ?? false))
+                if let key = command.key {
+                    button.keyboardShortcut(key, modifiers: command.modifiers)
+                } else {
+                    button
+                }
+            }
+        }
         CommandMenu("Maxima") {
             Button("Interrupt") { controller?.interrupt() }
                 .keyboardShortcut(".", modifiers: .command)
             Button("Restart Maxima") { controller?.restart() }
         }
     }
+}
+
+struct FormatCommand {
+    let title: String
+    let flag: TextFormat
+    let key: KeyEquivalent?
+    var modifiers: EventModifiers = .command
+
+    static let all = [
+        FormatCommand(title: "Bold", flag: .bold, key: "b"),
+        FormatCommand(title: "Italic", flag: .italic, key: "i"),
+        FormatCommand(title: "Underline", flag: .underline, key: "u"),
+        FormatCommand(title: "Strikethrough", flag: .strikethrough, key: nil),
+        FormatCommand(title: "Superscript", flag: .raised, key: "=", modifiers: [.command, .control]),
+        FormatCommand(title: "Subscript", flag: .lowered, key: "-", modifiers: [.command, .control]),
+    ]
 }
 
 extension CellKind {

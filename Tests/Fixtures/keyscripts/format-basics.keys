@@ -1,0 +1,30 @@
+# Bold, italic and underline in a text cell (Phase 3, step 8).
+wait 3
+key 1 cmd
+type plain bold
+key left shift
+key left shift
+key left shift
+key left shift
+key b cmd
+key right
+type  more
+dump .build/keyscripts/format-1.json
+key z cmd
+dump .build/keyscripts/format-2.json
+key z cmd
+dump .build/keyscripts/format-3.json
+key a cmd
+key i cmd
+key right
+type  Super
+key left shift
+key left shift
+key left shift
+key left shift
+key left shift
+key = cmd control
+key u cmd
+dump .build/keyscripts/format-4.json
+shot .build/keyscripts/format-4.png
+quit

@@ -12,7 +12,7 @@ import WorksheetKit
 /// made from CGEvents, as the keyboard makes them; XCUITest (Tests/UITests)
 /// covers real keystrokes. Launch with `-MacsimaKeyScript <file>`. Debug builds only.
 ///
-/// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
+/// Lines: `type <text>`, `key <name> [cmd] [shift] [option] [control]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
 /// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
@@ -68,6 +68,7 @@ enum KeyScriptDriver {
             if parts.contains("cmd") { flags.insert(.command) }
             if parts.contains("shift") { flags.insert(.shift) }
             if parts.contains("option") { flags.insert(.option) }
+            if parts.contains("control") { flags.insert(.control) }
             var (chars, code) = keys[name] ?? (name, keyCodes[name] ?? 0)
             var ignoring = chars
             // As a keyboard sends a shifted letter (seen with XCUITest's real
@@ -223,7 +224,7 @@ enum KeyScriptDriver {
     ]
     private static let keyCodes: [String: UInt16] = [
         "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1, "f": 3, "g": 5, "e": 14, "/": 44, "=": 24, "-": 27, "w": 13,
-        "c": 8, "x": 7, "v": 9, "a": 0, "[": 33, "]": 30,
+        "c": 8, "x": 7, "v": 9, "a": 0, "[": 33, "]": 30, "b": 11, "i": 34, "u": 32,
     ]
 
     /// The key window, or else the frontmost document window (the app may
@@ -301,6 +302,7 @@ enum KeyScriptDriver {
             ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.map(describe),
              "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell,
              "folded": cell.isFolded, "hidden": cell.isHidden,
+             "formats": TextFormatting.attributes(cell.textFormats).map { "\($0.0)=\($0.1)" },
              "editorText": controller.existingEditor(for: cell.id)?.string ?? NSNull(),
              "inWindow": controller.existingEditor(for: cell.id)?.window != nil,
              "backgrounds": controller.existingEditor(for: cell.id).map { describe($0)["backgrounds"] ?? [] } ?? [],

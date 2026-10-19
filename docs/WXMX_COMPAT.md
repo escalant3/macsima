@@ -64,7 +64,8 @@ feature.
 | --- | --- | --- | --- | --- |
 | `editor` with `line` elements, `&#x0A;` newlines | yes | one `line`, newlines as `&#x0A;` (as wxMaxima 26.09) | full | |
 | Carriage returns (soft line breaks in older files) | yes, kept as `\r` | written as `&#x0D;` | partial: the editor shows them as real line breaks, wxMaxima reflows them | |
-| Line formatting attributes (bold, colours in text cells) | kept while the cell's text is unchanged; editing the text drops the formatting | the original `editor` XML while unchanged | partial | Formatting text cells you want to edit in Macsima |
+| Text formats (`bold`, `italic`, `underline`, `strikethrough`, `superscript`, `subscript` ranges on `line`; wxMaxima after 26.09, GH #492) | yes: shown and editable (Format menu), kept through typing and undo | yes, as wxMaxima writes them (ranges in code points from the text's start); 26.09 and older show the text plain | full | |
+| Other line attributes, inline tags in `line` | kept while the cell's text is unchanged; editing the text drops them | the original `editor` XML while unchanged | partial | |
 | Answers to questions (`editor type="input"` inside an output) | yes, shown under the question | yes, the same way | full | |
 
 ## Output

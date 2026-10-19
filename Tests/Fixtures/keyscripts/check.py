@@ -116,6 +116,17 @@ elif script == "folds-basics":
     d5 = dump("folds", 5)
     check(4 in d5["visible"] and not d5["cells"][1]["folded"] and not d5["cells"][3]["folded"],
           "Find unfolds the sections around its match")
+elif script == "format-basics":
+    def text(n): return dump("format", n)["cells"][1]
+    c1 = text(1)
+    check(c1["input"] == "plain bold more" and c1["formats"] == ["bold=6-15"],
+          "Cmd+B makes the selection bold; typing after it continues bold: " + str(c1))
+    c2 = text(2)
+    check(c2["input"] == "plain bold" and c2["formats"] == ["bold=6-10"], "Cmd+Z undoes the typing: " + str(c2))
+    c3 = text(3)
+    check(c3["formats"] == [], "Cmd+Z again undoes the bold: " + str(c3))
+    check(text(4)["formats"] == ["italic=0-16", "underline=11-16", "superscript=11-16"],
+          "Cmd+A, Cmd+I: all italic; then underlined superscript: " + str(text(4)["formats"]))
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:

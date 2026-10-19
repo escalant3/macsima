@@ -178,7 +178,25 @@ private struct Reader {
         let lines = editor.elementChildren.filter { $0.name == "line" }
         let text = lines.map(\.textContent).joined(separator: "\n")
         cell.input = text
-        let formatted = lines.contains { !$0.attributes.isEmpty }
+        // Bold, italic, ... as range attributes of each line (wxMaxima after 26.09).
+        var formats: TextFormats = []
+        var offset = 0
+        var unknownAttributes = false
+        for (k, line) in lines.enumerated() {
+            if k > 0 { offset += 1 }   // the newline between lines
+            let lineText = line.textContent
+            let (f, unknown) = TextFormatting.read(line: lineText, attributes: line.attributes)
+            if !unknown.isEmpty { unknownAttributes = true }
+            if !f.isEmpty {
+                formats += TextFormats(repeating: [], count: offset - formats.count) + f
+            }
+            offset += lineText.unicodeScalars.count
+        }
+        if !formats.isEmpty { formats += TextFormats(repeating: [], count: offset - formats.count) }
+        cell.textFormats = formats
+        // Anything else (unknown attributes, inline elements) is kept verbatim.
+        let formatted = unknownAttributes
+            || lines.contains { !$0.elementChildren.isEmpty }
             || editor.elementChildren.contains { $0.name != "line" }
         if formatted {
             cell.preservedEditor = PreservedEditor(text: text, xml: editor.xml)

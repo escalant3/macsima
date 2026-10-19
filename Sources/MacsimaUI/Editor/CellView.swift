@@ -112,6 +112,7 @@ struct CellView: View {
                         .accessibilityIdentifier("cell-hidden-\(index)")
                 } else {
                     CellEditor(text: cell.input, kind: cell.kind, scale: scale, accessibilityID: "cell-input-\(index)",
+                               formats: cell.textFormats,
                                isFocused: isFocused, focusRequest: focusRequest,
                                caretRequest: caretRequest, cellID: cell.id, makeView: makeEditor)
                 }
