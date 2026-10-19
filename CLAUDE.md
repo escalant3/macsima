@@ -29,7 +29,7 @@ Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadma
 - Does my SBCL have threads: `sbcl --noinform --eval '(progn (format t "threads: ~a~%" (if (member :sb-thread *features*) "yes" "no")) (quit))'`
 
 ## Current phase
-Phase 2 is done: Macsima is a working worksheet app (see `docs/PHASE2_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` and `docs/PHASE1_REPORT.md`). Phase 3 (daily driver, `docs/PHASE3_PROMPT.md`) is in progress: Parts A (the editor) and B (math output) are done; Part B waits at checkpoint B; Part C follows.
+Phase 2 is done: Macsima is a working worksheet app (see `docs/PHASE2_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` and `docs/PHASE1_REPORT.md`). Phase 3 (daily driver, `docs/PHASE3_PROMPT.md`) is in progress: Parts A (the editor) and B (math output) are done and approved; Part C (the Maxima side, steps 9 to 14, then the report in step 15) is next. Arrow keys stopping on outputs are deferred past Phase 3.
 
 Facts to keep in mind (details in the reports, BOOTSTRAP.md, WXMX_COMPAT.md and PARITY.md):
 - **Build the app.** `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build`. All code lives in the package (`MacsimaUI`); `App/Macsima` only holds `@main`.
