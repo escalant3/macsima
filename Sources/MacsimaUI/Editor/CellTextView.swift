@@ -120,6 +120,7 @@ final class CellTextView: NSTextView {
                 layout.addRenderingAttribute(.backgroundColor, value: Self.findColor, for: range)
             }
         }
+        defer { redrawFragments() }
         let selection = selectedRange()
         guard highlightsSyntax, selection.length == 0,
               let (a, b) = MaximaTokenizer.matchingBracket(in: string, caret: selection.location) else { return }
@@ -150,6 +151,19 @@ final class CellTextView: NSTextView {
     static let bracketColor = NSColor(name: "MacsimaBracketMatch") { appearance in
         appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
             ? NSColor.systemYellow.withAlphaComponent(0.35) : NSColor.systemYellow.withAlphaComponent(0.45)
+    }
+
+    /// Redraws the text after its rendering attributes changed. TextKit 2
+    /// draws the text in subviews of the text view and doesn't redraw them
+    /// for rendering attributes alone; the text view's own needsDisplay
+    /// doesn't reach them (Find's marks showed only in the cell whose
+    /// selection changed).
+    func redrawFragments() {
+        func mark(_ view: NSView) {
+            view.needsDisplay = true
+            view.subviews.forEach(mark)
+        }
+        mark(self)
     }
 
     /// The TextKit 2 range for UTF-16 offsets.

@@ -244,6 +244,7 @@ enum KeyScriptDriver {
              "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell,
              "editorText": controller.existingEditor(for: cell.id)?.string ?? NSNull(),
              "inWindow": controller.existingEditor(for: cell.id)?.window != nil,
+             "backgrounds": controller.existingEditor(for: cell.id).map { describe($0)["backgrounds"] ?? [] } ?? [],
              "errorMarks": controller.errorMarks[cell.id].map { marks -> [String: Any] in
                  ["statements": marks.statements.map { [$0.location, $0.length] },
                   "spots": marks.spots.map { [$0.location, $0.length] }, "current": marks.text == cell.input]

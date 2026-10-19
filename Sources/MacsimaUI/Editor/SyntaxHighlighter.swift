@@ -84,6 +84,7 @@ enum SyntaxHighlighter {
     static func apply(to view: NSTextView, enabled: Bool) {
         guard let layout = view.textLayoutManager, let content = layout.textContentManager else { return }
         layout.removeRenderingAttribute(.foregroundColor, for: layout.documentRange)
+
         guard enabled else { return }
         let text = view.string
         let ns = text as NSString
