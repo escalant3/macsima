@@ -9,23 +9,32 @@ public enum MathHTML {
     /// Space between the label column and the math: the editor's gutter
     /// spacing plus the text view's 5 pt line padding, so math lines up with input.
     public static let gap = 19
+    /// The editor's gutter spacing, the part of `gap` that zooms.
+    static let gutterSpacing = 14
+    /// Width of the label column, the editor's gutter width.
+    static let labelWidth = 52
 
     /// A page holding `mathML` with an optional output label on the left.
     /// The page reports `[width, height, token]` to the `size` message
     /// handler; the token tells reports from this page apart from late
     /// reports of the page it replaced.
-    public static func page(mathML: String, label: String?, token: Int = 0) -> String {
+    /// `scale` is the worksheet's zoom (1 = 100%): fonts, the label column
+    /// and the gap grow with it, except the text view's fixed 5 pt line
+    /// padding, which is part of the gap.
+    public static func page(mathML: String, label: String?, token: Int = 0, scale: CGFloat = 1) -> String {
+        func px(_ v: CGFloat) -> String { String(format: "%.2fpx", v * scale) }
+        let gap = String(format: "%.2fpx", CGFloat(gutterSpacing) * scale + CGFloat(Self.gap - gutterSpacing))
         // The label column is always there, so unlabelled math (questions) lines up too.
         let labelHTML = "<span class=\"lbl\">\(label.map { "(\(escape($0)))" } ?? "")</span>"
         return """
         <!doctype html><html><head><meta charset="utf-8"><style>
         :root { color-scheme: light dark; }
         html, body { margin: 0; padding: 0; background: transparent; }
-        body { font: 13px -apple-system, sans-serif; color: CanvasText; overflow-y: hidden; }
-        .row { display: inline-flex; align-items: center; gap: \(gap)px; padding: 3px 6px 3px 0; }
-        .lbl { font: 12px ui-monospace, Menlo, monospace; color: #8a8a8e; min-width: 52px;
+        body { font: \(px(13)) -apple-system, sans-serif; color: CanvasText; overflow-y: hidden; }
+        .row { display: inline-flex; align-items: center; gap: \(gap); padding: \(px(3)) \(px(6)) \(px(3)) 0; }
+        .lbl { font: \(px(12)) ui-monospace, Menlo, monospace; color: #8a8a8e; min-width: \(px(CGFloat(labelWidth)));
                text-align: right; flex: none; }
-        math { font-family: "STIX Two Math", math; font-size: \(mathSize)px; }
+        math { font-family: "STIX Two Math", math; font-size: \(px(CGFloat(mathSize))); }
         mtext { font-family: "STIX Two Text", serif; }
         </style></head><body><div class="row">\(labelHTML)<div class="m">\(mathML)</div></div>
         <script>

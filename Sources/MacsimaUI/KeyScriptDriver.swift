@@ -165,7 +165,7 @@ enum KeyScriptDriver {
         "right": (String(UnicodeScalar(NSRightArrowFunctionKey)!), 124),
     ]
     private static let keyCodes: [String: UInt16] = [
-        "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1, "f": 3, "g": 5, "e": 14, "/": 44,
+        "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "r": 15, "z": 6, ".": 47, "n": 45, "s": 1, "f": 3, "g": 5, "e": 14, "/": 44, "=": 24, "-": 27, "w": 13,
     ]
 
     /// The key window, or else the frontmost document window (the app may
@@ -251,6 +251,7 @@ enum KeyScriptDriver {
         }
         var info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]
+        info["zoom"] = controller.document.worksheet.zoom
         let find = controller.find
         info["find"] = ["visible": find.isVisible, "query": find.query, "status": find.status,
                         "current": find.current ?? -1, "count": find.matches.count] as [String: Any]

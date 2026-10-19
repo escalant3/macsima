@@ -57,6 +57,16 @@ struct WorksheetCommands: Commands {
             Button("Use Selection for Find") { controller?.find.useSelection() }
                 .keyboardShortcut("e", modifiers: .command)
         }
+        // Zoom, saved in the file as wxMaxima does. Cmd+0 inserts a code
+        // cell, so Actual Size has no shortcut.
+        CommandGroup(after: .toolbar) {
+            Divider()
+            Button("Zoom In") { controller?.zoomIn() }
+                .keyboardShortcut("+", modifiers: .command)
+            Button("Zoom Out") { controller?.zoomOut() }
+                .keyboardShortcut("-", modifiers: .command)
+            Button("Actual Size") { controller?.actualSize() }
+        }
         CommandMenu("Maxima") {
             Button("Interrupt") { controller?.interrupt() }
                 .keyboardShortcut(".", modifiers: .command)

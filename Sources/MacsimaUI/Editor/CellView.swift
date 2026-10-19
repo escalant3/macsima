@@ -4,11 +4,29 @@ import AppKit
 import SwiftUI
 import WorksheetKit
 
-/// Width of the label gutter, shared with the label column inside math images.
-let gutterWidth: CGFloat = 52
-let gutterSpacing: CGFloat = 14
-/// Where outputs start: past the gutter and the text view's 5 pt line padding.
-let outputIndent: CGFloat = gutterWidth + gutterSpacing + 5
+/// The worksheet's sizes at its zoom (`scale` 1 = 100%), shared with the
+/// math page (`MathHTML`): the label gutter, fonts, and where outputs start.
+struct WorksheetMetrics {
+    var scale: CGFloat
+
+    /// Width of the label gutter, shared with the label column inside math images.
+    var gutterWidth: CGFloat { 52 * scale }
+    var gutterSpacing: CGFloat { 14 * scale }
+    var gutterFontSize: CGFloat { 12 * scale }
+    /// The text view's line padding: fixed, it doesn't zoom.
+    static let linePadding: CGFloat = 5
+    /// Where outputs start: past the gutter and the text view's line padding.
+    var outputIndent: CGFloat { gutterWidth + gutterSpacing + Self.linePadding }
+    /// Between a label and its math or image, so they line up with the input.
+    var mathGap: CGFloat { gutterSpacing + Self.linePadding }
+    var outputFontSize: CGFloat { 13 * scale }
+    var answerFontSize: CGFloat { 14 * scale }
+}
+
+extension EnvironmentValues {
+    /// The worksheet's zoom as a factor (1 = 100%).
+    @Entry var worksheetScale: CGFloat = 1
+}
 
 /// One cell: its editor with the `(%iN)` gutter, then its outputs.
 struct CellView: View {
@@ -19,6 +37,8 @@ struct CellView: View {
     let focusRequest: Int
     let caretRequest: CaretRequest?
     let makeEditor: () -> CellTextView
+
+    @Environment(\.worksheetScale) private var scale
 
     var body: some View {
         switch cell.kind {
@@ -33,14 +53,15 @@ struct CellView: View {
     }
 
     private var editorCell: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .top, spacing: gutterSpacing) {
+        let metrics = WorksheetMetrics(scale: scale)
+        return VStack(alignment: .leading, spacing: 4 * scale) {
+            HStack(alignment: .top, spacing: metrics.gutterSpacing) {
                 Text(gutterLabel)
-                    .font(.system(size: Self.gutterFontSize, design: .monospaced))
+                    .font(.system(size: metrics.gutterFontSize, design: .monospaced))
                     .foregroundStyle(.secondary)
-                    .frame(width: gutterWidth, alignment: .trailing)
-                    .padding(.top, Self.gutterOffset(for: cell.kind))
-                CellEditor(text: cell.input, kind: cell.kind, accessibilityID: "cell-input-\(index)",
+                    .frame(width: metrics.gutterWidth, alignment: .trailing)
+                    .padding(.top, Self.gutterOffset(for: cell.kind, scale: scale))
+                CellEditor(text: cell.input, kind: cell.kind, scale: scale, accessibilityID: "cell-input-\(index)",
                            isFocused: isFocused, focusRequest: focusRequest,
                            caretRequest: caretRequest, cellID: cell.id, makeView: makeEditor)
             }
@@ -75,12 +96,10 @@ struct CellView: View {
         return cell.inputLabel.map { "(%i\($0))" } ?? "-->"
     }
 
-    static let gutterFontSize: CGFloat = 12
-
     /// Moves the gutter label onto the baseline of the editor's first line.
-    static func gutterOffset(for kind: CellKind) -> CGFloat {
-        let label = NSFont.monospacedSystemFont(ofSize: gutterFontSize, weight: .regular)
-        return CellTextView.inset.height + CellEditor.font(for: kind).ascender - label.ascender
+    static func gutterOffset(for kind: CellKind, scale: CGFloat) -> CGFloat {
+        let label = NSFont.monospacedSystemFont(ofSize: WorksheetMetrics(scale: scale).gutterFontSize, weight: .regular)
+        return CellTextView.inset.height + CellEditor.font(for: kind, scale: scale).ascender - label.ascender
     }
 }
 
@@ -88,12 +107,13 @@ struct CellView: View {
 struct PlaceholderRow: View {
     let text: String
     let systemImage: String
+    @Environment(\.worksheetScale) private var scale
 
     var body: some View {
         Label(text, systemImage: systemImage)
             .font(.callout)
             .foregroundStyle(.secondary)
-            .padding(.leading, outputIndent)
+            .padding(.leading, WorksheetMetrics(scale: scale).outputIndent)
             .padding(.vertical, 2)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

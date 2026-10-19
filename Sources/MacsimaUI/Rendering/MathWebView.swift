@@ -55,9 +55,9 @@ public final class MathWKWebView: WKWebView {
         }
     }
 
-    public func show(mathML: String, label: String?) {
+    public func show(mathML: String, label: String?, scale: CGFloat = 1) {
         pageToken += 1
-        loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken), baseURL: nil)
+        loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken, scale: scale), baseURL: nil)
     }
 
     private final class SizeHandler: NSObject, WKScriptMessageHandler {
@@ -81,21 +81,22 @@ public final class MathWKWebView: WKWebView {
 struct MathWebView: NSViewRepresentable {
     let mathML: String
     let label: String?
+    let scale: CGFloat
     @Binding var size: CGSize
 
     func makeNSView(context: Context) -> MathWKWebView {
         let view = MathWKWebView()
         view.onSize = { new in if new != size { size = new } }
-        view.show(mathML: mathML, label: label)
-        context.coordinator.shown = mathML + (label ?? "")
+        view.show(mathML: mathML, label: label, scale: scale)
+        context.coordinator.shown = "\(scale)|" + mathML + (label ?? "")
         return view
     }
 
     func updateNSView(_ view: MathWKWebView, context: Context) {
-        let key = mathML + (label ?? "")
+        let key = "\(scale)|" + mathML + (label ?? "")
         if context.coordinator.shown != key {
             context.coordinator.shown = key
-            view.show(mathML: mathML, label: label)
+            view.show(mathML: mathML, label: label, scale: scale)
         }
     }
 
@@ -107,6 +108,7 @@ struct MathWebView: NSViewRepresentable {
 public struct MathOutputView: View {
     let mathML: String
     let label: String?
+    @Environment(\.worksheetScale) private var scale
     @State private var size = CGSize(width: 10, height: 28)
 
     public init(mathML: String, label: String?) {
@@ -115,7 +117,7 @@ public struct MathOutputView: View {
     }
 
     public var body: some View {
-        MathWebView(mathML: mathML, label: label, size: $size)
+        MathWebView(mathML: mathML, label: label, scale: scale, size: $size)
             .frame(height: size.height)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -131,16 +133,19 @@ public struct ImageOutputView: View {
         self.label = label
     }
 
+    @Environment(\.worksheetScale) private var scale
+
     public var body: some View {
-        HStack(alignment: .center, spacing: CGFloat(MathHTML.gap)) {
+        let metrics = WorksheetMetrics(scale: scale)
+        HStack(alignment: .center, spacing: metrics.mathGap) {
             Text(label.map { "(\($0))" } ?? "")
-                .font(.system(size: 12, design: .monospaced))
+                .font(.system(size: metrics.gutterFontSize, design: .monospaced))
                 .foregroundStyle(Color(white: 0.54))
-                .frame(minWidth: 52, alignment: .trailing)
+                .frame(minWidth: metrics.gutterWidth, alignment: .trailing)
             Image(nsImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: min(image.size.width, 640))
+                .frame(maxWidth: min(image.size.width, 640) * scale)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

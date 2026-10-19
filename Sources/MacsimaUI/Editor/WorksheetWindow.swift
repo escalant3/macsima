@@ -74,6 +74,7 @@ struct WorksheetWindow: View {
                     .background(.bar)
             }
         }
+        .environment(\.worksheetScale, controller.scale)
         .toolbar { WorksheetToolbar(controller: controller) }
         .environment(controller)
         .task { await controller.start() }

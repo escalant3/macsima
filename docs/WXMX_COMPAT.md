@@ -33,7 +33,7 @@ feature.
 | Element / feature | Read | Write | Status | Avoid in wxMaxima |
 | --- | --- | --- | --- | --- |
 | `wxMaximaDocument version` | yes; a warning above 1.5 | `1.5` | full | |
-| `zoom` | kept in the model (not applied to the view) | yes, unchanged | partial | |
+| `zoom` | yes, applied to the view | yes, the current zoom (View › Zoom In and Out) | full | |
 | `activecell` | kept | written back unchanged (not updated from Macsima's focus) | partial | |
 | `variables_num`, `variables_N` (watch list) | kept | written back | full (kept) | |
 | Unknown document attributes | kept, warned | written back | full (kept) | |

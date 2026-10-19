@@ -341,6 +341,8 @@ struct CellEditor: NSViewRepresentable {
     /// The cell's input in the model, to catch changes made elsewhere.
     let text: String
     let kind: CellKind
+    /// The worksheet's zoom.
+    let scale: CGFloat
     let accessibilityID: String
     /// This cell is the controller's focused cell.
     let isFocused: Bool
@@ -364,8 +366,11 @@ struct CellEditor: NSViewRepresentable {
 
     private func update(_ view: CellTextView) {
         view.sync(text)
-        let font = Self.font(for: kind)
-        if view.font != font { view.font = font }
+        let font = Self.font(for: kind, scale: scale)
+        if view.font != font {
+            view.font = font
+            view.invalidateIntrinsicContentSize()
+        }
         view.highlightsSyntax = kind == .code
         view.setAccessibilityIdentifier(accessibilityID)
         // The view outlives this representable, so it remembers which
@@ -391,14 +396,14 @@ struct CellEditor: NSViewRepresentable {
         return CGSize(width: width, height: nsView.height(forWidth: width))
     }
 
-    static func font(for kind: CellKind) -> NSFont {
+    static func font(for kind: CellKind, scale: CGFloat = 1) -> NSFont {
         switch kind {
-        case .code: .monospacedSystemFont(ofSize: 14, weight: .regular)
-        case .title: .systemFont(ofSize: 26, weight: .bold)
-        case .section: .systemFont(ofSize: 21, weight: .semibold)
-        case .subsection: .systemFont(ofSize: 17, weight: .semibold)
-        case .subsubsection, .heading5, .heading6: .systemFont(ofSize: 15, weight: .semibold)
-        case .text, .image, .pageBreak, .raw: .systemFont(ofSize: 14)
+        case .code: .monospacedSystemFont(ofSize: 14 * scale, weight: .regular)
+        case .title: .systemFont(ofSize: 26 * scale, weight: .bold)
+        case .section: .systemFont(ofSize: 21 * scale, weight: .semibold)
+        case .subsection: .systemFont(ofSize: 17 * scale, weight: .semibold)
+        case .subsubsection, .heading5, .heading6: .systemFont(ofSize: 15 * scale, weight: .semibold)
+        case .text, .image, .pageBreak, .raw: .systemFont(ofSize: 14 * scale)
         }
     }
 }

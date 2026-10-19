@@ -1,0 +1,21 @@
+# Zoom (Phase 3, step 5): Cmd+= and Cmd+- in steps of 10%, Actual Size,
+# saved in the file. Run with a file:
+#   Tests/Fixtures/keyscripts/run.sh zoom-basics Tests/Fixtures/wxmx/macsima-written/09-pagebreak-empty.wxmx
+wait 3
+dump .build/keyscripts/zoom-1.json
+key = cmd
+key = cmd
+key = cmd
+key = cmd
+key = cmd
+wait 3
+shot .build/keyscripts/zoom-150.png
+dump .build/keyscripts/zoom-2.json
+key - cmd
+dump .build/keyscripts/zoom-3.json
+menu Actual Size
+key = cmd
+key s cmd
+wait 2
+dump .build/keyscripts/zoom-4.json
+quit

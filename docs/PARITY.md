@@ -33,7 +33,7 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 | Matrix brackets | `bracketParens`, `angledParens`, `straightParens`, `noneParens`, round by default | All of them | done | |
 | Dark mode | Configurable colours | Follows the system appearance: editor, syntax colours, bracket, find and error marks, the explanation marker, and the math images, which re-render when the appearance changes (the `appearance` key script, light and dark screenshots; Phase 3 step 5). Colours are not configurable | done | colour settings: later |
 | Line breaking of long outputs | Breaks long expressions over lines | No line breaking: a long output is one wide image that runs past the window's edge (no sideways scrolling yet) | missing | 3 |
-| Zoom | Saved in the file, applied | Kept and saved back, not applied | missing | 3 |
+| Zoom | Saved in the file, applied | View › Zoom In (Cmd+plus, Cmd+=) and Zoom Out (Cmd+-) in 10% steps, 10% to 3200% as in wxMaxima, and Actual Size. Editor, gutter, outputs, plots and math scale; math is rendered again at the new size, so it stays sharp. Read from and saved to the file (Phase 3 step 5). No 80/120/150% presets | done | |
 | Cursor position (`activecell`) | Saved and restored | Kept from the file, not updated | partial | 3 |
 | Real keystrokes | | XCUITest target (`Tests/UITests/`, Phase 3 step 1) types real keys: Shift+Return, Cmd+1, Cmd+Z, Cmd+Shift+Delete. The key-script driver still posts synthesized events for the longer scripts. | done | |
 | `.wxmx` timestamps | Local time | ZIPFoundation writes them two hours off here; harmless | partial | later |

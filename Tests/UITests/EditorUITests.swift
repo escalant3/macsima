@@ -129,4 +129,21 @@ final class EditorUITests: XCTestCase {
         sheet.buttons["Delete"].click()
         XCTAssertFalse(input.waitForExistence(timeout: 2), "Delete closes it")
     }
+
+    @MainActor
+    func testZoomWithCommandPlusAndMinus() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("x+1;")
+        let before = input.frame.height
+        app.typeKey("+", modifierFlags: .command)   // Shift+= on a US keyboard
+        app.typeKey("=", modifierFlags: .command)   // and without Shift
+        let zoomed = input.frame.height
+        XCTAssertGreaterThan(zoomed, before * 1.1, "two steps of 10%: the editor grows")
+        app.typeKey("-", modifierFlags: .command)
+        app.typeKey("-", modifierFlags: .command)
+        XCTAssertEqual(input.frame.height, before, accuracy: 1)
+    }
 }

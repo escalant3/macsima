@@ -40,12 +40,14 @@ public final class MathSnapshotRenderer {
         window.orderBack(nil)
     }
 
-    public func cached(mathML: String, label: String?, dark: Bool) -> Rendered? {
-        cache[Self.key(mathML, label, dark)]
+    public func cached(mathML: String, label: String?, dark: Bool, scale: CGFloat = 1) -> Rendered? {
+        cache[Self.key(mathML, label, dark, scale)]
     }
 
-    public func render(mathML: String, label: String?, dark: Bool) async -> Rendered? {
-        let key = Self.key(mathML, label, dark)
+    /// `scale` is the worksheet's zoom: the math is laid out again at that
+    /// size, so zoomed math stays sharp.
+    public func render(mathML: String, label: String?, dark: Bool, scale: CGFloat = 1) async -> Rendered? {
+        let key = Self.key(mathML, label, dark, scale)
         if let hit = cache[key] { return hit }
         while busy { await withCheckedContinuation { waiting.append($0) } }
         if let hit = cache[key] { wakeNext(); return hit }
@@ -61,7 +63,7 @@ public final class MathSnapshotRenderer {
                 latest = size
                 if !resumed { resumed = true; c.resume() }
             }
-            web.show(mathML: mathML, label: label)
+            web.show(mathML: mathML, label: label, scale: scale)
         }
         let size = CGSize(width: max(1, latest.width), height: max(1, latest.height))
         web.frame.size = size
@@ -78,8 +80,8 @@ public final class MathSnapshotRenderer {
         if !waiting.isEmpty { waiting.removeFirst().resume() }
     }
 
-    private static func key(_ mathML: String, _ label: String?, _ dark: Bool) -> String {
-        "\(dark ? "d" : "l")|\(label ?? "")|\(mathML)"
+    private static func key(_ mathML: String, _ label: String?, _ dark: Bool, _ scale: CGFloat) -> String {
+        "\(dark ? "d" : "l")|\(scale)|\(label ?? "")|\(mathML)"
     }
 }
 
@@ -88,6 +90,7 @@ public struct MathImageOutputView: View {
     let mathML: String
     let label: String?
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.worksheetScale) private var scale
     @State private var rendered: MathSnapshotRenderer.Rendered?
 
     public init(mathML: String, label: String?) {
@@ -105,11 +108,13 @@ public struct MathImageOutputView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .task(id: "\(scheme)|\(label ?? "")|\(mathML)") {
+        .task(id: "\(scheme)|\(scale)|\(label ?? "")|\(mathML)") {
             let dark = scheme == .dark
-            rendered = MathSnapshotRenderer.shared.cached(mathML: mathML, label: label, dark: dark)
-            if rendered == nil {
-                rendered = await MathSnapshotRenderer.shared.render(mathML: mathML, label: label, dark: dark)
+            // Keep showing the old image until the new one is ready.
+            if let hit = MathSnapshotRenderer.shared.cached(mathML: mathML, label: label, dark: dark, scale: scale) {
+                rendered = hit
+            } else if let new = await MathSnapshotRenderer.shared.render(mathML: mathML, label: label, dark: dark, scale: scale) {
+                rendered = new
             }
         }
     }

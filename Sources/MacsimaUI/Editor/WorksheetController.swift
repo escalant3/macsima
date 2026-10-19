@@ -186,6 +186,29 @@ public final class WorksheetController {
         focusedCell = cells.isEmpty ? nil : cells[min(index, cells.count - 1)].id
     }
 
+    // MARK: - Zoom
+
+    /// wxMaxima's limits and step (Configuration.h, MaximaCommandMenus.cpp):
+    /// 10% to 3200%, 10 points at a time. Saved in the file as `zoom`.
+    static let zoomRange = 10...3200
+    static let zoomStep = 10
+
+    /// The zoom as a factor (1 = 100%).
+    public var scale: CGFloat { CGFloat(document.worksheet.zoom) / 100 }
+
+    public func zoomIn() { setZoom(document.worksheet.zoom + Self.zoomStep) }
+    public func zoomOut() { setZoom(document.worksheet.zoom - Self.zoomStep) }
+    public func actualSize() { setZoom(100) }
+
+    /// Sets the zoom in percent, clamped; it goes into the file, so it marks
+    /// the worksheet edited (without an undo step).
+    public func setZoom(_ percent: Int) {
+        let zoom = min(max(percent, Self.zoomRange.lowerBound), Self.zoomRange.upperBound)
+        guard zoom != document.worksheet.zoom else { return }
+        document.worksheet.zoom = zoom
+        markEdited()
+    }
+
     /// Cmd+/ in the focused code cell.
     public func toggleComment() {
         guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return }

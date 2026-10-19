@@ -156,6 +156,13 @@ elif script == "close-saved":
 elif script == "appearance":
     c = dump("appearance", 1)["cells"]
     check(len(c[0]["outputs"]) == 1 and c[1]["outputs"][1].startswith("error"), "the outputs arrived")
+elif script == "zoom-basics":
+    import zipfile, re
+    z = lambda n: dump("zoom", n)["zoom"]
+    check(z(1) == 100 and z(2) == 150 and z(3) == 140, f"Cmd+= five times: 150%; Cmd+-: 140% ({z(1)}, {z(2)}, {z(3)})")
+    with zipfile.ZipFile(".build/keyscripts/zoom-basics.wxmx") as f:
+        doc = re.search(r"<wxMaximaDocument[^>]*>", f.read("content.xml").decode()).group(0)
+    check(z(4) == 110 and 'zoom="110"' in doc, f"Actual Size, Cmd+=, Cmd+S: the file says {doc}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

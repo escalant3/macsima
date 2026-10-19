@@ -10,6 +10,7 @@ import WXMLKit
 struct OutputView: View {
     let output: Output
     var cellID: UUID?
+    @Environment(\.worksheetScale) private var scale
 
     var body: some View {
         switch output {
@@ -32,7 +33,7 @@ struct OutputView: View {
                     .fixedSize(horizontal: true, vertical: false)
                 if let answer {
                     Text(answer)
-                        .font(.system(size: 14, design: .monospaced))
+                        .font(.system(size: WorksheetMetrics(scale: scale).answerFontSize, design: .monospaced))
                         .textSelection(.enabled)
                 } else if let cellID {
                     AnswerField(cellID: cellID)
@@ -51,12 +52,13 @@ struct MessageText: View {
     let isError: Bool
     @State private var showsExplanation = false
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.worksheetScale) private var scale
 
     var body: some View {
         let explanation = MessageExplanations.explanation(for: text)
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(text)
-                .font(.system(size: 13, design: .monospaced))
+                .font(.system(size: WorksheetMetrics(scale: scale).outputFontSize, design: .monospaced))
                 .foregroundStyle(isError ? Color.red : Color.primary)
                 .textSelection(.enabled)
                 .padding(.horizontal, explanation == nil ? 0 : 3)
@@ -81,7 +83,7 @@ struct MessageText: View {
                     .accessibilityIdentifier("explain-message")
             }
         }
-        .padding(.leading, outputIndent)
+        .padding(.leading, WorksheetMetrics(scale: scale).outputIndent)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -91,6 +93,7 @@ struct MessageText: View {
 struct MathOutputItem: View {
     let xml: String
     @State private var live = false
+    @Environment(\.worksheetScale) private var scale
 
     var body: some View {
         let out = TranslationCache.shared.translate(xml)
@@ -98,9 +101,9 @@ struct MathOutputItem: View {
             if out.mathML.isEmpty, let label = out.label {
                 // An empty result: just its label, like wxMaxima shows it.
                 Text("(\(label))")
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(.system(size: WorksheetMetrics(scale: scale).gutterFontSize, design: .monospaced))
                     .foregroundStyle(Color(white: 0.54))
-                    .frame(width: gutterWidth, alignment: .trailing)
+                    .frame(width: WorksheetMetrics(scale: scale).gutterWidth, alignment: .trailing)
             } else if out.mathML.isEmpty {
                 EmptyView()
             } else if live {
@@ -147,13 +150,14 @@ struct AnswerField: View {
     @Environment(WorksheetController.self) private var controller
     @State private var text = ""
     @FocusState private var focused: Bool
+    @Environment(\.worksheetScale) private var scale
 
     var body: some View {
         if controller.asking == cellID {
             TextField("Answer", text: $text)
                 .textFieldStyle(.roundedBorder)
-                .font(.system(size: 14, design: .monospaced))
-                .frame(maxWidth: 320)
+                .font(.system(size: WorksheetMetrics(scale: scale).answerFontSize, design: .monospaced))
+                .frame(maxWidth: 320 * scale)
                 .focused($focused)
                 .onSubmit { controller.answer(text, for: cellID) }
                 .onAppear { focused = true }
