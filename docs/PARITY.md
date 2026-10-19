@@ -35,12 +35,15 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18). The first tab
 | Line breaking of long outputs | Breaks long expressions over lines | No line breaking: a long output is one wide image that runs past the window's edge (no sideways scrolling yet) | missing | 3 |
 | Zoom | Saved in the file, applied | Kept and saved back, not applied | missing | 3 |
 | Cursor position (`activecell`) | Saved and restored | Kept from the file, not updated | partial | 3 |
-| Real keystrokes | | The editor is tested with key events synthesized inside the app. The physical Delete key for Cmd+Shift+Delete and real typing are unverified, because Terminal has no Accessibility permission here. | partial | 2 (check by hand) |
+| Real keystrokes | | You checked Cmd+Shift+Delete with the physical Delete key and the editor with a real keyboard (2026-10-19). Automated checks post synthesized key events to the app's own event queue. | done | |
 | `.wxmx` timestamps | Local time | ZIPFoundation writes them two hours off here; harmless | partial | later |
 | Answer layout | The answer follows the question on the same line | The answer is on its own line below the question (seen by opening 04-question in both apps) | partial | 3 |
 | Error marker | Marks an error line in yellow (seen on the first error of 03-errors; the cause is not yet traced in wxMaxima's source) | Error text in red, no marker | partial | 3 |
 | Input labels after opening a file | No `(%iN)` until the cell is evaluated again | Guesses `(%iN)` from the first output label; can be wrong after a syntax error. Should match wxMaxima | partial | 3 |
 | Syntax highlighting in code cells | Yes | none | missing | 3 |
+| Moving between cells with the arrow keys | Up and Down move the cursor through inputs and outputs, across cells | Only with the mouse | missing | 3 (likely needs `NSTextView` for the caret position) |
+| After Shift+Return | The cursor moves to the next cell, or to a new cell at the end | The same (a Phase 2 follow-up, 2026-10-19) | done | |
+| Starting the app | Opens an untitled worksheet | The same; untitled worksheets are saved later with Cmd+S (a Phase 2 follow-up, 2026-10-19) | done | |
 
 ## Math XML translator (WXMLKit)
 

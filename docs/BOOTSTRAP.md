@@ -315,7 +315,7 @@ What Phase 3 inherits:
 - **Editor.** No AppKit yet; cross-cell selection, search and autocomplete will likely need `NSTextView`.
 - **Math.** Outputs are images, so selection needs a click. Long outputs don't wrap.
 - **Kept but not shown.** Folding, hidden cells, text formatting, zoom, image cells and animations are preserved and listed.
-- **Real keystrokes.** Untested while Terminal lacks Accessibility. The editor is tested with key events synthesized inside the app.
+- **Testing the editor.** The key-script driver posts synthesized key events to the app's own event queue; it needs no Accessibility permission, and undo grouping behaves as with a keyboard. Real-keyboard checks by hand (the Delete key, typing) passed.
 
 ## Bootstrap kit
 

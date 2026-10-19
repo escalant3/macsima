@@ -35,7 +35,7 @@
   - extreme nesting is refused.
 - **Tests:**
   - 96 Swift Testing tests in 21 suites pass in about 11 s (`swift test`, "Test run with 96 tests").
-  - Three key scripts drive the real app through the editor, evaluation and save (`Tests/Fixtures/keyscripts/run.sh editor-basics|eval-basics|save-basics`). All pass.
+  - Five key scripts drive the real app through the editor, evaluation, save and Shift+Return's advance (`Tests/Fixtures/keyscripts/run.sh editor-basics|eval-basics|save-basics|advance-basics|advance-existing`). All pass.
 
 ## Screenshots
 
@@ -130,13 +130,22 @@ Never touching your wxMaxima settings:
 
 ## Still untested
 
-- **Real keystrokes.** Terminal is not trusted for Accessibility here, even after the restart (`AXIsProcessTrusted()` is false; System Events refuses keystrokes). So the editor was driven by key events synthesized inside the app, through `NSApp.sendEvent`.
-  - Unverified: whether the physical Delete key triggers Cmd+Shift+Delete. The shortcut works with the U+0008 character SwiftUI registers.
-  - Unverified: typing with a real keyboard in general.
+- **Real keystrokes from scripts.** Terminal is not trusted for Accessibility here (`AXIsProcessTrusted()` is false; System Events refuses keystrokes), so the scripts post synthesized key events to the app's own event queue. You checked the physical Delete key (Cmd+Shift+Delete) and typing by hand on 2026-10-19: they work.
 - **Closing a window with unsaved changes.** The window's shutdown path (`onDisappear`) was not driven by a test. Quitting was tested.
 - **Questions in batch mode.** `03-errors` and `04-question` in wxMaxima (see above).
 - **Interrupting** while a question waits, the debugger, `to_lisp()` in the window, SVG plots, animations, very large worksheets (more than 500 cells) in the editor, and dark mode beyond two snapshots.
 - **Files from older wxMaxima releases** other than the repository samples.
+
+## Follow-ups after the report (2026-10-19)
+
+From your first session with the app:
+1. **Moving on after Shift+Return.** As in wxMaxima, Shift+Return now moves the cursor to the next cell with an editor (skipping page breaks), or to a new code cell at the end, so you can keep typing (`8622e2d`). After answering a question, the focus returns to that cell.
+2. **No Open panel at launch.** The app now starts with an untitled worksheet, as wxMaxima does; save it later with Cmd+S (`216e98c`).
+3. **Arrow keys between cells.** Left for Phase 3 (in PARITY.md). It needs the caret position inside each editor, and outputs that can take focus.
+
+Two lessons from the checks, both in the driver (`26f1037`):
+- **Undo looked broken, but the driver was at fault.** The driver handed synthesized events to `sendEvent` directly, so AppKit never closed its automatic undo groups, and one Cmd+Z undid several edits. Events are now posted through the app's event queue, like real keystrokes, and undo behaves.
+- **A test run typed into your own worksheet.** The run restored your last session's window (`~/Desktop/macsima_test.wxmx`) and typed into it. Nothing was saved: the file kept its 08:50 timestamp and its content. Now the scripts launch with `-ApplePersistenceIgnoreState YES`, and the driver refuses to run when a document outside `.build/keyscripts` is open.
 
 ## What changes Phase 3
 
