@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+import AppKit
 import SwiftUI
 import WorksheetKit
 
@@ -15,8 +16,9 @@ struct CellView: View {
     /// The cell's position, for accessibility identifiers (`cell-input-N`).
     let index: Int
     @Binding var text: String
-    var focus: FocusState<UUID?>.Binding
     let isFocused: Bool
+    let focusRequest: Int
+    let onFocus: () -> Void
     let onEvaluate: () -> Void
 
     var body: some View {
@@ -33,27 +35,15 @@ struct CellView: View {
 
     private var editorCell: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // TextEditor reports no text baseline, so the gutter is top-aligned
-            // and nudged down to the editor's first line.
             HStack(alignment: .top, spacing: gutterSpacing) {
                 Text(gutterLabel)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(.system(size: Self.gutterFontSize, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .frame(width: gutterWidth, alignment: .trailing)
                     .padding(.top, Self.gutterOffset(for: cell.kind))
-                TextEditor(text: $text)
-                    .font(Self.font(for: cell.kind))
-                    .scrollDisabled(true)
-                    .scrollContentBackground(.hidden)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(minHeight: 20)
-                    .focused(focus, equals: cell.id)
-                    .accessibilityIdentifier("cell-input-\(index)")
-                    .onKeyPress(.return, phases: .down) { press in
-                        guard press.modifiers.contains(.shift) else { return .ignored }
-                        onEvaluate()
-                        return .handled
-                    }
+                CellEditor(text: $text, kind: cell.kind, accessibilityID: "cell-input-\(index)",
+                           isFocused: isFocused, focusRequest: focusRequest,
+                           onFocus: onFocus, onEvaluate: onEvaluate)
             }
             .padding(.vertical, 3)
             .padding(.trailing, 6)
@@ -80,18 +70,12 @@ struct CellView: View {
         return cell.inputLabel.map { "(%i\($0))" } ?? "-->"
     }
 
-    /// Moves the 12 pt gutter label onto the baseline of the editor's first line.
-    static func gutterOffset(for kind: CellKind) -> CGFloat { 2 }
+    static let gutterFontSize: CGFloat = 12
 
-    static func font(for kind: CellKind) -> Font {
-        switch kind {
-        case .code: .system(size: 14, design: .monospaced)
-        case .title: .system(size: 26, weight: .bold)
-        case .section: .system(size: 21, weight: .semibold)
-        case .subsection: .system(size: 17, weight: .semibold)
-        case .subsubsection, .heading5, .heading6: .system(size: 15, weight: .semibold)
-        case .text, .image, .pageBreak, .raw: .system(size: 14)
-        }
+    /// Moves the gutter label onto the baseline of the editor's first line.
+    static func gutterOffset(for kind: CellKind) -> CGFloat {
+        let label = NSFont.monospacedSystemFont(ofSize: gutterFontSize, weight: .regular)
+        return CellTextView.inset.height + CellEditor.font(for: kind).ascender - label.ascender
     }
 }
 

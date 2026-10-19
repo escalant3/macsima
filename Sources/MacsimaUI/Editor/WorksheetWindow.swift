@@ -9,7 +9,6 @@ struct WorksheetWindow: View {
     @ObservedObject var document: WorksheetDocument
     @State private var controller: WorksheetController
     @Environment(\.undoManager) private var undoManager
-    @FocusState private var focus: UUID?
 
     init(document: WorksheetDocument) {
         self.document = document
@@ -25,8 +24,9 @@ struct WorksheetWindow: View {
                             cell: cell,
                             index: index,
                             text: Binding(get: { cell.input }, set: { document.setInput(cell.id, $0) }),
-                            focus: $focus,
-                            isFocused: focus == cell.id,
+                            isFocused: controller.focusedCell == cell.id,
+                            focusRequest: controller.focusRequest,
+                            onFocus: { controller.noteFocus(cell.id) },
                             onEvaluate: { controller.evaluateAndAdvance(cell.id) }
                         )
                         .id(cell.id)
@@ -35,9 +35,8 @@ struct WorksheetWindow: View {
                 .padding(.vertical, 16)
                 .padding(.horizontal, 12)
             }
-            .onChange(of: controller.focusedCell) { _, id in
-                if focus != id { focus = id }
-                if let id { withAnimation { proxy.scrollTo(id) } }
+            .onChange(of: controller.focusRequest) {
+                if let id = controller.focusedCell { withAnimation { proxy.scrollTo(id) } }
             }
         }
         .frame(minWidth: 560, minHeight: 360)
@@ -70,12 +69,6 @@ struct WorksheetWindow: View {
         .task { await controller.start() }
         .onDisappear { Task { await controller.shutdown() } }
         .focusedSceneValue(controller)
-        .onChange(of: focus) { _, id in
-            if let id {
-                controller.focusedCell = id
-                controller.becameKey()
-            }
-        }
         .onAppear {
             controller.becameKey()
             controller.undoManager = undoManager
@@ -84,7 +77,7 @@ struct WorksheetWindow: View {
         .onChange(of: undoManager) { _, new in controller.undoManager = new }
         .onChange(of: controller.asking) { _, asking in
             // The answer field had the focus; give it back to the current cell.
-            if asking == nil { focus = controller.focusedCell }
+            if asking == nil { controller.requestFocus() }
         }
         .onChange(of: document.worksheet.cells.map(\.id)) { old, new in
             // The focused cell went away (undo, delete): focus its neighbour.

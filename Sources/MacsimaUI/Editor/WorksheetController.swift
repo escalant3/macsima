@@ -13,7 +13,15 @@ import WXMLKit
 @Observable
 public final class WorksheetController {
     public let document: WorksheetDocument
-    public var focusedCell: UUID?
+    /// The cell with the keyboard focus. Setting it to another cell moves
+    /// the focus there (see `focusRequest`).
+    public var focusedCell: UUID? {
+        didSet { if focusedCell != oldValue, !notingFocus { focusRequest &+= 1 } }
+    }
+    @ObservationIgnored private var notingFocus = false
+    /// Bumped by every request to move the focus; an editor takes the focus
+    /// when it sees a new value and its cell is `focusedCell`.
+    public private(set) var focusRequest = 0
     public var undoManager: UndoManager?
     /// Marks the document edited. Evaluation output changes the document
     /// without the undo manager, which is all SwiftUI watches; the window
@@ -65,6 +73,18 @@ public final class WorksheetController {
     static var all: [WorksheetController] { live.compactMap(\.controller) }
 
     // MARK: - Cells
+
+    /// Gives the focus back to `focusedCell` (after the answer field had it).
+    public func requestFocus() { focusRequest &+= 1 }
+
+    /// An editor took the focus by itself (a click, Tab): record it without
+    /// a focus request, so the worksheet doesn't scroll.
+    func noteFocus(_ id: UUID) {
+        notingFocus = true
+        focusedCell = id
+        notingFocus = false
+        becameKey()
+    }
 
     public func insertCell(_ kind: CellKind) {
         let id = document.insertCell(kind, after: focusedCell ?? document.worksheet.cells.last?.id,
