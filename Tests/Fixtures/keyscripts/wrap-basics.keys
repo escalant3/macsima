@@ -1,0 +1,26 @@
+# Long outputs break into lines at the window's width (Phase 3, step 6),
+# and again when the window is resized. A matrix can't break: it scrolls.
+wait 3
+resize 760 900
+type expand((a+b+c)^5);
+key return shift
+wait 2
+type makelist(i^2,i,1,40);
+key return shift
+wait 2
+type sin(expand((x+1)^12));
+key return shift
+wait 2
+type expand((x+1)^14)/expand((x-1)^9);
+key return shift
+wait 2
+type matrix(makelist(i,i,1,30));
+key return shift
+wait 3
+shot .build/keyscripts/wrap-760.png
+dump .build/keyscripts/wrap-1.json
+resize 1100 900
+wait 3
+shot .build/keyscripts/wrap-1100.png
+dump .build/keyscripts/wrap-2.json
+quit

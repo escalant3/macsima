@@ -44,6 +44,20 @@ elif script == "eval-basics":
     check([c["label"] for c in d4["cells"]][:4] == [1, 2, 3, 4] and d4["cells"][4]["label"] == -1,
           "after Restart, Cmd+R relabels from 1 in order (and stops at the question)")
     check(d4["state"] == "question" and d4["status"] == "", "evaluation stops at the question; no status after a restart")
+elif script == "wrap-basics":
+    def renders(n, label):
+        return [r for r in dump("wrap", n)["renders"] if r["label"] == label]
+    d1 = dump("wrap", 1)
+    check(d1["windowWidth"] == 760, "the window is 760 points wide")
+    narrow = {l: renders(1, l)[-1] for l in ["%o1", "%o2", "%o3", "%o4"] if renders(1, l)}
+    check(len(narrow) == 4 and all(0 < r["wrap"] < 760 and r["width"] <= r["wrap"] for r in narrow.values()),
+          "the four long outputs are broken at the output column's width and fit in it")
+    check(all(r["height"] > 45 for r in narrow.values()), "each takes more than one line (one line is about 28 points)")
+    matrix = renders(1, "%o5")
+    check(len(matrix) > 0 and matrix[-1]["width"] > matrix[-1]["wrap"] > 0, "the wide matrix stays on one line (it scrolls)")
+    wide = renders(2, "%o1")
+    check(dump("wrap", 2)["windowWidth"] == 1100 and len(wide) > 0 and wide[-1]["wrap"] > narrow["%o1"]["wrap"]
+          and wide[-1]["height"] < narrow["%o1"]["height"], "after widening the window, %o1 is broken again into fewer lines")
 elif script == "save-basics":
     import zipfile, re
     with zipfile.ZipFile("Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx") as z:

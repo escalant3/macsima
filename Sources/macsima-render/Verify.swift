@@ -38,6 +38,70 @@ enum Verify {
             print("\(ok ? "ok  " : "BAD ") #\(i) shared \(Int(got.width))x\(Int(got.height)) fresh \(Int(want.width))x\(Int(want.height)) pixels differing \(String(format: "%.2f%%", diff * 100))")
         }
         print(failures == 0 ? "PASS" : "FAIL: \(failures) of \(outs.count) images do not match their math")
+        let wrapFailures = await lineBreaks(window: window)
+        print(wrapFailures == 0 ? "PASS line breaks" : "FAIL: \(wrapFailures) line-break checks")
+    }
+
+    /// The long outputs (fixture 33 and the expansion in 31), laid out at
+    /// several widths: math wider than its row breaks into lines that fit,
+    /// keeping every symbol in order. The matrix can't break and must not.
+    static func lineBreaks(window: NSWindow) async -> Int {
+        let outs = (chunks("33-long-outputs") + [chunks("31-display-forms")[45]]).map(MathMLTranslator.translate)
+        var failures = 0
+        for (i, out) in outs.enumerated() {
+            for width in [480.0, 700, 1000] {
+                let web = MathWKWebView()
+                web.frame = NSRect(x: 0, y: 0, width: width + 40, height: 300)
+                window.contentView?.addSubview(web)
+                var latest = CGSize.zero
+                await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+                    var resumed = false
+                    web.sizeObserver = { size in
+                        latest = size
+                        if !resumed { resumed = true; c.resume() }
+                    }
+                    web.show(mathML: out.mathML, label: out.label, wrap: .width(width))
+                }
+                let report = try? await web.evaluateJavaScript("lineBreakReport()") as? [Any]
+                web.removeFromSuperview()
+                let lines = report?[0] as? Int ?? 0
+                let kept = report?[1] as? String ?? "", given = report?[2] as? String ?? "?"
+                let natural = web.naturalWidth
+                let isMatrix = out.mathML.contains("<mtable>")
+                var problems: [String] = []
+                if natural > width {
+                    if isMatrix {
+                        if lines > 1 { problems.append("a matrix broke") }
+                    } else {
+                        if latest.width > width { problems.append("wider than its row") }
+                        if lines < 2 { problems.append("not broken") }
+                    }
+                } else if lines > 1 {
+                    problems.append("broken though it fits")
+                }
+                if lines > 1 && kept != given { problems.append("text changed") }
+                if !problems.isEmpty { failures += 1 }
+                print("\(problems.isEmpty ? "ok  " : "BAD ") long #\(i) at \(Int(width)): \(lines) line(s), \(Int(latest.width))x\(Int(latest.height)), one line \(Int(natural))"
+                      + (problems.isEmpty ? "" : " — " + problems.joined(separator: ", ")))
+            }
+        }
+        // A live view breaks at its own width, and again when resized.
+        let web = MathWKWebView()
+        web.frame = NSRect(x: 0, y: 0, width: 700, height: 300)
+        window.contentView?.addSubview(web)
+        defer { web.removeFromSuperview() }
+        var sizes: [CGSize] = []
+        web.sizeObserver = { sizes.append($0) }
+        web.show(mathML: outs[0].mathML, label: outs[0].label, wrap: .page)
+        for _ in 0..<50 where sizes.isEmpty { try? await Task.sleep(for: .milliseconds(100)) }
+        let narrow = sizes.last ?? .zero
+        web.frame.size.width = 1000
+        for _ in 0..<50 where sizes.last == narrow { try? await Task.sleep(for: .milliseconds(100)) }
+        let wide = sizes.last ?? .zero
+        let liveOK = narrow.width > 0 && narrow.width <= 700 && wide.width > 700 && wide.width <= 1000 && wide.height < narrow.height
+        if !liveOK { failures += 1 }
+        print("\(liveOK ? "ok  " : "BAD ") live view: \(Int(narrow.width))x\(Int(narrow.height)) at 700, \(Int(wide.width))x\(Int(wide.height)) at 1000")
+        return failures
     }
 
     /// Fraction of pixels whose alpha differs noticeably (1 when sizes differ).

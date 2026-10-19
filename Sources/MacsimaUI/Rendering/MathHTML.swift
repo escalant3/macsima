@@ -2,6 +2,24 @@
 
 import Foundation
 
+/// How a math page breaks math wider than its row into lines.
+public enum MathWrap: Hashable, Sendable {
+    /// Never: the math stays on one line however wide.
+    case none
+    /// To a row this many points wide, label column included.
+    case width(CGFloat)
+    /// To the page's own width, again whenever it changes (live views).
+    case page
+
+    var script: String {
+        switch self {
+        case .none: "0"
+        case .width(let w): String(format: "%.1f", w)
+        case .page: "-1"
+        }
+    }
+}
+
 /// The HTML page one math output is shown in.
 public enum MathHTML {
     /// Font size of the math in CSS pixels.
@@ -15,13 +33,15 @@ public enum MathHTML {
     static let labelWidth = 52
 
     /// A page holding `mathML` with an optional output label on the left.
-    /// The page reports `[width, height, token]` to the `size` message
-    /// handler; the token tells reports from this page apart from late
-    /// reports of the page it replaced.
+    /// The page reports `[width, height, token, width on one line]` to the
+    /// `size` message handler; the token tells reports from this page apart
+    /// from late reports of the page it replaced.
     /// `scale` is the worksheet's zoom (1 = 100%): fonts, the label column
     /// and the gap grow with it, except the text view's fixed 5 pt line
-    /// padding, which is part of the gap.
-    public static func page(mathML: String, label: String?, token: Int = 0, scale: CGFloat = 1) -> String {
+    /// padding, which is part of the gap. `wrap` says where long math
+    /// breaks into lines (MathLineBreaking).
+    public static func page(mathML: String, label: String?, token: Int = 0, scale: CGFloat = 1,
+                            wrap: MathWrap = .none) -> String {
         func px(_ v: CGFloat) -> String { String(format: "%.2fpx", v * scale) }
         let gap = String(format: "%.2fpx", CGFloat(gutterSpacing) * scale + CGFloat(Self.gap - gutterSpacing))
         // The label column is always there, so unlabelled math (questions) lines up too.
@@ -36,15 +56,27 @@ public enum MathHTML {
                text-align: right; flex: none; }
         math { font-family: "STIX Two Math", math; font-size: \(px(CGFloat(mathSize))); }
         mtext { font-family: "STIX Two Text", serif; }
+        .row.wrapped { align-items: baseline; }
+        .m.wrapped { display: flex; flex-wrap: wrap; align-items: baseline; row-gap: \(px(7)); }
+        .w { display: inline-flex; align-items: baseline; flex: none; }
         </style></head><body><div class="row">\(labelHTML)<div class="m">\(mathML)</div></div>
         <script>
+        \(MathLineBreaking.script)
+        const wrap = \(wrap.script);
+        let ready = false, laidOutFor = null, natural = 0;
         function report() {
-          const r = document.querySelector('.row').getBoundingClientRect();
-          window.webkit.messageHandlers.size.postMessage([Math.ceil(r.width), Math.ceil(r.height), \(token)]);
+          if (!ready) return;
+          const width = wrap < 0 ? document.documentElement.clientWidth : wrap;
+          if (width !== laidOutFor) { natural = layoutMath(width); laidOutFor = width; }
+          const [w, h] = measureMath();
+          window.webkit.messageHandlers.size.postMessage([w, h, \(token), natural]);
         }
-        // Report once painted (two frames after fonts are ready), then on every resize.
-        document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(report)));
-        new ResizeObserver(report).observe(document.querySelector('.row'));
+        // Lay out and report once painted (two frames after fonts are ready),
+        // then on every resize.
+        document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(() => { ready = true; report(); })));
+        const observer = new ResizeObserver(report);
+        observer.observe(document.querySelector('.row'));
+        if (wrap < 0) observer.observe(document.documentElement);
         </script></body></html>
         """
     }

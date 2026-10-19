@@ -1,0 +1,17 @@
+<:lisp-quiet wxMathML.lisp, 87652 bytes>
+:lisp-quiet (setf $gnuplot_command "/opt/homebrew/bin/gnuplot")
+:lisp-quiet (when (fboundp 'wx-open-interrupt-channel) (wx-open-interrupt-channel "127.0.0.1" 61541 "PHASE0-TEST-TOKEN"))
+:lisp-quiet (ignore-errors (setf (symbol-value '*lisp-quiet-suppressed-prompt*) "<PROMPT>(%i1)</PROMPT>"))
+:lisp-quiet (setf *prompt-suffix* "</PROMPT>") (setf *prompt-prefix* "<PROMPT>") (setf $in_netmath nil) (setf $show_openplot t) 
+expand((a+b+c)^6);
+makelist(i^2,i,1,60);
+expand((x+1)^20)/expand((x-1)^12);
+solve(x^3+a*x+b=0,x);
+'integrate(expand((x+y)^9)*sin(x),x);
+sin(expand((x+1)^15));
+taylor(sin(x)*exp(x),x,0,18);
+matrix(makelist(i,i,1,30),makelist(i^2,i,1,30));
+expand((x+y)^8)=expand((x-y)^8);
+f(x):=block([a,b,c],a:x^2+3*x+1,b:a^2-2*a+7,c:b^3+a*b+x,return(c+a+b+x^5+x^7+x^9));
+product(x+k,k,1,25);
+expand((1+sqrt(2)*x)^14);

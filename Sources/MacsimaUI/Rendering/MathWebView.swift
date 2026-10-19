@@ -21,6 +21,9 @@ public final class MathWKWebView: WKWebView {
     /// Number of web views that have reported a size at least once.
     @MainActor public static var sizedCount = 0
     private var hasSized = false
+    /// The width the math of the last report takes on one line, before any
+    /// line breaking.
+    public private(set) var naturalWidth: CGFloat = 0
     /// Token of the page loaded last; size reports with another token are stale.
     private var pageToken = 0
     private var handler: SizeHandler?
@@ -55,21 +58,23 @@ public final class MathWKWebView: WKWebView {
         }
     }
 
-    public func show(mathML: String, label: String?, scale: CGFloat = 1) {
+    public func show(mathML: String, label: String?, scale: CGFloat = 1, wrap: MathWrap = .none) {
         pageToken += 1
-        loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken, scale: scale), baseURL: nil)
+        loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken, scale: scale, wrap: wrap),
+                       baseURL: nil)
     }
 
     private final class SizeHandler: NSObject, WKScriptMessageHandler {
         weak var view: MathWKWebView?
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            guard let values = message.body as? [NSNumber], values.count == 3 else { return }
+            guard let values = message.body as? [NSNumber], values.count == 4 else { return }
             let size = CGSize(width: values[0].doubleValue, height: values[1].doubleValue)
             MainActor.assumeIsolated {
                 // A page that was replaced can still report (for example when the
                 // view is resized for the next render); ignore it.
                 guard let view, values[2].intValue == view.pageToken else { return }
                 if !view.hasSized { view.hasSized = true; MathWKWebView.sizedCount += 1 }
+                view.naturalWidth = values[3].doubleValue
                 view.onSize?(size)
                 view.sizeObserver?(size)
             }
@@ -82,12 +87,13 @@ struct MathWebView: NSViewRepresentable {
     let mathML: String
     let label: String?
     let scale: CGFloat
+    let wrap: MathWrap
     @Binding var size: CGSize
 
     func makeNSView(context: Context) -> MathWKWebView {
         let view = MathWKWebView()
         view.onSize = { new in if new != size { size = new } }
-        view.show(mathML: mathML, label: label, scale: scale)
+        view.show(mathML: mathML, label: label, scale: scale, wrap: wrap)
         context.coordinator.shown = "\(scale)|" + mathML + (label ?? "")
         return view
     }
@@ -96,7 +102,7 @@ struct MathWebView: NSViewRepresentable {
         let key = "\(scale)|" + mathML + (label ?? "")
         if context.coordinator.shown != key {
             context.coordinator.shown = key
-            view.show(mathML: mathML, label: label, scale: scale)
+            view.show(mathML: mathML, label: label, scale: scale, wrap: wrap)
         }
     }
 
@@ -104,20 +110,24 @@ struct MathWebView: NSViewRepresentable {
     final class Coordinator { var shown = "" }
 }
 
-/// One math output: a web view sized to its content.
+/// One math output: a web view sized to its content, breaking long math
+/// into lines at its own width.
 public struct MathOutputView: View {
     let mathML: String
     let label: String?
+    /// False keeps the math on one line (a question's prompt).
+    let wraps: Bool
     @Environment(\.worksheetScale) private var scale
     @State private var size = CGSize(width: 10, height: 28)
 
-    public init(mathML: String, label: String?) {
+    public init(mathML: String, label: String?, wraps: Bool = true) {
         self.mathML = mathML
         self.label = label
+        self.wraps = wraps
     }
 
     public var body: some View {
-        MathWebView(mathML: mathML, label: label, scale: scale, size: $size)
+        MathWebView(mathML: mathML, label: label, scale: scale, wrap: wraps ? .page : .none, size: $size)
             .frame(height: size.height)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -29,7 +29,7 @@ struct OutputView: View {
         case .question(let prompt, let answer):
             // The answer follows the question on its line, as in wxMaxima.
             HStack(alignment: .center, spacing: 8) {
-                MathOutputItem(xml: prompt)
+                MathOutputItem(xml: prompt, wraps: false)
                     .fixedSize(horizontal: true, vertical: false)
                 if let answer {
                     Text(answer)
@@ -92,6 +92,8 @@ struct MessageText: View {
 /// in a live web view so the math can be selected.
 struct MathOutputItem: View {
     let xml: String
+    /// False keeps the math on one line.
+    var wraps = true
     @State private var live = false
     @Environment(\.worksheetScale) private var scale
 
@@ -107,9 +109,9 @@ struct MathOutputItem: View {
             } else if out.mathML.isEmpty {
                 EmptyView()
             } else if live {
-                MathOutputView(mathML: out.mathML, label: out.label)
+                MathOutputView(mathML: out.mathML, label: out.label, wraps: wraps)
             } else {
-                MathImageOutputView(mathML: out.mathML, label: out.label)
+                MathImageOutputView(mathML: out.mathML, label: out.label, wraps: wraps)
             }
         }
         .contentShape(Rectangle())

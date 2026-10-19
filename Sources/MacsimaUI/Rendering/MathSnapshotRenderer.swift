@@ -19,10 +19,15 @@ public final class MathSnapshotRenderer {
     private let window: NSWindow
     private let web: MathWKWebView
     private var cache: [String: Rendered] = [:]
+    /// The width each math takes on one line, keyed like `cache` without the
+    /// wrap width: math narrower than a row needs no render of its own per width.
+    private var naturalWidths: [String: CGFloat] = [:]
     private var busy = false
     private var waiting: [CheckedContinuation<Void, Never>] = []
     /// Renders done since launch (measurements).
     public private(set) var renderCount = 0
+    /// The latest renders, for checks: label, width broken at (nil: none), size.
+    public private(set) var recent: [(label: String?, wrap: CGFloat?, size: CGSize)] = []
 
     private init() {
         // Kept on screen but fully transparent and behind everything: WebKit
@@ -40,22 +45,30 @@ public final class MathSnapshotRenderer {
         window.orderBack(nil)
     }
 
-    public func cached(mathML: String, label: String?, dark: Bool, scale: CGFloat = 1) -> Rendered? {
-        cache[Self.key(mathML, label, dark, scale)]
+    public func cached(mathML: String, label: String?, dark: Bool, scale: CGFloat = 1, width: CGFloat? = nil) -> Rendered? {
+        cache[Self.key(mathML, label, dark, scale, effectiveWidth(width, mathML, label, dark, scale))]
     }
 
     /// `scale` is the worksheet's zoom: the math is laid out again at that
-    /// size, so zoomed math stays sharp.
-    public func render(mathML: String, label: String?, dark: Bool, scale: CGFloat = 1) async -> Rendered? {
-        let key = Self.key(mathML, label, dark, scale)
+    /// size, so zoomed math stays sharp. Math wider than `width` (points,
+    /// label column included) is broken into lines; nil never breaks.
+    public func render(mathML: String, label: String?, dark: Bool, scale: CGFloat = 1,
+                       width: CGFloat? = nil) async -> Rendered? {
+        var wrap = effectiveWidth(width, mathML, label, dark, scale)
+        var key = Self.key(mathML, label, dark, scale, wrap)
         if let hit = cache[key] { return hit }
         while busy { await withCheckedContinuation { waiting.append($0) } }
+        // Another render may have found the math's width meanwhile.
+        wrap = effectiveWidth(width, mathML, label, dark, scale)
+        key = Self.key(mathML, label, dark, scale, wrap)
         if let hit = cache[key] { wakeNext(); return hit }
         busy = true
         defer { busy = false; wakeNext() }
 
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
-        web.frame.size = CGSize(width: 1200, height: 400)
+        let frameWidth = max(1200, (wrap ?? 0) + 40)
+        window.setContentSize(CGSize(width: frameWidth, height: 400))
+        web.frame.size = CGSize(width: frameWidth, height: 400)
         var latest = CGSize.zero
         await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
             var resumed = false
@@ -63,8 +76,10 @@ public final class MathSnapshotRenderer {
                 latest = size
                 if !resumed { resumed = true; c.resume() }
             }
-            web.show(mathML: mathML, label: label, scale: scale)
+            web.show(mathML: mathML, label: label, scale: scale, wrap: wrap.map { .width($0) } ?? .none)
         }
+        let natural = web.naturalWidth
+        naturalWidths[Self.key(mathML, label, dark, scale, nil)] = natural
         let size = CGSize(width: max(1, latest.width), height: max(1, latest.height))
         web.frame.size = size
         let config = WKSnapshotConfiguration()
@@ -72,50 +87,89 @@ public final class MathSnapshotRenderer {
         guard let image = try? await web.takeSnapshot(configuration: config) else { return nil }
         let rendered = Rendered(image: image, size: size)
         cache[key] = rendered
+        // Math that fitted is the same picture at any width.
+        if let wrap, natural <= wrap { cache[Self.key(mathML, label, dark, scale, nil)] = rendered }
         renderCount += 1
+        recent.append((label, wrap, size))
+        if recent.count > 100 { recent.removeFirst() }
         return rendered
+    }
+
+    /// The width to break at: nil when the math is known to fit.
+    private func effectiveWidth(_ width: CGFloat?, _ mathML: String, _ label: String?, _ dark: Bool,
+                                _ scale: CGFloat) -> CGFloat? {
+        guard let width else { return nil }
+        if let natural = naturalWidths[Self.key(mathML, label, dark, scale, nil)], natural <= width.rounded(.down) {
+            return nil
+        }
+        return width.rounded(.down)
     }
 
     private func wakeNext() {
         if !waiting.isEmpty { waiting.removeFirst().resume() }
     }
 
-    private static func key(_ mathML: String, _ label: String?, _ dark: Bool, _ scale: CGFloat) -> String {
-        "\(dark ? "d" : "l")|\(scale)|\(label ?? "")|\(mathML)"
+    private static func key(_ mathML: String, _ label: String?, _ dark: Bool, _ scale: CGFloat,
+                            _ width: CGFloat?) -> String {
+        "\(dark ? "d" : "l")|\(scale)|\(width.map { "\(Int($0))" } ?? "-")|\(label ?? "")|\(mathML)"
     }
 }
 
-/// One math output shown as an image from `MathSnapshotRenderer`.
+/// One math output shown as an image from `MathSnapshotRenderer`, broken
+/// into lines to fit the width it gets. Math that can't break (a wide
+/// matrix) scrolls sideways.
 public struct MathImageOutputView: View {
     let mathML: String
     let label: String?
+    /// False keeps the math on one line (a question's prompt, sized to fit).
+    let wraps: Bool
     @Environment(\.colorScheme) private var scheme
     @Environment(\.worksheetScale) private var scale
     @State private var rendered: MathSnapshotRenderer.Rendered?
+    @State private var width: CGFloat = 0
 
-    public init(mathML: String, label: String?) {
+    public init(mathML: String, label: String?, wraps: Bool = true) {
         self.mathML = mathML
         self.label = label
+        self.wraps = wraps
     }
 
     public var body: some View {
         Group {
-            if let rendered {
-                Image(nsImage: rendered.image)
-                    .frame(width: rendered.size.width, height: rendered.size.height)
+            if let rendered, wraps, rendered.size.width > width + 1, width > 0 {
+                ScrollView(.horizontal) { image(rendered) }
+                    .scrollIndicators(.automatic)
+            } else if let rendered {
+                image(rendered)
             } else {
                 Color.clear.frame(height: 28)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .task(id: "\(scheme)|\(scale)|\(label ?? "")|\(mathML)") {
+        .onGeometryChange(for: CGFloat.self) { $0.size.width.rounded(.down) } action: { width = $0 }
+        .task(id: "\(scheme)|\(scale)|\(wraps ? width : -1)|\(label ?? "")|\(mathML)") {
+            guard width > 0 || !wraps else { return }
+            let width: CGFloat? = wraps ? width : nil
             let dark = scheme == .dark
+            let renderer = MathSnapshotRenderer.shared
             // Keep showing the old image until the new one is ready.
-            if let hit = MathSnapshotRenderer.shared.cached(mathML: mathML, label: label, dark: dark, scale: scale) {
+            if let hit = renderer.cached(mathML: mathML, label: label, dark: dark, scale: scale, width: width) {
                 rendered = hit
-            } else if let new = await MathSnapshotRenderer.shared.render(mathML: mathML, label: label, dark: dark, scale: scale) {
+                return
+            }
+            // While the window is being resized, wait for the width to settle.
+            if rendered != nil {
+                try? await Task.sleep(for: .milliseconds(150))
+                if Task.isCancelled { return }
+            }
+            if let new = await renderer.render(mathML: mathML, label: label, dark: dark, scale: scale, width: width) {
                 rendered = new
             }
         }
+    }
+
+    private func image(_ rendered: MathSnapshotRenderer.Rendered) -> some View {
+        Image(nsImage: rendered.image)
+            .frame(width: rendered.size.width, height: rendered.size.height)
     }
 }

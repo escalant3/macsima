@@ -58,10 +58,33 @@ enum Snapshots {
         print("wrote snapshots to \(dir.path)")
     }
 
-    static func write(_ out: MathOutput, to file: URL, window: NSWindow, dark: Bool) async {
+    /// Long outputs (fixture 33 and the expansion in 31) on one line, then
+    /// broken into lines for a row `width` points wide (Phase 3, step 6).
+    static func lineBreaks(to dir: URL, width: CGFloat) async {
+        let window = NSWindow(contentRect: NSRect(x: 80, y: 80, width: 1400, height: 400),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.title = "macsima-render wrap"
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        let outs = (chunks("33-long-outputs") + [chunks("31-display-forms")[45]]).map(MathMLTranslator.translate)
+        for (i, out) in outs.enumerated() {
+            let name = String(format: "long-%02d", i + 1)
+            await write(out, to: dir.appending(path: "\(name)-one-line.png"), window: window, dark: false)
+            await write(out, to: dir.appending(path: "\(name)-\(Int(width)).png"), window: window, dark: false,
+                        wrap: .width(width))
+        }
+        print("wrote line-break snapshots to \(dir.path)")
+    }
+
+    static func write(_ out: MathOutput, to file: URL, window: NSWindow, dark: Bool, wrap: MathWrap = .none) async {
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         let web = MathWKWebView()
-        web.frame = NSRect(x: 0, y: 0, width: 980, height: 300)
+        var frameWidth: CGFloat = 980
+        if case .width(let w) = wrap {
+            frameWidth = w + 40
+            window.setContentSize(CGSize(width: w + 60, height: 400))
+        }
+        web.frame = NSRect(x: 0, y: 0, width: frameWidth, height: 300)
         window.contentView?.addSubview(web)
         defer { web.removeFromSuperview() }
         var latest = CGSize.zero
@@ -71,7 +94,7 @@ enum Snapshots {
                 latest = size
                 if !resumed { resumed = true; c.resume() }
             }
-            web.show(mathML: out.mathML, label: out.label)
+            web.show(mathML: out.mathML, label: out.label, wrap: wrap)
         }
         try? await Task.sleep(for: .milliseconds(300))   // fonts settle, later size reports arrive
         let size = CGSize(width: latest.width + 8, height: latest.height + 8)

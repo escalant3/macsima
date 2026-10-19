@@ -166,6 +166,7 @@ Phase 2 took B, but not with a web view per output:
 - **Process cost.** WebKit starts a content process for each web view: 38–52 processes and 1.2–1.6 GB for 200 outputs, with heavy scroll stutter.
 - **Shared renderer.** One hidden web view renders each output to a cached image instead: one process, about 40 MB, smooth scrolling. A live web view appears only when an output is clicked for selection.
 - **Workarounds.** WebKit's MathML needs non-stretchy fences around short content, a strut inside radicals, and `menclose` for overlines (`docs/PHASE2_REPORT.md`).
+- **Line breaking (Phase 3).** WebKit's MathML has no automatic line breaking. wxMaxima breaks its flat list of cells greedily at the canvas width (`Cell::BreakLines_List`) after turning cells wider than the line into their linear form (`BreakUpCells`, each cell's `BreakUp()`). Macsima does the same in the page's script (`MathLineBreaking.swift`): pieces of the MathML become separate `<math>` elements in a wrapping flex box, measured by WebKit itself. WebKit sizes math around a stretchy bracket for its widest form, so each piece is trimmed to its content's width.
 
 ## Proposed native architecture
 
@@ -313,7 +314,7 @@ Corrections to the sections above, found in Phase 2:
 
 What Phase 3 inherits:
 - **Editor.** No AppKit yet; cross-cell selection, search and autocomplete will likely need `NSTextView`.
-- **Math.** Outputs are images, so selection needs a click. Long outputs don't wrap.
+- **Math.** Outputs are images, so selection needs a click. Long outputs don't wrap (they do since Phase 3 step 6).
 - **Kept but not shown.** Folding, hidden cells, text formatting, zoom, image cells and animations are preserved and listed.
 - **Testing the editor.** The key-script driver posts synthesized key events to the app's own event queue; it needs no Accessibility permission, and undo grouping behaves as with a keyboard. Real-keyboard checks by hand (the Delete key, typing) passed.
 

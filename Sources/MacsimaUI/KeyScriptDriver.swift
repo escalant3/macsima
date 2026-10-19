@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -132,6 +132,12 @@ enum KeyScriptDriver {
             WorksheetController.keyController?.find.replacement = rest
         case "find-replace-all":
             WorksheetController.keyController?.find.replaceAll()
+        case "resize":
+            // The key window's content size in points: `resize <width> <height>`.
+            let size = rest.split(separator: " ").compactMap { Double($0) }
+            if size.count == 2, let window = documentWindow {
+                window.setContentSize(CGSize(width: size[0], height: size[1]))
+            }
         case "dump":
             dump(to: rest)
         case "shot":
@@ -253,6 +259,11 @@ enum KeyScriptDriver {
         var info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]
         info["zoom"] = controller.document.worksheet.zoom
+        info["renders"] = MathSnapshotRenderer.shared.recent.map { r -> [String: Any] in
+            ["label": r.label ?? "", "wrap": r.wrap.map { Int($0) } ?? -1,
+             "width": Int(r.size.width), "height": Int(r.size.height)]
+        }
+        info["windowWidth"] = Int(documentWindow?.contentLayoutRect.width ?? 0)
         let find = controller.find
         info["find"] = ["visible": find.isVisible, "query": find.query, "status": find.status,
                         "current": find.current ?? -1, "count": find.matches.count] as [String: Any]
