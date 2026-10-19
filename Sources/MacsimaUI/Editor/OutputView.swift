@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 import AppKit
+import MaximaKit
 import SwiftUI
 import WorksheetKit
 import WXMLKit
@@ -17,18 +18,9 @@ struct OutputView: View {
         case .text(let text) where text.isEmpty:
             EmptyView()   // a statement's text run with nothing in it yet
         case .text(let text):
-            Text(text)
-                .font(.system(size: 13, design: .monospaced))
-                .textSelection(.enabled)
-                .padding(.leading, outputIndent)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            MessageText(text: text, isError: false)
         case .error(_, let message):
-            Text(message.isEmpty ? "Error (see the output above)" : message)
-                .font(.system(size: 13, design: .monospaced))
-                .foregroundStyle(.red)
-                .textSelection(.enabled)
-                .padding(.leading, outputIndent)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            MessageText(text: message.isEmpty ? "Error (see the output above)" : message, isError: true)
         case .image(let data, _, let label, _):
             if let image = NSImage(data: data) {
                 ImageOutputView(image: image, label: label)
@@ -48,6 +40,47 @@ struct OutputView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+/// Plain output text or an error message. A message wxMaxima can explain
+/// gets its yellow marker, the explanation as a tooltip, and a button that
+/// shows it.
+struct MessageText: View {
+    let text: String
+    let isError: Bool
+    @State private var showsExplanation = false
+
+    var body: some View {
+        let explanation = MessageExplanations.explanation(for: text)
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(text)
+                .font(.system(size: 13, design: .monospaced))
+                .foregroundStyle(isError ? Color.red : Color.primary)
+                .textSelection(.enabled)
+                .padding(.horizontal, explanation == nil ? 0 : 3)
+                .background {
+                    if explanation != nil {
+                        RoundedRectangle(cornerRadius: 3).fill(Color.yellow.opacity(0.28))
+                    }
+                }
+                .help(explanation ?? "")
+            if let explanation {
+                Button("Explain", systemImage: "lightbulb") { showsExplanation.toggle() }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+                    .help("What this message most likely means")
+                    .popover(isPresented: $showsExplanation, arrowEdge: .bottom) {
+                        Text(explanation)
+                            .frame(width: 320, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(12)
+                    }
+                    .accessibilityIdentifier("explain-message")
+            }
+        }
+        .padding(.leading, outputIndent)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

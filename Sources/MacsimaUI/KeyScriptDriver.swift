@@ -205,7 +205,11 @@ enum KeyScriptDriver {
             ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.map(describe),
              "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell,
              "editorText": controller.existingEditor(for: cell.id)?.string ?? NSNull(),
-             "inWindow": controller.existingEditor(for: cell.id)?.window != nil]
+             "inWindow": controller.existingEditor(for: cell.id)?.window != nil,
+             "errorMarks": controller.errorMarks[cell.id].map { marks -> [String: Any] in
+                 ["statements": marks.statements.map { [$0.location, $0.length] },
+                  "spots": marks.spots.map { [$0.location, $0.length] }, "current": marks.text == cell.input]
+             } ?? NSNull()]
         }
         var info: [String: Any] = ["cells": cells, "state": controller.sessionState.rawValue,
                                    "status": controller.statusMessage ?? "", "running": controller.running.count]

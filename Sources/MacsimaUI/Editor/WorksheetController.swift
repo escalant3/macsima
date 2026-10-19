@@ -37,6 +37,13 @@ public final class WorksheetController {
     /// The cell whose question is waiting for an answer.
     public private(set) var asking: UUID?
 
+    /// Where the last evaluation of a cell failed, for its editor.
+    public private(set) var errorMarks: [UUID: ErrorMarks] = [:]
+    /// The text each running cell was sent with, and its statements' ranges.
+    @ObservationIgnored private var sentStatements: [UUID: (text: String, ranges: [Range<Int>])] = [:]
+    /// The statement each running cell is at.
+    @ObservationIgnored private var currentStatement: [UUID: Int] = [:]
+
     private var session: MaximaSession?
     private var sessionWatcher: Task<Void, Never>?
     /// The input label the next statement gets.
@@ -133,6 +140,7 @@ public final class WorksheetController {
             self?.find.documentChanged()
         }
         editor.findMarks = find.marks(for: id)
+        editor.errorMarks = errorMarks[id]
         editor.undoSource = { [weak self] in self?.undoManager }
         editor.onFocus = { [weak self] in self?.noteFocus(id) }
         editor.onEvaluate = { [weak self] in self?.evaluateAndAdvance(id) }
@@ -258,6 +266,9 @@ public final class WorksheetController {
         document.worksheet.clearOutputs(id)
         pending[id] = nil
         running.insert(id)
+        setErrorMarks(nil, for: id)
+        sentStatements[id] = (text, (try? StatementSplitter.ranges(text)) ?? [])
+        currentStatement[id] = nil
         Task {
             do {
                 let stream = try await session.evaluate(cellID: id.uuidString, text: text)
@@ -265,6 +276,11 @@ public final class WorksheetController {
                 startReader()
             } catch {
                 enqueue(id, .append(.error(kind: nil, message: "\(error)")))
+                // Unbalanced brackets: nothing was sent; mark the bracket.
+                if case .split(let split)? = error as? MaximaError, let at = split.position.utf16Offset(in: text) {
+                    let length = at < (text as NSString).length ? 1 : 0
+                    setErrorMarks(ErrorMarks(text: text, statements: [], spots: [NSRange(location: at, length: length)]), for: id)
+                }
                 running.remove(id)
             }
         }
@@ -333,6 +349,7 @@ public final class WorksheetController {
     func receive(_ event: CellEvent, for id: UUID) {
         switch event {
         case .started(let index, _):
+            currentStatement[id] = index
             if index == 0 { enqueue(id, .label(nextLabel)) }
             enqueue(id, .appendText(Self.statementMark))
         case .math(let xml):
@@ -360,6 +377,7 @@ public final class WorksheetController {
             asking = id
         case .error(let kind, let message):
             enqueue(id, .error(kind: kind.rawValue, message: message))
+            markError(in: id, syntax: kind == .syntax, message: message)
         case .interrupted:
             enqueue(id, .error(kind: "interrupted", message: "Interrupted"))
         case .skipped:
@@ -383,6 +401,26 @@ public final class WorksheetController {
             flush()
             running.remove(id)
         }
+    }
+
+    /// Marks the statement that failed in the cell's input, and for a
+    /// syntax error the spot Maxima's parser stopped at (as wxMaxima does
+    /// since GH #289).
+    private func markError(in id: UUID, syntax: Bool, message: String) {
+        guard let sent = sentStatements[id], let index = currentStatement[id], index < sent.ranges.count else { return }
+        let statement = sent.ranges[index]
+        var marks = errorMarks[id].flatMap { $0.text == sent.text ? $0 : nil }
+            ?? ErrorMarks(text: sent.text, statements: [], spots: [])
+        marks.statements.append(NSRange(location: statement.lowerBound, length: statement.count))
+        if syntax, let spot = SyntaxErrorLocation.locate(output: message, cellText: sent.text, statement: statement) {
+            marks.spots.append(NSRange(location: spot.lowerBound, length: spot.count))
+        }
+        setErrorMarks(marks, for: id)
+    }
+
+    private func setErrorMarks(_ marks: ErrorMarks?, for id: UUID) {
+        errorMarks[id] = marks
+        existingEditor(for: id)?.errorMarks = marks
     }
 
     /// Math as the model keeps it: one `<math>` element in canonical XML,
@@ -461,4 +499,13 @@ public final class WorksheetController {
 extension Cell {
     /// The cell shows a text editor (page breaks, image and unknown cells don't).
     var hasEditor: Bool { ![.raw, .pageBreak, .image].contains(kind) }
+}
+
+/// Where a cell's last evaluation failed: the statements Maxima reported an
+/// error for and the places a syntax error points at, as UTF-16 ranges in
+/// `text`. Shown only while the cell still holds that text.
+public struct ErrorMarks: Equatable, Sendable {
+    public var text: String
+    public var statements: [NSRange]
+    public var spots: [NSRange]
 }

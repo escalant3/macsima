@@ -121,6 +121,19 @@ elif script == "find-basics":
     check(f(4)["status"] == "No matches", "no matches left")
     check(not f(5)["visible"], "Esc closes the bar")
     check(inputs(6) == ["a:x+1;\nx^2", "f(x):=X;", "a word with x"], f"one Cmd+Z undoes Replace All: {inputs(6)}")
+elif script == "errors-basics":
+    c1 = dump("errors", 1)["cells"]
+    marks = [c["errorMarks"] for c in c1]
+    check(marks[0] == {"statements": [[5, 6]], "spots": [], "current": True},
+          f"1/0: the failing statement b:1/0; is marked, not the others: {marks[0]}")
+    check(marks[1] == {"statements": [[0, 8]], "spots": [[3, 2]], "current": True},
+          f"f(a,,b): the statement and the spot ,, Maxima's parser points at: {marks[1]}")
+    check(marks[2] == {"statements": [], "spots": [[1, 1]], "current": True},
+          f"g(x:=2; is never sent; the unclosed ( is marked: {marks[2]}")
+    check(marks[3] is None, "the new empty cell has no marks")
+    c2 = dump("errors", 2)
+    check(c2["cells"][1]["errorMarks"]["current"] is False and c2["editor"]["backgrounds"] == [],
+          f"typing in the cell hides its marks: {c2['editor']['backgrounds']}")
 else:
     sys.exit(f"unknown script {script}")
 print("PASS" if failures == 0 else f"FAIL ({failures})")

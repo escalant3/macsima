@@ -21,11 +21,22 @@ public struct Statement: Equatable, Sendable {
     }
 }
 
-/// A place in a cell's text, 1-based.
+/// A place in a cell's text, 1-based; the column counts Characters.
 public struct SourcePosition: Equatable, Sendable, CustomStringConvertible {
     public var line: Int
     public var column: Int
     public var description: String { "line \(line), column \(column)" }
+
+    /// The same place as a UTF-16 offset into `text`, or nil past its end.
+    public func utf16Offset(in text: String) -> Int? {
+        var line = 1, column = 1, offset = 0
+        for c in text {
+            if line == self.line && column == self.column { return offset }
+            if c == "\n" { line += 1; column = 1 } else { column += 1 }
+            offset += c.utf16.count
+        }
+        return line == self.line && column == self.column ? offset : nil
+    }
 }
 
 public enum SplitError: Error, Equatable, Sendable, CustomStringConvertible {
@@ -35,6 +46,13 @@ public enum SplitError: Error, Equatable, Sendable, CustomStringConvertible {
     case unclosed(Character, at: SourcePosition)
     case unclosedString(at: SourcePosition)
     case unclosedComment(at: SourcePosition)
+
+    /// Where the problem is.
+    public var position: SourcePosition {
+        switch self {
+        case .unexpectedClose(_, let at, _), .unclosed(_, let at), .unclosedString(let at), .unclosedComment(let at): at
+        }
+    }
 
     public var description: String {
         switch self {
@@ -60,6 +78,22 @@ public enum SplitError: Error, Equatable, Sendable, CustomStringConvertible {
 /// nothing is sent that would leave Maxima waiting for more input.
 public enum StatementSplitter {
     public static func split(_ cell: String) throws(SplitError) -> [Statement] {
+        try splitWithSpans(cell).map(\.statement)
+    }
+
+    /// Where each statement `split` returns is in `cell`, as UTF-16 offsets
+    /// (as NSString and text views count): from its first character to its
+    /// terminator, included.
+    public static func ranges(_ cell: String) throws(SplitError) -> [Range<Int>] {
+        let spans = try splitWithSpans(cell)
+        var utf16: [Int] = [0]   // UTF-16 offset of each Character index
+        utf16.reserveCapacity(cell.count + 1)
+        for c in cell { utf16.append(utf16.last! + c.utf16.count) }
+        return spans.map { utf16[$0.span.lowerBound]..<utf16[$0.span.upperBound] }
+    }
+
+    /// The statements with the Character range each one covers in `cell`.
+    static func splitWithSpans(_ cell: String) throws(SplitError) -> [(statement: Statement, span: Range<Int>)] {
         let chars = Array(cell)
         var positions: [SourcePosition] = []
         positions.reserveCapacity(chars.count + 1)
@@ -70,7 +104,7 @@ public enum StatementSplitter {
         }
         positions.append(SourcePosition(line: line, column: column))
 
-        var statements: [Statement] = []
+        var statements: [(statement: Statement, span: Range<Int>)] = []
         var i = 0
         while i < chars.count {
             // Skip whitespace and comments up to the statement's first code character.
@@ -82,7 +116,9 @@ public enum StatementSplitter {
             let start = i
             if chars[i] == ":", i + 1 < chars.count, chars[i + 1].isLetter {
                 while i < chars.count, chars[i] != "\n" { i += 1 }
-                statements.append(Statement(text: String(chars[start..<i]).trimmingWhitespace, terminator: .line))
+                var end = i
+                while end > start, chars[end - 1].isWhitespace { end -= 1 }
+                statements.append((Statement(text: String(chars[start..<i]).trimmingWhitespace, terminator: .line), start..<end))
                 continue
             }
             var brackets: [(Character, Int)] = []
@@ -115,10 +151,11 @@ public enum StatementSplitter {
                 i += 1
             }
             if let (open, at) = brackets.last { throw .unclosed(open, at: positions[at]) }
-            let end = min(i, chars.count)
+            var end = min(i, chars.count)
             var text = String(chars[start..<end]).trimmingWhitespace
             if terminator == nil { text += ";" }
-            statements.append(Statement(text: text, terminator: terminator ?? .show))
+            while end > start, chars[end - 1].isWhitespace { end -= 1 }
+            statements.append((Statement(text: text, terminator: terminator ?? .show), start..<end))
         }
         return statements
     }

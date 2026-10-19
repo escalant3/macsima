@@ -48,7 +48,8 @@ struct CellView: View {
             .padding(.trailing, 6)
             .background(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(isFocused ? Color.accentColor : Color.secondary.opacity(cell.kind == .code ? 0.25 : 0))
+                    .fill(isFocused ? Color.accentColor : failed ? Color.red.opacity(0.7)
+                          : Color.secondary.opacity(cell.kind == .code ? 0.25 : 0))
                     .frame(width: 3)
             }
             ForEach(Array(cell.outputs.enumerated()), id: \.offset) { n, output in
@@ -62,6 +63,11 @@ struct CellView: View {
                                systemImage: "chevron.right.circle")
             }
         }
+    }
+
+    /// The last evaluation ended in an error (wxMaxima draws the cell's bracket red).
+    private var failed: Bool {
+        cell.outputs.contains { if case .error(let kind, _) = $0 { kind != "interrupted" } else { false } }
     }
 
     private var gutterLabel: String {

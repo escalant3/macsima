@@ -113,7 +113,7 @@ Maxima evaluates text and prints tagged text. Everything below is on your side o
 | --- | --- | --- |
 | Document model | Cells of several kinds (title, section, subsection, text, code, with outputs attached to code cells), saved as `.wxmx` (a zip with `content.xml` and images) or plain `.wxm` | Yes |
 | Evaluation queue | Splits a cell into statements, tracks `;` versus `$` endings, handles `:lisp` and `to_lisp()` mode, adds a missing terminator, runs one statement at a time | Yes |
-| Error handling | Optionally aborts the queue on error; parses Maxima's error text to mark the failing statement and spot in the editor | Basic |
+| Error handling | Optionally aborts the queue on error; parses Maxima's error text to mark the failing statement and spot in the editor. Checked in Phase 3: wxMaxima 26.09 marks a failed cell's bracket red and paints messages it can explain yellow, with the explanation as a tooltip (`TextCell::UpdateToolTip`); statement and spot marks (light red, `TS_ERROR_STATEMENT`/`TS_ERROR_SPOT`, located from the parser's echo by `SyntaxErrorLocation.cpp`) arrived after 26.09 (`bc6529ad`, GH #289) | Basic |
 | Questions and debugger | Non-main prompts open an answer cell; the `(dbm:N)` debugger and the SBCL low-level debugger (LDB, via the child's stdin) are special cases | Later |
 | 2D math | Lays out the XML as cells (fractions, sums, matrices, boxes) with selection and copy via `altCopy` | Yes |
 | Plots | Loads the PNG or SVG file an `img` tag names; animations arrive as a `slide` tag listing frames | Yes |

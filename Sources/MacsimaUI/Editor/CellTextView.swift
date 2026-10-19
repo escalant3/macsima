@@ -83,6 +83,11 @@ final class CellTextView: NSTextView {
         updateBracketMatch()
     }
 
+    /// Where the last evaluation failed, shown while the text is unchanged.
+    var errorMarks: ErrorMarks? {
+        didSet { if errorMarks != oldValue { updateBracketMatch() } }
+    }
+
     /// Find's matches in this cell, shown with a background.
     var findMarks: [NSRange] = [] {
         didSet { if findMarks != oldValue { updateBracketMatch() } }
@@ -99,6 +104,17 @@ final class CellTextView: NSTextView {
         guard let layout = textLayoutManager else { return }
         layout.removeRenderingAttribute(.backgroundColor, for: layout.documentRange)
         let length = (string as NSString).length
+        if let marks = errorMarks, marks.text == string {
+            for (ranges, color) in [(marks.statements, Self.errorStatementColor), (marks.spots, Self.errorSpotColor)] {
+                for mark in ranges where NSMaxRange(mark) <= length {
+                    // An empty range (a bracket missing at the very end) marks the last character.
+                    let shown = mark.length > 0 ? mark : NSRange(location: max(0, mark.location - 1), length: min(1, length))
+                    if let range = textRange(shown) {
+                        layout.addRenderingAttribute(.backgroundColor, value: color, for: range)
+                    }
+                }
+            }
+        }
         for mark in findMarks where NSMaxRange(mark) <= length {
             if let range = textRange(mark) {
                 layout.addRenderingAttribute(.backgroundColor, value: Self.findColor, for: range)
@@ -112,6 +128,18 @@ final class CellTextView: NSTextView {
                 layout.addRenderingAttribute(.backgroundColor, value: Self.bracketColor, for: range)
             }
         }
+    }
+
+    /// wxMaxima's TS_ERROR_STATEMENT and TS_ERROR_SPOT colours (Styles.cpp, 13e4aee).
+    static let errorStatementColor = NSColor(name: "MacsimaErrorStatement") { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(srgbRed: 75 / 255, green: 30 / 255, blue: 30 / 255, alpha: 1)
+            : NSColor(srgbRed: 1, green: 228 / 255, blue: 228 / 255, alpha: 1)
+    }
+    static let errorSpotColor = NSColor(name: "MacsimaErrorSpot") { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(srgbRed: 140 / 255, green: 40 / 255, blue: 40 / 255, alpha: 1)
+            : NSColor(srgbRed: 1, green: 170 / 255, blue: 170 / 255, alpha: 1)
     }
 
     static let findColor = NSColor(name: "MacsimaFindMatch") { appearance in
