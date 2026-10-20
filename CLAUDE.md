@@ -29,7 +29,7 @@ Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadma
 - Does my SBCL have threads: `sbcl --noinform --eval '(progn (format t "threads: ~a~%" (if (member :sb-thread *features*) "yes" "no")) (quit))'`
 
 ## Current phase
-Phase 3 is done (see `docs/PHASE3_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` to `docs/PHASE2_REPORT.md`); my week of real use is in progress. Five Phase 3 items in PARITY.md wait for my decision (listed in the report). Arrow keys stopping on outputs and Esc-sequences for Greek letters (Esc completes now) are deferred past Phase 3. Do not start Phase 4 until I say so.
+Phase 3 is done (see `docs/PHASE3_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` to `docs/PHASE2_REPORT.md`); my week of real use is in progress. Selecting text inside math, arrow keys stopping on outputs and Esc-sequences for Greek letters (Esc completes now) are deferred past Phase 3. Do not start Phase 4 until I say so.
 
 Facts to keep in mind (details in the reports, BOOTSTRAP.md, WXMX_COMPAT.md and PARITY.md):
 - **Build the app.** `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build`. All code lives in the package (`MacsimaUI`); `App/Macsima` only holds `@main`.

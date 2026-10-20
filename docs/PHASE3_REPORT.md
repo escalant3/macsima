@@ -4,7 +4,7 @@
 
 **Result: Phase 3 is built, and all three checkpoints are approved** (A and B on 2026-10-19, C on 2026-10-20). The exit criterion, a week of real work without falling back to wxMaxima, starts now.
 
-Five items marked for Phase 3 in `docs/PARITY.md` are neither done nor deferred by agreement. They are listed under [Still missing from PARITY.md](#still-missing-from-paritymd) and wait for a decision.
+Every item marked for Phase 3 in `docs/PARITY.md` is now done or deferred by agreement (see [Still missing from PARITY.md](#still-missing-from-paritymd)).
 
 ## Summary
 
@@ -35,7 +35,7 @@ Five items marked for Phase 3 in `docs/PARITY.md` are neither done nor deferred 
   - **`.wxm` files:** open and save.
   - **A Settings window.**
 - **Tests:**
-  - **Unit and integration tests:** 173 Swift Testing tests in 42 suites pass in about 26 s (`swift test`, "Test run with 173 tests"). Of these, 21 run the real Maxima.
+  - **Unit and integration tests:** 179 Swift Testing tests in 42 suites pass in about 40 s (`swift test`, "Test run with 179 tests"). Of these, 21 run the real Maxima.
   - **Key scripts:** 28 scripts drive the debug app; all pass. Some need a fixture file; `CLAUDE.md` lists them.
   - **UI tests:** 11 XCUITest tests type real keys; all pass.
 - **History.** 49 commits.
@@ -123,17 +123,15 @@ Line-breaking before-and-after snapshots are in `docs/phase3-snapshots/`.
 
 ## Still missing from PARITY.md
 
-**Marked for Phase 3, not done, not yet agreed as deferred.** These need your decision:
-
-| Item | Where it stands | Why it is still open |
-| --- | --- | --- |
-| Selecting text inside math | Click an output for a live, selectable web view | Selecting across outputs, as in wxMaxima, needs math in the editor's own text, a large change |
-| Box labels (`boxname`) | The box shows, the label doesn't (Copy as Maxima input keeps it) | Not in any Part C step; a translator change |
-| Plot resolution (`ppi`) | pngcairo plots are 600×450 at 1×, slightly soft on Retina | Not in any Part C step; needs gnuplot's size or a 2× terminal |
-| Cursor position (`activecell`) | Kept from the file, not updated | Not in any Part C step; small |
-| Jump to error | Errors are marked; no command goes to the first one | Not in any Part C step; small |
+**Settled after the report (2026-10-20).** Five Phase 3 items were open when the report was first written. You agreed to finish the small ones and defer the large one; all are now resolved:
+- **Box labels:** done. The name shows small above the box; `box(expr, highlight)` is red text without a box.
+- **Plot resolution:** done for `wxplot2d` and friends and their animations: drawn at 2×, marked `ppi="192"`, shown by ppi. `wxdraw` plots stay 1× (later).
+- **Cursor position (`activecell`):** done, saved and restored as wxMaxima counts it.
+- **Jump to error:** done, Cell › Go to Next Error (⌘') and Previous Error (⌘⇧").
+- **Selecting text inside math:** deferred past Phase 3 (needs math in the editor's own text).
 
 **Deferred by agreement:**
+- Selecting text inside math directly in the worksheet.
 - Arrow keys stopping on outputs.
 - Greek letters with Esc (Esc completes now).
 
@@ -159,7 +157,8 @@ Line-breaking before-and-after snapshots are in `docs/phase3-snapshots/`.
 - **Ctrl+Space on a Mac without the input-source shortcut:** on this Mac the system takes it; Esc was tested instead.
 - **Mouse clicks in the completion list:** only tested by keyboard.
 - **Long real use:** memory and speed over a week of work. That is the exit test now under way.
+- **Two timing tests are flaky under a fully loaded machine:** the CPU-share test (its floor is now 20%) and `exitsBeforeConnectingIsRetriedThenFails` (a fake Maxima that exits at once was not noticed within 30 s, once). Both pass alone, the second 10 out of 10.
 
-## Next: a user manual
+## The user manual
 
-Phase 3 added far more than the menus explain. Proposed: an application manual covering every feature, its keys and where wxMaxima differs. Phase 4 doesn't start until you say so; the form and timing are your call (see the reply that comes with this report).
+`docs/MANUAL.md` describes every feature by task, with its keys and where Macsima differs from wxMaxima. Showing it inside the app is for later.
