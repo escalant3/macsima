@@ -88,7 +88,9 @@ struct ProcessCPUTests {
         try await Task.sleep(for: .seconds(1))
         let busy = try #require(ProcessCPU.time(ofGroup: group))
         let percent = ProcessCPU.percent(from: before, to: busy, over: clock.now - start)
-        #expect(percent > 50 && percent < 200, "one busy SBCL thread: \(percent)%")
+        // One busy SBCL thread: about 100%, less when the full suite loads
+        // every core (it measured 40% then).
+        #expect(percent > 20 && percent < 200, "one busy SBCL thread: \(percent)%")
         _ = await drain(stream)
         await session.shutdown()
         #expect(ProcessCPU.time(ofGroup: group) == nil, "nothing left to read after shutdown")

@@ -15,6 +15,8 @@ public struct MathOutput: Sendable {
     public var mathML: String
     /// Files named by `img` tags (plots).
     public var imagePaths: [String]
+    /// The `ppi` of images that say it (Macsima's 2× plots, wxMaxima's files), by path.
+    public var imagePPI: [String: String] = [:]
     /// An animation's frame files (`slide`, from `with_slider` and
     /// `wxanimate`) and the element's attributes; nil when there is none.
     public var animation: (frames: [String], attributes: [String: String])?
@@ -52,7 +54,7 @@ public enum MathMLTranslator {
         let math = body.isEmpty ? "" : "<math display=\"block\">\(body)</math>"
         let plain = MaximaInputText.of(root, quoteStrings: context.label != nil).trimmingCharacters(in: .whitespaces)
         return MathOutput(label: context.label, mathML: math,
-                          imagePaths: context.imagePaths, animation: context.animation, unknownTags: context.unknown.sorted(),
+                          imagePaths: context.imagePaths, imagePPI: context.imagePPI, animation: context.animation, unknownTags: context.unknown.sorted(),
                           plainText: plain, wellFormed: true)
     }
 
@@ -75,6 +77,7 @@ private struct Context {
     var depth = 0
     var label: String?
     var imagePaths: [String] = []
+    var imagePPI: [String: String] = [:]
     var animation: (frames: [String], attributes: [String: String])?
     var unknown: Set<String> = []
 
@@ -86,7 +89,22 @@ private struct Context {
         depth += 1
         defer { depth -= 1 }
         if depth > MathMLTranslator.maxDepth { return Self.mtext(node.textContent) }
-        let kids = node.elementChildren
+        // emit recurses up to maxDepth levels on the main thread's stack,
+        // and a debug build reserves every case's temporaries in one frame
+        // (an 18 KB frame overflowed 8 MB at 400 levels). So the cases live
+        // in three functions of their own, and a level pays for one group.
+        switch name {
+        case "mrow", "r", "math", "mth", "d", "mtd", "hl", "cj", "a":
+            return emitRow(node, name, attrs, children)
+        case "fn", "p", "q", "mfrac", "f", "msup", "e", "msub", "munder", "i", "ie", "mmultiscripts", "tb", "mtr", "sm", "in", "lm", "limit", "at":
+            return emitLayout(node, name, attrs, children)
+        default:
+            return emitLeaf(node, name, attrs, children)
+        }
+    }
+
+    @inline(never)
+    mutating func emitRow(_ node: MathNode, _ name: String, _ attrs: [String: String], _ children: [MathNode]) -> String {
         switch name {
         case "mrow" where attrs["list"] == "true" || attrs["set"] == "true",
              "r" where attrs["list"] == "true" || attrs["set"] == "true":
@@ -97,36 +115,26 @@ private struct Context {
             return row(children)
         case "math", "mth", "mrow", "r", "d":
             return row(children)
-        case "editor":
-            // A question's answer, inside an output in .wxmx files.
-            let answer = kids.filter { $0.name == "line" }.map(\.textContent).joined(separator: " ")
-            return answer.isEmpty ? "" : "<mspace width=\"0.5em\"/>" + Self.mtext(answer)
-        case "line":
-            return Self.mtext(node.textContent)
-        case "lbl":
-            let raw = attrs["altCopy"] ?? node.textContent
-            // Glue labels read "%o1"; wxMaxima's saved ones "(%o1)" and a tab.
-            label = raw.trimmingCharacters(in: CharacterSet(charactersIn: "()").union(.whitespacesAndNewlines))
-            return ""
-        case "mi", "v":
-            return identifier(node.textContent)
-        case "mn", "n":
-            return "<mn>\(esc(node.textContent))</mn>"
-        case "mo":
-            return "<mo>\(esc(Self.operatorText(node.textContent)))</mo>"
-        case "st":
-            return Self.mtext(node.textContent)
-        case "t":
-            if attrs["listdelim"] == "true" { return Self.fence(node.textContent, stretchy: fencesStretch) }
-            return Self.mtext(node.textContent)
-        case "fnm":
-            // wxMaxima's .wxmx files keep operators (+, −, =) as fnm too.
-            let text = node.textContent
-            if text.isEmpty { return "" }
-            if text.unicodeScalars.allSatisfy({ CharacterSet.alphanumerics.contains($0) || $0 == "_" || $0 == "%" }) {
-                return "<mi>\(esc(text))</mi>"
-            }
-            return "<mo>\(esc(Self.operatorText(text)))</mo>"
+        case "mtd":
+            // Table cells drop display style; wxMaxima shows full-size fractions in matrices.
+            return "<mtd><mrow displaystyle=\"true\">\(row(children))</mrow></mtd>"
+        case "hl":
+            return box(attrs, row(children))
+        case "cj":
+            // WebKit draws mover accents (U+00AF, U+203E, U+0305) misplaced; menclose is clean.
+            return "<menclose notation=\"top\">\(row(children))</menclose>"
+        case "a":
+            let tall = Self.isTall(node)
+            return "<mrow>\(Self.fence("|", stretchy: tall))\(row(children))\(Self.fence("|", stretchy: tall))</mrow>"
+        default:
+            return unknownElement(node)
+        }
+    }
+
+    @inline(never)
+    mutating func emitLayout(_ node: MathNode, _ name: String, _ attrs: [String: String], _ children: [MathNode]) -> String {
+        let kids = node.elementChildren
+        switch name {
         case "fn":
             // The glue prints some names as bare text (return(x) is
             // <fn>return<mrow>...</mrow></fn>), which wxMaxima reads as a text cell.
@@ -189,10 +197,6 @@ private struct Context {
             return "<msubsup>\(emit(kids[0]))\(emit(kids[1]))\(emit(kids[2]))</msubsup>"
         case "mmultiscripts":
             return "<mmultiscripts>\(kids.map { emit($0) }.joined())</mmultiscripts>"
-        case "mprescripts":
-            return "<mprescripts/>"
-        case "none":
-            return "<none/>"
         case "tb":
             let rows = kids.map { emit($0) }.joined()
             // As wxMaxima's MatrCell: square for bracketParens (Maxima's default
@@ -207,9 +211,6 @@ private struct Context {
             return "<mrow>\(fence(open))<mtable>\(rows)</mtable>\(fence(close))</mrow>"
         case "mtr":
             return "<mtr>\(kids.map { emit($0) }.joined())</mtr>"
-        case "mtd":
-            // Table cells drop display style; wxMaxima shows full-size fractions in matrices.
-            return "<mtd><mrow displaystyle=\"true\">\(row(children))</mrow></mtd>"
         case "sm":
             guard kids.count == 3 else { return unknownElement(node) }
             let op = attrs["type"] == "prod" ? "&#x220F;" : "&#x2211;"
@@ -227,21 +228,49 @@ private struct Context {
         case "at":
             guard kids.count == 2 else { return unknownElement(node) }
             return "<msub><mrow>\(emit(kids[0]))<mo stretchy=\"true\">|</mo></mrow>\(emit(kids[1]))</msub>"
-        case "hl":
-            // box(expr, highlight) colours instead of boxing (wxMaxima's
-            // ParseHighlightTag); box(expr, name) shows its name. wxMaxima
-            // draws it in a gap of the top edge; here it sits small above.
-            guard let name = attrs["boxname"] else { return "<menclose notation=\"box\">\(row(children))</menclose>" }
-            if name == "highlight" { return "<mstyle mathcolor=\"#d00\">\(row(children))</mstyle>" }
-            let shown = name.count >= 2 && name.hasPrefix("\"") && name.hasSuffix("\"") ? String(name.dropFirst().dropLast()) : name
-            return "<mover><menclose notation=\"box\">\(row(children))</menclose>"
-                + "<mtext mathsize=\"70%\" mathcolor=\"#888\">\(MathMLTranslator.escape(shown))</mtext></mover>"
-        case "cj":
-            // WebKit draws mover accents (U+00AF, U+203E, U+0305) misplaced; menclose is clean.
-            return "<menclose notation=\"top\">\(row(children))</menclose>"
-        case "a":
-            let tall = Self.isTall(node)
-            return "<mrow>\(Self.fence("|", stretchy: tall))\(row(children))\(Self.fence("|", stretchy: tall))</mrow>"
+        default:
+            return unknownElement(node)
+        }
+    }
+
+    @inline(never)
+    mutating func emitLeaf(_ node: MathNode, _ name: String, _ attrs: [String: String], _ children: [MathNode]) -> String {
+        let kids = node.elementChildren
+        switch name {
+        case "editor":
+            // A question's answer, inside an output in .wxmx files.
+            let answer = kids.filter { $0.name == "line" }.map(\.textContent).joined(separator: " ")
+            return answer.isEmpty ? "" : "<mspace width=\"0.5em\"/>" + Self.mtext(answer)
+        case "line":
+            return Self.mtext(node.textContent)
+        case "lbl":
+            let raw = attrs["altCopy"] ?? node.textContent
+            // Glue labels read "%o1"; wxMaxima's saved ones "(%o1)" and a tab.
+            label = raw.trimmingCharacters(in: CharacterSet(charactersIn: "()").union(.whitespacesAndNewlines))
+            return ""
+        case "mi", "v":
+            return identifier(node.textContent)
+        case "mn", "n":
+            return "<mn>\(esc(node.textContent))</mn>"
+        case "mo":
+            return "<mo>\(esc(Self.operatorText(node.textContent)))</mo>"
+        case "st":
+            return Self.mtext(node.textContent)
+        case "t":
+            if attrs["listdelim"] == "true" { return Self.fence(node.textContent, stretchy: fencesStretch) }
+            return Self.mtext(node.textContent)
+        case "fnm":
+            // wxMaxima's .wxmx files keep operators (+, −, =) as fnm too.
+            let text = node.textContent
+            if text.isEmpty { return "" }
+            if text.unicodeScalars.allSatisfy({ CharacterSet.alphanumerics.contains($0) || $0 == "_" || $0 == "%" }) {
+                return "<mi>\(esc(text))</mi>"
+            }
+            return "<mo>\(esc(Self.operatorText(text)))</mo>"
+        case "mprescripts":
+            return "<mprescripts/>"
+        case "none":
+            return "<none/>"
         case "g":
             return greek(node.textContent, asFunction: false)
         case "s":
@@ -251,7 +280,7 @@ private struct Context {
         case "mspace":
             return "<mspace width=\"0.4em\"/>"
         case "img":
-            imagePaths.append(node.textContent.trimmingCharacters(in: .whitespacesAndNewlines))
+            image(node)
             return ""
         case "slide":
             animation = Self.animation(node)
@@ -260,6 +289,7 @@ private struct Context {
             return unknownElement(node)
         }
     }
+
 
     /// An animation's frame files, separated by ";". with_slider_draw also
     /// lists its gnuplot sources and data there; only images are frames.
@@ -273,6 +303,28 @@ private struct Context {
         var a = node.attributes
         a["lisp"] = nil
         return (frames, a)
+    }
+
+    // Out of line: emit recurses up to the depth cap on the main thread's
+    // stack, so its own frame must stay small (a larger one crashed a run).
+
+    /// box(expr) draws a box; box(expr, highlight) colours instead (wxMaxima's
+    /// ParseHighlightTag); box(expr, name) shows its name. wxMaxima draws it
+    /// in a gap of the top edge; here it sits small above.
+    @inline(never)
+    func box(_ attrs: [String: String], _ content: String) -> String {
+        guard let name = attrs["boxname"] else { return "<menclose notation=\"box\">\(content)</menclose>" }
+        if name == "highlight" { return "<mstyle mathcolor=\"#d00\">\(content)</mstyle>" }
+        let shown = name.count >= 2 && name.hasPrefix("\"") && name.hasSuffix("\"") ? String(name.dropFirst().dropLast()) : name
+        return "<mover><menclose notation=\"box\">\(content)</menclose>"
+            + "<mtext mathsize=\"70%\" mathcolor=\"#888\">\(MathMLTranslator.escape(shown))</mtext></mover>"
+    }
+
+    @inline(never)
+    mutating func image(_ node: MathNode) {
+        let path = node.textContent.trimmingCharacters(in: .whitespacesAndNewlines)
+        imagePaths.append(path)
+        if let ppi = node.attributes["ppi"] { imagePPI[path] = ppi }
     }
 
     static let thinSpace = "<mspace width=\"0.17em\"/>"

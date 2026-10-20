@@ -17,6 +17,15 @@ struct ModesIntegrationTests {
         #expect(await session.state == .question)
         let result = await session.interrupt(via: method)
         await collect(&it, into: &events)
+        // SIGINT sometimes reaches Maxima while it prints the question, and
+        // it asks again (seen under load); interrupting again stops it, as
+        // a second press of Interrupt does in the app.
+        var again = 0
+        while case .question? = events.last, again < 3 {
+            again += 1
+            _ = await session.interrupt(via: method)
+            await collect(&it, into: &events)
+        }
         print("interrupt via \(method): \(result); events after the question:", events.drop { if case .question = $0 { false } else { true } })
         #expect(events.last == .finished(.interrupted))
         #expect(await session.state == .idle)

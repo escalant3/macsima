@@ -133,12 +133,7 @@ public enum LaTeXTranslator {
         case "cj":
             return "\\overline{\(row(kids, &depth))}"
         case "hl":
-            // As the MathML: highlight is the plain content (colour would
-            // need a package), a named box carries its name above.
-            guard let name = attrs["boxname"] else { return "\\boxed{\(row(kids, &depth))}" }
-            if name == "highlight" { return row(kids, &depth) }
-            let shown = name.count >= 2 && name.hasPrefix("\"") && name.hasSuffix("\"") ? String(name.dropFirst().dropLast()) : name
-            return "\\overset{\\scriptstyle\\text{\(Self.escapeText(shown))}}{\\boxed{\(row(kids, &depth))}}"
+            return box(attrs, row(kids, &depth))
         case "fn":
             let content = children.filter { $0.name != nil || !$0.textContent.trimmingCharacters(in: .whitespaces).isEmpty }
             guard let head = content.first else { return "" }
@@ -329,6 +324,17 @@ public enum LaTeXTranslator {
             }
         }
         return out
+    }
+
+    /// As the MathML: a named box carries its name above, highlight is the
+    /// plain content (colour would need a package). Out of line, so the
+    /// recursive frame stays small.
+    @inline(never)
+    static func box(_ attrs: [String: String], _ content: String) -> String {
+        guard let name = attrs["boxname"] else { return "\\boxed{\(content)}" }
+        if name == "highlight" { return content }
+        let shown = name.count >= 2 && name.hasPrefix("\"") && name.hasSuffix("\"") ? String(name.dropFirst().dropLast()) : name
+        return "\\overset{\\scriptstyle\\text{\(escapeText(shown))}}{\\boxed{\(content)}}"
     }
 
     static func escapeText(_ s: String) -> String {

@@ -19,6 +19,15 @@ struct DeepNestingTests {
         #expect(throws: XMLTreeError.self) { try XMLTree.parseFragment(nested(100_000)) }
     }
 
+    /// x^2^2^...: each level goes through the layout cases, the largest frame.
+    @Test func translatorCapsDepthThroughPowers() {
+        let deep = String(repeating: "<e>", count: 450) + "<v>x</v>" + String(repeating: "<n>2</n></e>", count: 450)
+        let out = MathMLTranslator.translate("<math>" + deep + "</math>")
+        #expect(out.wellFormed)
+        let tex = LaTeXTranslator.translate("<math>" + deep + "</math>")
+        #expect(tex != nil)
+    }
+
     @Test func translatorCapsDepth() {
         let out = MathMLTranslator.translate("<math>" + nested(510) + "</math>")
         #expect(out.wellFormed)
