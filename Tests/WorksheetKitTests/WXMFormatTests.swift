@@ -16,6 +16,67 @@ struct WXMFormatTests {
         cells.reduce(into: [:]) { $0[$1.kind, default: 0] += 1 }
     }
 
+    @Test func imageCells() throws {
+        let png = Data([0x89, 0x50, 0x4E, 0x47, 1, 2, 3])
+        var image = Cell(kind: .image, input: "A */ caption")
+        image.outputs = [.image(data: png, format: "png", label: nil)]
+        let sheet = Worksheet(cells: [Cell(kind: .code, input: "x;"), image])
+        let text = WXMFormat.document(sheet)
+        // As TreeToWXM writes it: the caption's markers, then type and base64.
+        #expect(text.contains("/* [wxMaxima: caption start ]\nA *&#47; caption\n   [wxMaxima: caption end   ] */\n"
+            + "/* [wxMaxima: image   start ]\npng\n\(png.base64EncodedString())\n   [wxMaxima: image   end   ] */\n"))
+        let back = WXMFormat.read(text)
+        #expect(back.warnings.isEmpty)
+        #expect(back.cells.map(\.kind) == [.code, .image])
+        #expect(back.cells[1].input == "A */ caption")
+        #expect(back.cells[1].outputs == [.image(data: png, format: "png", label: nil)])
+    }
+
+    @Test func badImageIsLeftOut() {
+        let text = "/* [wxMaxima: caption start ]\nc\n   [wxMaxima: caption end   ] */\n"
+            + "/* [wxMaxima: image   start ]\npng\n!!not base64!!\n   [wxMaxima: image   end   ] */\n"
+        let r = WXMFormat.read(text)
+        #expect(r.cells.count == 1 && r.cells[0].outputs.isEmpty)
+        #expect(r.warnings == ["an image Macsima could not read (left out)"])
+    }
+
+    @Test func macExport() {
+        var folded = Cell(kind: .section, input: "Part")
+        folded.isFolded = true
+        let sheet = Worksheet(cells: [
+            Cell(kind: .title, input: "Notes & more"),
+            Cell(kind: .text, input: "Plain prose."),
+            Cell(kind: .text, input: "ends */ early"),
+            Cell(kind: .code, input: "f(x) := x^2;\nf(3);"),
+            folded,
+            Cell(kind: .code, input: "inside: 1$"),
+            Cell(kind: .pageBreak),
+        ])
+        #expect(WXMFormat.mac(sheet) == """
+            /* [wxMaxima: title   start ]
+            Notes &amp; more
+               [wxMaxima: title   end   ] */
+
+            /* Plain prose. */
+
+            /* ends *&#47; early */
+
+            f(x) := x^2;
+            f(3);
+
+            /* [wxMaxima: section start ]
+            Part
+               [wxMaxima: section end   ] */
+
+            inside: 1$
+
+            /* [wxMaxima: page break    ] */
+
+
+
+            """)
+    }
+
     @Test func textCells() throws {
         let r = try read("textcells.wxm")
         #expect(counts(r.cells) == [.text: 10, .title: 1, .section: 1, .subsection: 1, .subsubsection: 1,

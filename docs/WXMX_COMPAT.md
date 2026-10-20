@@ -26,7 +26,7 @@ feature.
 | Other archive files (images of kept cells, animation frames, gnuplot data `.gz`) | kept as attachments | written back under the same name | full (kept) | |
 | Untrusted input | caps: `content.xml` 64 MB, any file 128 MB, total 512 MB, 10,000 files; `..`, absolute and backslash paths rejected; XML nested deeper than 512 levels rejected | | full | |
 | Zip timestamps | | ZIPFoundation 0.9.19 writes them two hours off from local time here (looks like UTC); harmless, wxMaxima ignores them | partial | |
-| `.wxm` plain-text format | WorksheetKit reads it (cells, answers, hide, folds; images left out), used for pasting cells | WorksheetKit writes it, for copying cells; opening and saving `.wxm` files comes in Phase 3 step 13 | partial | Save as `.wxmx` |
+| `.wxm` plain-text format | Opens as a worksheet (File › Open, Phase 3 step 13): cells, answers, hide, folds and image cells (caption, base64 image; images over 48 MB or unreadable are left out with a warning). Files over 64 MB are refused; UTF-8, else Latin-1. Also read for pasting cells | Saved as wxMaxima's TreeToWXM writes it, image cells included, when the document is a `.wxm` (Save, Save As, Duplicate). Like wxMaxima: no outputs and no zoom | full | Outputs are lost by design: save as `.wxmx` to keep them. Image cells in `.wxm` checked against wxMaxima's source, not against a wxMaxima-written file |
 
 ## Document
 

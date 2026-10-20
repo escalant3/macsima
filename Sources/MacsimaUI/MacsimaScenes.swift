@@ -7,6 +7,10 @@ extension UTType {
     /// wxMaxima's zipped XML worksheet. wxMaxima declares only the extension,
     /// so this app imports the type under wxMaxima's bundle prefix.
     public static let wxmx = UTType(importedAs: "net.sf.wxmaxima.wxmx")
+    /// wxMaxima's plain-text batch worksheet (inputs only, no outputs).
+    public static let wxm = UTType(importedAs: "net.sf.wxmaxima.wxm", conformingTo: .plainText)
+    /// A Maxima batch file, for File › Export.
+    public static let maximaBatch = UTType(filenameExtension: "mac", conformingTo: .plainText) ?? .plainText
 }
 
 /// The app's scenes: one document window per worksheet.

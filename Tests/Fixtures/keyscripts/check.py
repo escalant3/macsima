@@ -335,6 +335,23 @@ elif script == "modes-basics":
     last = cell(10, "2+2")
     check(not d(10)["debugger"]["lisp"] and d(10)["state"] == "idle" and last["label"] > 0 and "math" in last["outputs"][0],
           f"Return to Maxima: 2+2 runs with a label again: {last['label']} {last['outputs']}")
+elif script == "files-basics":
+    import os
+    read = lambda n: open(f".build/keyscripts/{n}", encoding="utf-8").read() if os.path.exists(f".build/keyscripts/{n}") else ""
+    html, tex, mac, req, wxm = (read(n) for n in ["files-1.html", "files-1.tex", "files-1.mac", "files-2.html", "files-3.wxm"])
+    check("<math" in html and "integrate(x^2, x);" in html and "data:image/png;base64," in html and "Some notes." in html,
+          "Export › HTML: inputs, MathML outputs, the plot inside the page, the text cell")
+    check("\\includeimage{files-1_img/image1.png}" in tex and os.path.exists(".build/keyscripts/files-1_img/image1.png")
+          and "\\begin{equation*}" in tex, "Export › LaTeX: the math, and the plot in files-1_img/")
+    check(mac.startswith("integrate(x^2, x);\n") and "/* Some notes. */" in mac, f"Export › Maxima Batch File: {mac[:120]!r}")
+    check("<math" in req and "integrate(x^2, x);" in req, "wxworksheettohtml() in a cell writes the page Maxima asked for")
+    check(wxm.startswith("/* [wxMaxima batch file version 1]") and "integrate(x^2, x);" in wxm,
+          "Save To .wxm writes wxMaxima's batch format")
+    d2 = dump("files", 2)
+    kinds = [c["kind"] for c in d2["cells"]]
+    check(kinds.count("text") == 10 and "pageBreak" in kinds, f"textcells.wxm opens as a worksheet: {kinds}")
+    check("Open Recent" in dump("files", 1)["menus"] and "Maxima Batch File…" in dump("files", 1)["menus"],
+          f"File › Open Recent and Export are there: {dump('files', 1)['menus']}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

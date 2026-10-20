@@ -57,12 +57,21 @@ targets:
             # Alternate: never take over .wxmx from wxMaxima.
             LSHandlerRank: Alternate
             LSItemContentTypes: [net.sf.wxmaxima.wxmx]
+          - CFBundleTypeName: wxMaxima Batch Worksheet
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [net.sf.wxmaxima.wxm]
         UTImportedTypeDeclarations:
           - UTTypeIdentifier: net.sf.wxmaxima.wxmx
             UTTypeDescription: wxMaxima Worksheet
             UTTypeConformsTo: [public.zip-archive, public.data]
             UTTypeTagSpecification:
               public.filename-extension: [wxmx]
+          - UTTypeIdentifier: net.sf.wxmaxima.wxm
+            UTTypeDescription: wxMaxima Batch Worksheet
+            UTTypeConformsTo: [public.plain-text]
+            UTTypeTagSpecification:
+              public.filename-extension: [wxm]
   # Real keystrokes through XCUITest (Phase 3). Needs Automation Mode; see Tests/UITests/README.md.
   MacsimaUITests:
     type: bundle.ui-testing

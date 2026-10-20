@@ -45,7 +45,7 @@ public final class WorksheetController {
     /// The session's state, for the toolbar.
     public private(set) var sessionState: SessionState = .dead
     /// Why Maxima is not running, or other news for the status line.
-    public private(set) var statusMessage: String?
+    public internal(set) var statusMessage: String?
     /// When Maxima left idle for the evaluation now running (the status bar's clock).
     public private(set) var busySince: Date?
     /// How long the last evaluation took, from leaving idle to idle again.
@@ -578,6 +578,8 @@ public final class WorksheetController {
         case .tag("statusbar", let content):
             statusMessage = content
             statusFromMaxima = true
+        case .tag("worksheetexport", let content):
+            handleExportRequest(content)
         case .tag("macsima-help", let content):
             help.received(MaximaHelp.parse(content))
         case .tag("macsima-values", let content):
@@ -764,6 +766,10 @@ public final class WorksheetController {
         case .tag("statusbar", let content):
             statusMessage = content
             statusFromMaxima = true
+        case .tag("worksheetexport", let content):
+            // After this cell's outputs so far are in the model.
+            flush()
+            handleExportRequest(content)
         case .tag:
             break
         case .finished(let outcome):

@@ -72,6 +72,19 @@ public enum WXMFormat {
         return out
     }
 
+    /// The worksheet as a Maxima program (File › Export › Maxima Batch
+    /// File), as wxMaxima's ExportToMAC writes it: code as it is, text cells
+    /// as comments, headings, images and page breaks between their markers
+    /// (comments to Maxima), folded sections inline. No outputs, no answers.
+    public static func mac(_ worksheet: Worksheet) -> String {
+        var out = ""
+        for cell in worksheet.cells {
+            let text = cellText(cell, wxm: false)
+            if !text.isEmpty { out += text + "\n" }
+        }
+        return out + "\n"
+    }
+
     /// Cells as wxMaxima writes them, one after the other (the clipboard form).
     /// Cells `.wxm` can't hold (kept raw cells) are left out.
     public static func cells(_ cells: [Cell]) -> String {
@@ -97,30 +110,71 @@ public enum WXMFormat {
         return out
     }
 
-    static func cellText(_ cell: Cell) -> String {
-        var out = ""
-        for cell in [cell] {
-            var text = ""
-            if cell.extraAttributes["hide"] == "true" { text += Marker.hide + "\n" }
-            switch cell.kind {
-            case .code:
-                text += Marker.inputStart + "\n" + escapeMarkers(cell.input) + "\n" + Marker.inputEnd + "\n"
-                for (question, answer) in answers(of: cell) {
-                    text += Marker.questionStart + "\n" + escapeText(question) + "\n" + Marker.questionEnd + "\n"
-                    text += Marker.answerStart + "\n" + escapeText(answer) + "\n" + Marker.answerEnd + "\n"
-                }
-                if cell.extraAttributes["auto_answer"] == "yes" { text += Marker.autoAnswer + "\n" }
-            case .pageBreak:
-                text += Marker.pageBreak + "\n"
-            case .raw, .image:
-                continue
-            default:
-                guard let word = textMarkers.first(where: { $0.0 == cell.kind })?.1 else { continue }
-                text += textStart(word) + "\n" + escapeText(cell.input) + "\n" + textEnd(word) + "\n"
+    /// One cell as TreeToWXM writes it; `wxm` false is the `.mac` form.
+    static func cellText(_ cell: Cell, wxm: Bool = true) -> String {
+        var text = ""
+        if cell.extraAttributes["hide"] == "true" { text += Marker.hide + "\n" }
+        switch cell.kind {
+        case .code where wxm:
+            text += Marker.inputStart + "\n" + escapeMarkers(cell.input) + "\n" + Marker.inputEnd + "\n"
+            for (question, answer) in answers(of: cell) {
+                text += Marker.questionStart + "\n" + escapeText(question) + "\n" + Marker.questionEnd + "\n"
+                text += Marker.answerStart + "\n" + escapeText(answer) + "\n" + Marker.answerEnd + "\n"
             }
-            out += text
+            if cell.extraAttributes["auto_answer"] == "yes" { text += Marker.autoAnswer + "\n" }
+        case .code:
+            text += cell.input + "\n"
+        case .text where !wxm:
+            // A comment the user may have written: escaped only when it would
+            // end early or stay open (GH #2353, #1907).
+            text += "/* " + (isCommentBody(cell.input) ? cell.input : escapeSlashesNextToStars(cell.input)) + " */\n"
+        case .pageBreak:
+            text += Marker.pageBreak + "\n"
+        case .image:
+            text += textStart(captionWord) + "\n" + (wxm ? escapeText(cell.input) : escapeSlashes(cell.input)) + "\n"
+                + textEnd(captionWord) + "\n"
+            if case .image(let data, let format, _, _)? = cell.outputs.first {
+                text += Marker.imageStart + "\n" + format + "\n" + data.base64EncodedString() + "\n" + Marker.imageEnd + "\n"
+            }
+        case .raw:
+            return ""
+        default:
+            guard let word = textMarkers.first(where: { $0.0 == cell.kind })?.1 else { return "" }
+            text += textStart(word) + "\n" + (wxm ? escapeText(cell.input) : escapeSlashes(cell.input)) + "\n" + textEnd(word) + "\n"
+        }
+        return text
+    }
+
+    /// Would Maxima read "/* text */" back as one comment? (IsMaximaCommentBody:
+    /// comments nest, and the two characters of a pair are used up.)
+    static func isCommentBody(_ text: String) -> Bool {
+        let c = Array(text)
+        var depth = 1, i = 0
+        while i + 1 < c.count {
+            if c[i] == "/", c[i + 1] == "*" { depth += 1; i += 2 }
+            else if c[i] == "*", c[i + 1] == "/" { depth -= 1; if depth == 0 { return false }; i += 2 }
+            else { i += 1 }
+        }
+        return depth == 1
+    }
+
+    /// A "/" next to a "*" as "&#47;" (EscapeSlashesNextToStars).
+    static func escapeSlashesNextToStars(_ content: String) -> String {
+        let chars = Array(content)
+        var out = ""
+        for (i, c) in chars.enumerated() {
+            if c == "/", (i > 0 && chars[i - 1] == "*") || (i + 1 < chars.count && chars[i + 1] == "*") {
+                out += "&#47;"
+            } else {
+                out.append(c)
+            }
         }
         return out
+    }
+
+    /// EscapeWXMSlashes: "&" too, then the slashes; no marker escaping.
+    static func escapeSlashes(_ content: String) -> String {
+        escapeSlashesNextToStars(content.replacingOccurrences(of: "&", with: "&amp;"))
     }
 
     /// Known answers as a `.wxmx` keeps them: `questionN` and `answerN`.
@@ -143,17 +197,7 @@ public enum WXMFormat {
     /// Text inside a comment: "&" and a "/" next to a "*" as entities, so the
     /// comment can't end early (GH #1907), then marker lines escaped.
     static func escapeText(_ content: String) -> String {
-        let amp = content.replacingOccurrences(of: "&", with: "&amp;")
-        let chars = Array(amp)
-        var out = ""
-        for (i, c) in chars.enumerated() {
-            if c == "/", (i > 0 && chars[i - 1] == "*") || (i + 1 < chars.count && chars[i + 1] == "*") {
-                out += "&#47;"
-            } else {
-                out.append(c)
-            }
-        }
-        return escapeMarkers(out)
+        escapeMarkers(escapeSlashes(content))
     }
 
     static func unescapeText(_ content: String) -> String {
@@ -176,8 +220,12 @@ public enum WXMFormat {
         }
     }
 
+    /// Images larger than this (base64 characters, about 48 MB of bytes)
+    /// are left out: a `.wxm` is untrusted input.
+    static let maxImageBase64 = 64 << 20
+
     /// Cells from `.wxm` text. Folded cells follow their heading, which is
-    /// marked folded; images are left out.
+    /// marked folded; image cells keep their caption and image.
     public static func read(_ text: String) -> ReadResult {
         var warnings: Set<String> = []
         let lines = text.replacingOccurrences(of: "\r\n", with: "\n").split(separator: "\n", omittingEmptySubsequences: false)
@@ -224,11 +272,20 @@ public enum WXMFormat {
             } else if let (kind, word) = textMarkers.first(where: { line == textStart($0.1) }) {
                 append(Cell(kind: kind, input: unescapeText(until(textEnd(word)))))
             } else if line == textStart(captionWord) {
-                _ = until(textEnd(captionWord))
-                warnings.insert("image cells (left out: Macsima can't show them yet)")
+                append(Cell(kind: .image, input: unescapeText(until(textEnd(captionWord)))))
             } else if line == Marker.imageStart {
-                if i < lines.count { i += 1 }   // the image type
-                _ = until(Marker.imageEnd)
+                // The type, then the base64 bytes (one line as wxMaxima writes it).
+                guard i < lines.count else { break }
+                let format = lines[i].trimmingCharacters(in: .whitespaces).lowercased()
+                i += 1
+                let encoded = until(Marker.imageEnd).filter { !$0.isWhitespace }
+                if encoded.count > maxImageBase64 {
+                    warnings.insert("an image over \(maxImageBase64 / (1 << 20)) MB (left out)")
+                } else if let data = Data(base64Encoded: encoded), let last = cells.indices.last, cells[last].kind == .image {
+                    cells[last].outputs = [.image(data: data, format: format.isEmpty ? "png" : format, label: nil)]
+                } else {
+                    warnings.insert("an image Macsima could not read (left out)")
+                }
             } else if line == Marker.questionStart {
                 question = unescapeText(until(Marker.questionEnd))
             } else if line == Marker.answerStart {

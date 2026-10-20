@@ -76,7 +76,7 @@ public enum MaximaHelp {
         return piece.replacingOccurrences(of: "\\", with: "")
     }
 
-    static func unescape(_ s: String) -> String {
+    public static func unescape(_ s: String) -> String {
         guard s.contains("&") else { return s }
         return s.replacingOccurrences(of: "&lt;", with: "<").replacingOccurrences(of: "&gt;", with: ">")
             .replacingOccurrences(of: "&quot;", with: "\"").replacingOccurrences(of: "&apos;", with: "'")

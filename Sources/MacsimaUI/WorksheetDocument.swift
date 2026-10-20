@@ -14,7 +14,12 @@ import WorksheetKit
 /// That is the invariant behind `@unchecked Sendable` (ReferenceFileDocument
 /// requires Sendable): `worksheet` is only ever mutated on the main actor.
 public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable {
-    public static let readableContentTypes: [UTType] = [.wxmx]
+    public static let readableContentTypes: [UTType] = [.wxmx, .wxm]
+    public static let writableContentTypes: [UTType] = [.wxmx, .wxm]
+
+    /// A `.wxm` larger than this is refused: it is untrusted input, and a
+    /// real one is text without outputs.
+    static let maxWXMBytes = 64 << 20
 
     @Published public var worksheet: Worksheet
     /// What the reader kept without being able to show it; shown when the file opens.
@@ -27,6 +32,19 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
     public required init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
+        }
+        if configuration.contentType.conforms(to: .wxm) {
+            guard data.count <= Self.maxWXMBytes else {
+                throw CocoaError(.fileReadTooLarge, userInfo: [NSLocalizedFailureReasonErrorKey: "The .wxm file is over 64 MB."])
+            }
+            // wxMaxima writes UTF-8; older files may be Latin-1.
+            guard let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
+                throw CocoaError(.fileReadInapplicableStringEncoding)
+            }
+            let result = WXMFormat.read(text)
+            worksheet = Worksheet(cells: result.cells.isEmpty ? [Cell(kind: .code)] : result.cells)
+            openWarnings = result.warnings
+            return
         }
         do {
             let result = try WXMXReader.read(data)
@@ -41,8 +59,13 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
         worksheet
     }
 
+    /// `.wxm` keeps inputs, headings, text, images and answers, not outputs
+    /// or zoom (as in wxMaxima); `.wxmx` keeps everything.
     public func fileWrapper(snapshot: Worksheet, configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: try WXMXWriter.write(snapshot))
+        if configuration.contentType.conforms(to: .wxm) {
+            return FileWrapper(regularFileWithContents: Data(WXMFormat.document(snapshot).utf8))
+        }
+        return FileWrapper(regularFileWithContents: try WXMXWriter.write(snapshot))
     }
 
     // MARK: - Undoable edits

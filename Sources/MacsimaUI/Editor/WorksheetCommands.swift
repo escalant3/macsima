@@ -71,6 +71,14 @@ struct WorksheetCommands: Commands {
                 .keyboardShortcut(.delete, modifiers: [.command, .shift])
                 .disabled(controller?.focusedCell == nil)
         }
+        CommandGroup(replacing: .importExport) {
+            Menu("Export") {
+                ForEach(ExportKind.allCases, id: \.self) { kind in
+                    Button(kind.title) { controller?.export(kind) }
+                }
+            }
+            .disabled(controller == nil)
+        }
         // Replaces the Edit menu's text-view Find items, which search one cell.
         CommandGroup(replacing: .textEditing) {
             Button("Find…") { controller?.find.show(replace: false) }

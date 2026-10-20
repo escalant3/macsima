@@ -1,0 +1,27 @@
+# Export and file formats (Phase 3, step 13). Files and dumps go to
+# .build/keyscripts/ and are checked by run.sh.
+wait 3
+type integrate(x^2, x);
+key return shift
+wait 3
+type wxplot2d(sin(x), [x, 0, %pi])$
+key return shift
+wait 5
+key 1 cmd
+type Some notes.
+export html .build/keyscripts/files-1.html
+export latex .build/keyscripts/files-1.tex
+export mac .build/keyscripts/files-1.mac
+# Maxima asks for the export itself (the glue's wxworksheettohtml).
+key 0 cmd
+type wxworksheettohtml(".build/keyscripts/files-2.html")$
+key return shift
+wait 3
+save-copy wxm .build/keyscripts/files-3.wxm
+dump .build/keyscripts/files-1.json
+# A .wxm file opens as a worksheet.
+open-copy Tests/Fixtures/wxm/textcells.wxm .build/keyscripts/files-4.wxm
+wait 3
+dump .build/keyscripts/files-2.json
+shot .build/keyscripts/files-2.png
+quit

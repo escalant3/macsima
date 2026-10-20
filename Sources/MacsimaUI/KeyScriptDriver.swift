@@ -3,6 +3,7 @@
 #if DEBUG
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 import WorksheetKit
 
 /// Drives the app from a script of key events, for checking the editor
@@ -14,7 +15,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option] [control]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `debug <command>`, `debug-on-error on|off`, `to-maxima`, `interrupt`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `export <kind> <path>`, `save-copy <type> <path>`, `open-copy <fixture> <path>`, `debug <command>`, `debug-on-error on|off`, `to-maxima`, `interrupt`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -168,6 +169,33 @@ enum KeyScriptDriver {
         case "watch":
             // `watch <name> ...`: typed into the variables panel.
             WorksheetController.keyController?.variables.add(rest.split(separator: " ").map(String.init))
+        case "export":
+            // `export html|latex|mac <path>`: File › Export without the panel.
+            let parts = rest.split(separator: " ", maxSplits: 1).map(String.init)
+            if parts.count == 2, let kind = ExportKind(rawValue: parts[0]), let url = scriptFile(parts[1]) {
+                WorksheetController.keyController?.write(kind, to: url)
+            }
+        case "save-copy":
+            // `save-copy wxm|wxmx <path>`: Save To in that format.
+            let parts = rest.split(separator: " ", maxSplits: 1).map(String.init)
+            if parts.count == 2, let url = scriptFile(parts[1]),
+               let document = documentWindow?.windowController?.document as? NSDocument {
+                let type = parts[0] == "wxm" ? UTType.wxm.identifier : UTType.wxmx.identifier
+                await withCheckedContinuation { c in
+                    document.save(to: url, ofType: type, for: .saveToOperation) { error in
+                        if let error { log("save-copy: \(error)") }
+                        c.resume()
+                    }
+                }
+            }
+        case "open-copy":
+            // `open-copy <fixture> <path>`: copies a fixture under .build/keyscripts and opens it.
+            let parts = rest.split(separator: " ", maxSplits: 1).map(String.init)
+            if parts.count == 2, let url = scriptFile(parts[1]) {
+                try? FileManager.default.removeItem(at: url)
+                try? FileManager.default.copyItem(at: URL(filePath: parts[0]), to: url)
+                _ = try? await NSDocumentController.shared.openDocument(withContentsOf: url, display: true)
+            }
         case "debug":
             // `debug <command>`: a debugger button (:next, :bt) or the field.
             WorksheetController.keyController?.debugCommand(rest)
@@ -328,6 +356,13 @@ enum KeyScriptDriver {
         return nil
     }
 
+    /// A path the scripts may write: under .build/keyscripts only.
+    private static func scriptFile(_ path: String) -> URL? {
+        let url = URL(filePath: path, relativeTo: URL(filePath: FileManager.default.currentDirectoryPath + "/")).standardizedFileURL
+        guard url.path.contains("/.build/keyscripts/") else { log("refusing to write \(path)"); return nil }
+        return url
+    }
+
     private static func dump(to path: String) {
         guard let controller = WorksheetController.keyController else { log("no controller"); return }
         let cells = controller.document.worksheet.cells.map { cell -> [String: Any] in
@@ -372,6 +407,8 @@ enum KeyScriptDriver {
                             "source": controller.debugLocation?.source ?? "", "lisp": controller.inLispMode] as [String: Any]
         info["statusBar"] = ["busy": controller.busySince != nil, "cpu": controller.cpuPercent ?? -1,
                              "last": controller.lastDuration.map { Double($0.components.seconds) + Double($0.components.attoseconds) / 1e18 } ?? -1] as [String: Any]
+        refreshMenus(NSApp.mainMenu)
+        info["menus"] = ["Open Recent", "Export", "HTML…", "LaTeX…", "Maxima Batch File…"].filter { findMenuItem($0, in: NSApp.mainMenu) != nil }
         info["sidebar"] = controller.showsSidebar ? controller.sidebarTab.rawValue : "hidden"
         info["watch"] = controller.variables.names.map { name -> [String: Any] in
             let v = controller.variables.values[name]
