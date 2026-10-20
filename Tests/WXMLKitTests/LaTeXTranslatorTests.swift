@@ -25,6 +25,14 @@ struct LaTeXTranslatorTests {
         }
     }
 
+    @Test func boxes() {
+        let x2 = #"<msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup>"#
+        #expect(LaTeXTranslator.translate("<math><mrow><hl>\(x2)</hl></mrow></math>") == #"\boxed{{x}^{2}}"#)
+        #expect(LaTeXTranslator.translate(#"<math><mrow><hl boxname="&quot;a_b&quot;">"# + x2 + "</hl></mrow></math>")
+                == #"\overset{\scriptstyle\text{a\_b}}{\boxed{{x}^{2}}}"#)
+        #expect(LaTeXTranslator.translate(#"<math><mrow><hl boxname="highlight">"# + x2 + "</hl></mrow></math>") == "{x}^{2}")
+    }
+
     /// The math of the .wxmx fixtures (wxMaxima's own dialect).
     static func wxmxChunks() throws -> [(String, String)] {
         let base = MathFixtures.testsDir.deletingLastPathComponent().appending(path: "Fixtures/wxmx")

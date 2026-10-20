@@ -133,7 +133,12 @@ public enum LaTeXTranslator {
         case "cj":
             return "\\overline{\(row(kids, &depth))}"
         case "hl":
-            return "\\boxed{\(row(kids, &depth))}"
+            // As the MathML: highlight is the plain content (colour would
+            // need a package), a named box carries its name above.
+            guard let name = attrs["boxname"] else { return "\\boxed{\(row(kids, &depth))}" }
+            if name == "highlight" { return row(kids, &depth) }
+            let shown = name.count >= 2 && name.hasPrefix("\"") && name.hasSuffix("\"") ? String(name.dropFirst().dropLast()) : name
+            return "\\overset{\\scriptstyle\\text{\(Self.escapeText(shown))}}{\\boxed{\(row(kids, &depth))}}"
         case "fn":
             let content = children.filter { $0.name != nil || !$0.textContent.trimmingCharacters(in: .whitespaces).isEmpty }
             guard let head = content.first else { return "" }

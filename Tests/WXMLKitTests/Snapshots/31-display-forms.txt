@@ -80,7 +80,7 @@ in:    <math><lbl altCopy="%o12">(%o12) </lbl><mrow><hl boxname="&quot;tag&quot;
 label: %o12
 image: -
 text:  box(y,"tag")
-out:   <math display="block"><menclose notation="box"><mi>y</mi></menclose></math>
+out:   <math display="block"><mover><menclose notation="box"><mi>y</mi></menclose><mtext mathsize="70%" mathcolor="#888">tag</mtext></mover></math>
 
 ### 13
 in:    <math><lbl altCopy="%o13">(%o13) </lbl><munder lisp="wxxml-array-no-display-properties"><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><mn>1</mn></mrow></munder></math>

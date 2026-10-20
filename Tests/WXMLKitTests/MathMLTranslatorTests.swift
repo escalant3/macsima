@@ -123,6 +123,19 @@ struct MathMLTranslatorTests {
         #expect(ml("<math><g>%alpha</g></math>").contains("<mi>α</mi>"))
     }
 
+    /// box(), box(expr, name) and box(expr, highlight) as the glue sends them (Maxima 5.50.0).
+    @Test func boxes() {
+        let inner = #"<msup><mrow><mi lisp="*var-tag*">x</mi></mrow><mn>2</mn></msup>"#
+        #expect(ml("<math><mrow><hl>\(inner)</hl></mrow></math>").contains(#"<menclose notation="box"><msup>"#))
+        let named = ml(#"<math><mrow><hl boxname="&quot;a label&quot;">"# + inner + "</hl></mrow></math>")
+        #expect(named.contains(#"<mover><menclose notation="box">"#) && named.contains(">a label</mtext></mover>"),
+                "the name above the box, without its quotes: \(named)")
+        #expect(ml(#"<math><mrow><hl boxname="a&lt;b">"# + inner + "</hl></mrow></math>").contains(">a&lt;b</mtext>"))
+        let highlight = ml(#"<math><mrow><hl boxname="highlight"><mi>b</mi><mo>+</mo><mi>a</mi></hl></mrow></math>"#)
+        #expect(highlight.contains(##"<mstyle mathcolor="#d00">"##) && !highlight.contains("menclose"),
+                "highlight colours, without a box: \(highlight)")
+    }
+
     /// Fixes for WebKit's MathML layout, chosen with `macsima-render lab` (Phase 2, step 3b).
     @Test func webKitLayoutWorkarounds() {
         // Parens around short content do not stretch (WebKit raises them); around fractions they do.

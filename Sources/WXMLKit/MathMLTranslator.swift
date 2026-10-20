@@ -228,7 +228,14 @@ private struct Context {
             guard kids.count == 2 else { return unknownElement(node) }
             return "<msub><mrow>\(emit(kids[0]))<mo stretchy=\"true\">|</mo></mrow>\(emit(kids[1]))</msub>"
         case "hl":
-            return "<menclose notation=\"box\">\(row(children))</menclose>"
+            // box(expr, highlight) colours instead of boxing (wxMaxima's
+            // ParseHighlightTag); box(expr, name) shows its name. wxMaxima
+            // draws it in a gap of the top edge; here it sits small above.
+            guard let name = attrs["boxname"] else { return "<menclose notation=\"box\">\(row(children))</menclose>" }
+            if name == "highlight" { return "<mstyle mathcolor=\"#d00\">\(row(children))</mstyle>" }
+            let shown = name.count >= 2 && name.hasPrefix("\"") && name.hasSuffix("\"") ? String(name.dropFirst().dropLast()) : name
+            return "<mover><menclose notation=\"box\">\(row(children))</menclose>"
+                + "<mtext mathsize=\"70%\" mathcolor=\"#888\">\(MathMLTranslator.escape(shown))</mtext></mover>"
         case "cj":
             // WebKit draws mover accents (U+00AF, U+203E, U+0305) misplaced; menclose is clean.
             return "<menclose notation=\"top\">\(row(children))</menclose>"
