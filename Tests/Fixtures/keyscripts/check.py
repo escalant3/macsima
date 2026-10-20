@@ -41,8 +41,11 @@ elif script == "eval-basics":
     check(d2["state"] == "busy" and d2["running"] == 1, "the long integral is running")
     check(d3["state"] == "idle" and d3["cells"][4]["outputs"] == ["error interrupted Interrupted"], "Cmd+. interrupts it")
     d4 = dump("eval", 4)
-    check([c["label"] for c in d4["cells"]][:4] == [1, 2, 3, 4] and d4["cells"][4]["label"] == -1,
-          "after Restart, Cmd+R relabels from 1 in order (and stops at the question)")
+    # Abort on error is off here: 2+2 after 1/0 runs and takes (%i4). The
+    # cell after the question has not run yet and keeps its old outputs.
+    check([c["label"] for c in d4["cells"]][:4] == [1, 2, 3, 5] and "math %o4 4" in d4["cells"][2]["outputs"]
+          and d4["cells"][4]["outputs"] == ["error interrupted Interrupted"],
+          f"after Restart, Cmd+R relabels from 1 in order and stops at the question: {[c['label'] for c in d4['cells']]}")
     check(d4["state"] == "question" and d4["status"] == "", "evaluation stops at the question; no status after a restart")
 elif script == "wrap-basics":
     def renders(n, label):
@@ -352,6 +355,25 @@ elif script == "files-basics":
     check(kinds.count("text") == 10 and "pageBreak" in kinds, f"textcells.wxm opens as a worksheet: {kinds}")
     check("Open Recent" in dump("files", 1)["menus"] and "Maxima Batch File…" in dump("files", 1)["menus"],
           f"File › Open Recent and Export are there: {dump('files', 1)['menus']}")
+elif script == "settings-basics":
+    d = lambda n: dump("settings", n)
+    def last_render(n, label):
+        r = [x for x in d(n)["renders"] if x["label"] == label]
+        return r[-1] if r else None
+    f1, f2 = d(1)["editor"]["font"], d(2)["editor"]["font"]
+    check(f1.endswith(" 14") and f2 == "Menlo 20", f"code font and size follow Settings at once: {f1} -> {f2}")
+    r1, r2 = last_render(1, "%o1"), last_render(2, "%o1")
+    check(r1 and r2 and r2["height"] > r1["height"] * 1.3, f"the math is rendered again, larger: {r1} -> {r2}")
+    cell = [c for c in d(3)["cells"] if c["input"] == "1/0; 5;"][0]
+    check(any(o.startswith("error") for o in cell["outputs"]) and any("math %o" in o and o.endswith(" 5") for o in cell["outputs"]),
+          f"Abort on error off: 5 is evaluated after 1/0: {cell['outputs']}")
+    plot = [c for c in d(4)["cells"] if c["input"].startswith("wxplot2d")][0]
+    check(any(o.startswith("image %t") and " svg" in o for o in plot["outputs"]), f"plots come as SVG: {plot['outputs']}")
+    check(d(5)["zoom"] == 150, f"a new worksheet starts at the default zoom: {d(5)['zoom']}")
+    s7 = {c["input"].strip(): c for c in d(7)["cells"]}
+    check(s7["1/0;"]["outputs"][0].startswith("error") and s7["7;"]["outputs"] == ["math %o3 7"]
+          and s7["8;"]["outputs"] == [] and d(7)["state"] == "idle",
+          f"abort on error: Cmd+R stops at 1/0; 7; keeps its old (%o3), 8; is not run: {[(k, v['outputs']) for k, v in s7.items()]}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

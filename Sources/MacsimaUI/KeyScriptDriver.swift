@@ -15,7 +15,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option] [control]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `export <kind> <path>`, `save-copy <type> <path>`, `open-copy <fixture> <path>`, `debug <command>`, `debug-on-error on|off`, `to-maxima`, `interrupt`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `setting <key> <value>`, `export <kind> <path>`, `save-copy <type> <path>`, `open-copy <fixture> <path>`, `debug <command>`, `debug-on-error on|off`, `to-maxima`, `interrupt`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -169,6 +169,14 @@ enum KeyScriptDriver {
         case "watch":
             // `watch <name> ...`: typed into the variables panel.
             WorksheetController.keyController?.variables.add(rest.split(separator: " ").map(String.init))
+        case "setting":
+            // `setting <key> <value>`: as the Settings window does, in the
+            // scripts' own settings store (never the user's).
+            let parts = rest.split(separator: " ", maxSplits: 1).map(String.init)
+            guard parts.count == 2, AppSettings.store !== UserDefaults.standard else { log("setting refused"); return }
+            if let number = Double(parts[1]) { AppSettings.store.set(number, forKey: parts[0]) }
+            else if parts[1] == "true" || parts[1] == "false" { AppSettings.store.set(parts[1] == "true", forKey: parts[0]) }
+            else { AppSettings.store.set(parts[1], forKey: parts[0]) }
         case "export":
             // `export html|latex|mac <path>`: File › Export without the panel.
             let parts = rest.split(separator: " ", maxSplits: 1).map(String.init)
@@ -447,7 +455,8 @@ enum KeyScriptDriver {
             }
         }
         let selection = editor.selectedRange()
-        return ["colors": colors, "backgrounds": backgrounds, "selection": [selection.location, selection.length]]
+        return ["colors": colors, "backgrounds": backgrounds, "selection": [selection.location, selection.length],
+                "font": editor.font.map { "\($0.familyName ?? $0.fontName) \(Int($0.pointSize))" } ?? ""]
     }
 
     private static func name(_ color: NSColor) -> String {

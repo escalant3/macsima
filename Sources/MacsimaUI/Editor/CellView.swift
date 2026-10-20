@@ -31,6 +31,9 @@ extension EnvironmentValues {
 /// One cell: its editor with the `(%iN)` gutter, then its outputs.
 struct CellView: View {
     let cell: Cell
+    @AppStorage(AppSettings.codeFontKey, store: AppSettings.store) private var codeFont = ""
+    @AppStorage(AppSettings.codeSizeKey, store: AppSettings.store) private var codeSize = AppSettings.defaultCodeSize
+    @AppStorage(AppSettings.textSizeKey, store: AppSettings.store) private var textSize = AppSettings.defaultTextSize
     /// The cell's position, for accessibility identifiers (`cell-input-N`).
     let index: Int
     let isFocused: Bool
@@ -112,6 +115,7 @@ struct CellView: View {
                         .accessibilityIdentifier("cell-hidden-\(index)")
                 } else {
                     CellEditor(text: cell.input, kind: cell.kind, scale: scale, accessibilityID: "cell-input-\(index)",
+                               fontSettings: "\(codeFont)|\(codeSize)|\(textSize)",
                                formats: cell.textFormats,
                                isFocused: isFocused, focusRequest: focusRequest,
                                caretRequest: caretRequest, cellID: cell.id, makeView: makeEditor)

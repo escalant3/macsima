@@ -28,6 +28,9 @@ wait 2
 dump .build/keyscripts/eval-3.json
 menu Restart Maxima
 wait 4
+# The 1/0 cell would stop Evaluate All (abort on error, settings-basics);
+# here the run goes on to the question.
+setting AbortOnError false
 key r cmd
 wait 8
 dump .build/keyscripts/eval-4.json

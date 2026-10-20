@@ -10,7 +10,9 @@ public struct MaximaConfiguration: Sendable {
     public var initialFolder: String?
     /// Sent as `linel` before every statement.
     public var lineWidth = 80
-    /// Stop the rest of a cell when one of its statements fails.
+    /// When a statement fails, stop: the rest of its cell and the cells
+    /// queued after it are not run (wxMaxima's "abort on error", which
+    /// clears its evaluation queue). Off, everything goes on.
     public var abortCellOnError = true
     /// Launch attempts when Maxima exits before connecting.
     public var startAttempts = 3

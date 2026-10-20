@@ -69,7 +69,8 @@ struct ExportTests {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         var failures: [String] = []
-        // All at once: one LuaLaTeX per document, then wait for them.
+        // Four at a time: one LuaLaTeX per document (all at once starved the
+        // other tests running alongside).
         var runs: [(name: String, k: Int, tex: String, process: Process)] = []
         for (k, (name, sheet)) in try Self.fixtures().enumerated() {
             let file = WorksheetExport.latex(sheet, imageFolder: "doc\(k)_img")
@@ -82,6 +83,7 @@ struct ExportTests {
             p.arguments = ["-interaction=nonstopmode", "-halt-on-error", "doc\(k).tex"]
             p.currentDirectoryURL = dir
             p.standardOutput = FileHandle.nullDevice
+            if runs.count >= 4 { runs[runs.count - 4].process.waitUntilExit() }
             try p.run()
             runs.append((name, k, file.tex, p))
         }

@@ -1,0 +1,52 @@
+# Settings (Phase 3, step 14), changed the way the Settings window changes
+# them, in the scripts' own settings store. Dumps go to .build/keyscripts/.
+wait 3
+type expand((a+b)^2);
+key return shift
+wait 3
+key up
+dump .build/keyscripts/settings-1.json
+# Fonts and sizes show at once: the editor's font, the math's size.
+setting CodeFont Menlo
+setting CodeSize 20
+setting MathSize 30
+wait 3
+dump .build/keyscripts/settings-2.json
+shot .build/keyscripts/settings-2.png
+# Abort on error, on by default: Evaluate All stops at 1/0, and the cell
+# after it keeps its old output, as in wxMaxima.
+key down
+type 1/0;
+key return shift
+wait 2
+type 7;
+key return shift
+wait 2
+type 8;
+key r cmd
+wait 3
+dump .build/keyscripts/settings-7.json
+# Abort on error off: the rest of the cell runs after an error.
+setting AbortOnError false
+key 0 cmd
+type 1/0; 5;
+key return shift
+wait 3
+dump .build/keyscripts/settings-3.json
+# Plots as SVG from now on.
+setting PlotFormat svg
+wait 1
+type wxplot2d(x, [x, 0, 1])$
+key return shift
+wait 5
+dump .build/keyscripts/settings-4.json
+# New worksheets take the default zoom.
+setting DefaultZoom 150
+key n cmd
+wait 3
+dump .build/keyscripts/settings-5.json
+# The Settings window itself.
+key , cmd
+wait 2
+shot .build/keyscripts/settings-6.png
+quit

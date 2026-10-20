@@ -20,7 +20,7 @@ public actor MaximaSession {
 
     public nonisolated let events: AsyncStream<SessionEvent>
     private nonisolated let eventSink: AsyncStream<SessionEvent>.Continuation
-    public let configuration: MaximaConfiguration
+    public private(set) var configuration: MaximaConfiguration
     private let makeTransport: TransportFactory
     private let makeToken: @Sendable () -> String
 
@@ -304,6 +304,7 @@ public actor MaximaSession {
                 job.statements[job.next...].forEach { job.sink.yield(.skipped($0)) }
                 finish(job, .failed(job.failure ?? kind))
             }
+            if configuration.abortCellOnError { cancelQueue() }
         case nil:
             job.sink.yield(.prompt(label: label))
             if job.next == job.statements.count { finish(job, job.failure.map { .failed($0) } ?? .completed) }
@@ -314,6 +315,20 @@ public actor MaximaSession {
         } else {
             runNext()
         }
+    }
+
+    /// Abort on error: the cells waiting behind the failed one are not run.
+    private func cancelQueue() {
+        for job in queue {
+            job.statements.forEach { job.sink.yield(.skipped($0)) }
+            finish(job, .cancelled)
+        }
+        queue.removeAll()
+    }
+
+    /// Settings › Abort on Error, for the cells evaluated from now on.
+    public func setAbortOnError(_ on: Bool) {
+        configuration.abortCellOnError = on
     }
 
     private func finish(_ job: CellJob, _ outcome: CellOutcome) {

@@ -2,6 +2,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import WorksheetKit
 
 extension UTType {
     /// wxMaxima's zipped XML worksheet. wxMaxima declares only the extension,
@@ -15,6 +16,13 @@ extension UTType {
 
 /// The app's scenes: one document window per worksheet.
 public struct MacsimaScenes: Scene {
+    /// A new worksheet at Settings' default zoom.
+    nonisolated static func newWorksheet() -> Worksheet {
+        var sheet = DemoWorksheet.requested ? DemoWorksheet.make() : .empty()
+        sheet.zoom = AppSettings.defaultZoom
+        return sheet
+    }
+
     public init() {
         #if DEBUG
         Task { @MainActor in
@@ -25,7 +33,7 @@ public struct MacsimaScenes: Scene {
     }
 
     public var body: some Scene {
-        DocumentGroup(newDocument: { WorksheetDocument(worksheet: DemoWorksheet.requested ? DemoWorksheet.make() : .empty()) }) { file in
+        DocumentGroup(newDocument: { WorksheetDocument(worksheet: Self.newWorksheet()) }) { file in
             WorksheetWindow(document: file.document)
         }
         .defaultSize(width: 900, height: 980)

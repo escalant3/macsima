@@ -22,8 +22,8 @@ public enum MathWrap: Hashable, Sendable {
 
 /// The HTML page one math output is shown in.
 public enum MathHTML {
-    /// Font size of the math in CSS pixels.
-    public static let mathSize = 19
+    /// Font size of the math in CSS pixels (Settings › Math size, 19 by default).
+    public static var mathSize: Double { AppSettings.mathSize }
     /// Space between the label column and the math: the editor's gutter
     /// spacing plus the text view's 5 pt line padding, so math lines up with input.
     public static let gap = 19

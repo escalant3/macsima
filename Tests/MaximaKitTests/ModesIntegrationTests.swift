@@ -98,3 +98,39 @@ struct ModesIntegrationTests {
         await session.shutdown()
     }
 }
+
+@Suite(.serialized, .enabled(if: Integration.maximaAvailable))
+struct AbortOnErrorTests {
+    /// Three cells queued at once; the middle one fails.
+    private func run(abort: Bool) async throws -> [[CellEvent]] {
+        let session = MaximaSession()
+        try await session.start()
+        await session.setAbortOnError(abort)
+        let streams = [
+            try await session.evaluate(cellID: "a", text: "1+1;"),
+            try await session.evaluate(cellID: "b", text: "1/0; 3;"),
+            try await session.evaluate(cellID: "c", text: "4;"),
+        ]
+        var all: [[CellEvent]] = []
+        for stream in streams { all.append(await drain(stream)) }
+        await session.shutdown()
+        return all
+    }
+
+    @Test func onStopsTheQueue() async throws {
+        let cells = try await run(abort: true)
+        #expect(cells[0].last == .finished(.completed))
+        #expect(cells[1].last == .finished(.failed(.maxima)))
+        #expect(cells[1].contains(.skipped(Statement(text: "3;", terminator: .show))))
+        #expect(cells[2].last == .finished(.cancelled), "the cell after the error is not run")
+        #expect(!cells[2].contains { if case .started = $0 { true } else { false } })
+    }
+
+    @Test func offGoesOn() async throws {
+        let cells = try await run(abort: false)
+        #expect(cells[1].contains { if case .math(let m) = $0 { m.contains("<mn>3</mn>") } else { false } },
+                "the rest of the failing cell runs")
+        #expect(cells[1].last == .finished(.failed(.maxima)))
+        #expect(cells[2].last == .finished(.completed))
+    }
+}

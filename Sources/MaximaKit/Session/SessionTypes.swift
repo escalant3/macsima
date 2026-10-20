@@ -38,6 +38,8 @@ public enum CellOutcome: Sendable, Equatable, CustomStringConvertible {
     case completed
     case failed(ErrorKind)
     case interrupted
+    /// Not run: a cell before it failed and `abortCellOnError` is on.
+    case cancelled
     case sessionDied(String)
 
     public var description: String {
@@ -45,6 +47,7 @@ public enum CellOutcome: Sendable, Equatable, CustomStringConvertible {
         case .completed: "completed"
         case .failed(let kind): "failed (\(kind.rawValue) error)"
         case .interrupted: "interrupted"
+        case .cancelled: "cancelled"
         case .sessionDied(let why): "session died (\(why))"
         }
     }

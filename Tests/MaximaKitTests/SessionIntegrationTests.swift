@@ -77,12 +77,17 @@ struct ProcessCPUTests {
         let group = try #require(await session.processGroup)
         let idle = try #require(ProcessCPU.time(ofGroup: group))
         // About two seconds of work.
+        _ = idle
         let stream = try await session.evaluate(cellID: "a", text: "for i thru 3000000 do x: i^2$")
+        // Measured from when Maxima is at work, over a second.
+        while await session.state != .busy { try await Task.sleep(for: .milliseconds(10)) }
+        try await Task.sleep(for: .milliseconds(100))
         let clock = ContinuousClock()
         let start = clock.now
+        let before = try #require(ProcessCPU.time(ofGroup: group))
         try await Task.sleep(for: .seconds(1))
         let busy = try #require(ProcessCPU.time(ofGroup: group))
-        let percent = ProcessCPU.percent(from: idle, to: busy, over: clock.now - start)
+        let percent = ProcessCPU.percent(from: before, to: busy, over: clock.now - start)
         #expect(percent > 50 && percent < 200, "one busy SBCL thread: \(percent)%")
         _ = await drain(stream)
         await session.shutdown()

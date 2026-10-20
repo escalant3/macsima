@@ -110,6 +110,10 @@ public final class WorksheetController {
     public init(document: WorksheetDocument) {
         self.document = document
         find.controller = self
+        settingsObserver = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification,
+                                                                  object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applySettings() }
+        }
         help.ask = { [weak self] topic in
             guard let session = self?.session else { return false }
             Task { await session.help(topic) }
@@ -400,6 +404,23 @@ public final class WorksheetController {
         help.lookUp(editor(for: id).helpTopic ?? "")
     }
 
+    // MARK: - Settings
+
+    @ObservationIgnored private var settingsObserver: NSObjectProtocol?
+    /// What this window's Maxima was last told, so only changes are sent.
+    @ObservationIgnored private var appliedAbort: Bool?
+    @ObservationIgnored private var appliedSVG: Bool?
+
+    /// Abort on error and the plot format reach the running Maxima at once.
+    func applySettings() {
+        guard let session else { return }
+        let abort = AppSettings.abortOnError, svg = AppSettings.plotsAsSVG
+        if appliedAbort != nil, appliedAbort != abort { Task { await session.setAbortOnError(abort) } }
+        if appliedSVG != nil, appliedSVG != svg { Task { await session.setOption("wxplot_usesvg", svg) } }
+        appliedAbort = abort
+        appliedSVG = svg
+    }
+
     // MARK: - Debugger and Lisp mode
 
     /// A debugger command (`:next`, `:bt`) or an expression, as typed into
@@ -508,6 +529,9 @@ public final class WorksheetController {
             statusMessage = nil
             try await session.start()
             if debugOnError { await session.setOption("debugmode", true) }
+            // The configuration had today's settings; changes are sent from here on.
+            appliedAbort = AppSettings.abortOnError
+            appliedSVG = AppSettings.plotsAsSVG
         } catch {
             statusMessage = "Maxima did not start: \(error)"
         }
@@ -611,7 +635,8 @@ public final class WorksheetController {
     public func evaluate(_ id: UUID) {
         guard let cell = document.worksheet[id], cell.kind == .code, let session else { return }
         let text = cell.input
-        document.worksheet.clearOutputs(id)
+        // The old outputs stay until the cell runs, as in wxMaxima: a cell
+        // that waits, or is not run after an error (abort on error), keeps them.
         pending[id] = nil
         running.insert(id)
         setErrorMarks(nil, for: id)
@@ -623,6 +648,7 @@ public final class WorksheetController {
                 streams.append((id, stream))
                 startReader()
             } catch {
+                enqueue(id, .clearOutputs)
                 enqueue(id, .append(.error(kind: nil, message: "\(error)")))
                 // Unbalanced brackets: nothing was sent; mark the bracket.
                 if case .split(let split)? = error as? MaximaError, let at = split.position.utf16Offset(in: text) {
@@ -695,6 +721,8 @@ public final class WorksheetController {
         /// The statement failed: the text since it started becomes the error.
         case error(kind: String?, message: String)
         case answered(String)
+        /// The cell starts running: the last run's outputs and label go.
+        case clearOutputs
         /// Drops the empty text runs statement marks left behind.
         case cleanUp
     }
@@ -705,6 +733,7 @@ public final class WorksheetController {
         switch event {
         case .started(let index, _):
             currentStatement[id] = index
+            if index == 0 { enqueue(id, .clearOutputs) }
             // Lisp mode has no input labels.
             if index == 0, !inLispMode { enqueue(id, .label(nextLabel)) }
             enqueue(id, .appendText(Self.statementMark))
@@ -878,6 +907,9 @@ public final class WorksheetController {
             } else {
                 cell.outputs.append(.error(kind: kind, message: message))
             }
+        case .clearOutputs:
+            cell.outputs = []
+            cell.inputLabel = nil
         case .cleanUp:
             cell.outputs.removeAll { if case .text(let t) = $0 { t.isEmpty } else { false } }
         case .answered(let answer):

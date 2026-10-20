@@ -128,7 +128,7 @@ public final class MathSnapshotRenderer {
 
     private static func key(_ mathML: String, _ label: String?, _ dark: Bool, _ scale: CGFloat,
                             _ width: CGFloat?) -> String {
-        "\(dark ? "d" : "l")|\(scale)|\(width.map { "\(Int($0))" } ?? "-")|\(label ?? "")|\(mathML)"
+        "\(dark ? "d" : "l")|\(scale)|\(MathHTML.mathSize)|\(width.map { "\(Int($0))" } ?? "-")|\(label ?? "")|\(mathML)"
     }
 }
 
@@ -142,6 +142,8 @@ public struct MathImageOutputView: View {
     let wraps: Bool
     @Environment(\.colorScheme) private var scheme
     @Environment(\.worksheetScale) private var scale
+    /// Settings › Math size: a change renders the math again.
+    @AppStorage(AppSettings.mathSizeKey, store: AppSettings.store) private var mathSize = AppSettings.defaultMathSize
     @State private var rendered: MathSnapshotRenderer.Rendered?
     @State private var width: CGFloat = 0
 
@@ -164,7 +166,7 @@ public struct MathImageOutputView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onGeometryChange(for: CGFloat.self) { $0.size.width.rounded(.down) } action: { width = $0 }
-        .task(id: "\(scheme)|\(scale)|\(wraps ? width : -1)|\(label ?? "")|\(mathML)") {
+        .task(id: "\(scheme)|\(scale)|\(mathSize)|\(wraps ? width : -1)|\(label ?? "")|\(mathML)") {
             guard width > 0 || !wraps else { return }
             let width: CGFloat? = wraps ? width : nil
             let dark = scheme == .dark

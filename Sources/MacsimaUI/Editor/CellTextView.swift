@@ -597,6 +597,8 @@ struct CellEditor: NSViewRepresentable {
     /// The worksheet's zoom.
     let scale: CGFloat
     let accessibilityID: String
+    /// Changes when Settings' fonts change, so the view takes the new font.
+    var fontSettings = ""
     /// Bold, italic, ... of a text cell's text.
     var formats: TextFormats = []
     /// This cell is the controller's focused cell.
@@ -657,14 +659,20 @@ struct CellEditor: NSViewRepresentable {
         return CGSize(width: width, height: nsView.height(forWidth: width))
     }
 
+    /// The cell's font: Settings' code font and sizes, at the worksheet's
+    /// zoom. Headings keep their proportion to the text size.
     static func font(for kind: CellKind, scale: CGFloat = 1) -> NSFont {
+        let text = CGFloat(AppSettings.textSize) * scale
         switch kind {
-        case .code: .monospacedSystemFont(ofSize: 14 * scale, weight: .regular)
-        case .title: .systemFont(ofSize: 26 * scale, weight: .bold)
-        case .section: .systemFont(ofSize: 21 * scale, weight: .semibold)
-        case .subsection: .systemFont(ofSize: 17 * scale, weight: .semibold)
-        case .subsubsection, .heading5, .heading6: .systemFont(ofSize: 15 * scale, weight: .semibold)
-        case .text, .image, .pageBreak, .raw: .systemFont(ofSize: 14 * scale)
+        case .code:
+            let size = CGFloat(AppSettings.codeSize) * scale
+            let family = AppSettings.codeFont
+            return (family.isEmpty ? nil : NSFont(name: family, size: size)) ?? .monospacedSystemFont(ofSize: size, weight: .regular)
+        case .title: return .systemFont(ofSize: text * 26 / 14, weight: .bold)
+        case .section: return .systemFont(ofSize: text * 21 / 14, weight: .semibold)
+        case .subsection: return .systemFont(ofSize: text * 17 / 14, weight: .semibold)
+        case .subsubsection, .heading5, .heading6: return .systemFont(ofSize: text * 15 / 14, weight: .semibold)
+        case .text, .image, .pageBreak, .raw: return .systemFont(ofSize: text)
         }
     }
 }
