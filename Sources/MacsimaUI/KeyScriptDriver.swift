@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option] [control]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -157,6 +157,11 @@ enum KeyScriptDriver {
         case "insert-image":
             // `insert-image <path>`: Cell › Insert Image… without the open panel.
             WorksheetController.keyController?.insertImage(from: URL(filePath: rest))
+        case "help":
+            // `help <topic>`: what clicking a link in the manual panel does.
+            WorksheetController.keyController?.help.lookUp(rest)
+        case "help-back":
+            WorksheetController.keyController?.help.back()
         case "toggle-fold":
             // `toggle-fold <cell>` (0-based): the triangle in a cell's gutter.
             if let c = Int(rest), let controller = WorksheetController.keyController,
@@ -330,6 +335,10 @@ enum KeyScriptDriver {
            let editor = controller.existingEditor(for: find.matches[current].cell) {
             info["findSelection"] = [editor.selectedRange().location, editor.selectedRange().length]
         }
+        let help = controller.help
+        info["help"] = ["visible": help.isVisible, "pending": help.pending ?? NSNull(), "topic": help.page?.topic ?? NSNull(),
+                        "entries": help.page?.entries.map(\.name) ?? [], "related": help.page?.related.count ?? 0,
+                        "error": help.page?.error ?? NSNull(), "history": help.history] as [String: Any]
         if let popup = CompletionPopup.current, popup.isShown {
             info["completion"] = ["items": popup.items.map(\.insertion),
                                   "selected": popup.selected?.insertion ?? NSNull(),

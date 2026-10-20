@@ -106,6 +106,16 @@ struct WorksheetCommands: Commands {
                 }
             }
         }
+        // wxMaxima's F1 for the word under the caret.
+        CommandGroup(before: .help) {
+            Button("Look Up in Maxima Manual") { controller?.lookUpHelp() }
+                .keyboardShortcut(KeyEquivalent(Character(UnicodeScalar(NSF1FunctionKey)!)), modifiers: [])
+            Button(controller?.help.isVisible == true ? "Hide Manual" : "Show Manual") {
+                if let help = controller?.help { help.isVisible.toggle() }
+            }
+            .keyboardShortcut("0", modifiers: [.command, .option])
+            Divider()
+        }
         CommandMenu("Maxima") {
             Button("Interrupt") { controller?.interrupt() }
                 .keyboardShortcut(".", modifiers: .command)

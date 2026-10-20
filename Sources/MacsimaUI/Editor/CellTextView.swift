@@ -441,6 +441,42 @@ final class CellTextView: NSTextView {
         super.keyDown(with: event)
     }
 
+    // MARK: - Help (code cells)
+
+    /// Look Up in Maxima Manual, from the context menu.
+    var onLookUp: ((String) -> Void)?
+
+    /// What F1 looks up: the selection when it is one line, else the name
+    /// or operator at the caret.
+    var helpTopic: String? {
+        let selection = selectedRange()
+        if selection.length > 0 {
+            let text = (string as NSString).substring(with: selection).trimmingCharacters(in: .whitespaces)
+            return text.isEmpty || text.contains("\n") ? nil : text
+        }
+        return MaximaHelp.topic(in: string, caret: selection.location)
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event)
+        guard highlightsSyntax, let menu else { return menu }
+        // The click's spot, not the caret, as Look Up does.
+        let at = characterIndexForInsertion(at: convert(event.locationInWindow, from: nil))
+        let selection = selectedRange()
+        let topic = selection.length > 0 && NSLocationInRange(at, selection) ? helpTopic : MaximaHelp.topic(in: string, caret: at)
+        guard let topic else { return menu }
+        let item = NSMenuItem(title: "Look Up “\(topic)” in Maxima Manual", action: #selector(lookUpFromMenu(_:)), keyEquivalent: "")
+        item.target = self
+        item.representedObject = topic
+        menu.insertItem(item, at: 0)
+        menu.insertItem(.separator(), at: 1)
+        return menu
+    }
+
+    @objc private func lookUpFromMenu(_ sender: NSMenuItem) {
+        if let topic = sender.representedObject as? String { onLookUp?(topic) }
+    }
+
     // MARK: - Completion (code cells)
 
     /// The names the worksheet's code cells use and the functions they

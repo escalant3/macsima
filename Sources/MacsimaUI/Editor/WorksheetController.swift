@@ -75,10 +75,17 @@ public final class WorksheetController {
 
     /// Find and Replace for this window.
     public let find = FindController()
+    /// The manual panel.
+    public let help = HelpModel()
 
     public init(document: WorksheetDocument) {
         self.document = document
         find.controller = self
+        help.ask = { [weak self] topic in
+            guard let session = self?.session else { return false }
+            Task { await session.help(topic) }
+            return true
+        }
     }
 
     // MARK: - Window registry
@@ -164,6 +171,7 @@ public final class WorksheetController {
         editor.onLeave = { [weak self] up, x in self?.leave(id, up: up, x: x) ?? false }
         editor.onSelectCells = { [weak self] up in self?.startCellSelection(from: id, up: up) }
         editor.onPasteCells = { [weak self] in self?.pasteCells(after: id) ?? false }
+        editor.onLookUp = { [weak self] topic in self?.help.lookUp(topic) }
         editor.completionSymbols = { [weak self] word in self?.completionSymbols(skipping: word, in: id) ?? CompletionIndex() }
         editor.onFormatsChange = { [weak self] formats in
             guard let self, self.document.worksheet[id]?.textFormats != formats else { return }
@@ -339,6 +347,13 @@ public final class WorksheetController {
         markEdited()
     }
 
+    /// Help › Look Up in Maxima Manual (F1): the name at the caret of the
+    /// focused code cell, or the selection; with neither, just the panel.
+    public func lookUpHelp() {
+        guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return help.isVisible = true }
+        help.lookUp(editor(for: id).helpTopic ?? "")
+    }
+
     /// Cell › Complete Word and Show Template, in the focused code cell.
     public func complete(templatesOnly: Bool) {
         guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return }
@@ -441,6 +456,8 @@ public final class WorksheetController {
         case .tag("statusbar", let content):
             statusMessage = content
             statusFromMaxima = true
+        case .tag("macsima-help", let content):
+            help.received(MaximaHelp.parse(content))
         case .tag("wxxml-symbols", let content):
             MaximaSymbols.shared.ingestInBackground(content)
         case .interruptChannelReady, .tag, .output:

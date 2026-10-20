@@ -83,6 +83,9 @@ The stream is plain text with known tags mixed in. The scanner looks for a bare 
 | `wxxml-key` | The echoed auth token | Authenticate the session |
 | `wxxml-asciimath` | Maxima's own ASCII-art display block | Show in a monospace font |
 | `wxasync` | Background-job output with the originating cell's `id`, carried as an id child element (only wx-spawn-async produces it) | Route to that cell |
+| `macsima-help` | Macsima's own (not wxMaxima's): the reply of `macsima-help` in `macsima.lisp`, sent after the setup lines. `topic`, one `entry` (`name`, `section`, `text`) per exact match in the text manual, `related` inexact matches, or `error` | Show in the manual panel |
+
+Macsima keeps its own Lisp in `Sources/MaximaKit/Resources/macsima.lisp`, so `wxMathML.lisp` stays a plain copy. Its queries go out as `:lisp-quiet` lines, which use up no input label, and wait until Maxima is idle: one sent while a question waits would be read as the answer (checked on 5.50.0, `HelpIntegrationTests`).
 
 The worker side reads with a one-second socket timeout, strips carriage returns, and processes its buffer at least every 100 ms or when it exceeds 10,000 characters, so the UI is not flooded.
 
@@ -119,7 +122,7 @@ Maxima evaluates text and prints tagged text. Everything below is on your side o
 | Plots | Loads the PNG or SVG file an `img` tag names; animations arrive as a `slide` tag listing frames | Yes |
 | Autocomplete | Symbols and templates from `wxxml-symbols`, plus a regex pass over the user's own definitions | Later |
 | Variables and status | Watch panel from `variables`, status bar from `statusbar`, CPU polling of the child | Later |
-| Help | Topic names from `html-manual-keywords`; opens Maxima's HTML manual | Later |
+| Help | Topic names from `html-manual-keywords`; opens Maxima's HTML manual. Homebrew's 5.50.0 ships the HTML index but not the pages, so Macsima shows the text manual (what `describe` prints) in a side panel (Phase 3 step 10) | Later |
 | Export and tooling | HTML, LaTeX, `.mac` and `.wxm` export, undo, search, a worksheet diff viewer | Later |
 | Settings | Maxima and gnuplot paths, display options, init file `wxmaxima-init` if present | Basic |
 

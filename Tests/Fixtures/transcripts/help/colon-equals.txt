@@ -1,0 +1,137 @@
+<topic>:=</topic><entry><name>:=</name><section>Assignment operators</section><text>
+ -- Operator: :=
+
+     The function definition operator.
+
+     ‘&lt;f&gt;(&lt;x_1&gt;, ..., &lt;x_n&gt;) := &lt;expr&gt;’ defines a function named &lt;f&gt;
+     with arguments &lt;x_1&gt;, ..., &lt;x_n&gt; and function body &lt;expr&gt;.  ‘:=’
+     never evaluates the function body (unless explicitly evaluated by
+     quote-quote ‘''’).  The function body is evaluated every time the
+     function is called.
+
+     ‘&lt;f&gt;[&lt;x_1&gt;, ..., &lt;x_n&gt;] := &lt;expr&gt;’ defines a so-called *note
+     memoizing function::.  Its function body is evaluated just once for
+     each distinct value of its arguments, and that value is returned,
+     without evaluating the function body, whenever the arguments have
+     those values again.  (A function of this kind is also known as a
+     &quot;array function&quot;.)
+
+     ‘&lt;f&gt;[&lt;x_1&gt;, ..., &lt;x_n&gt;](&lt;y_1&gt;, ..., &lt;y_m&gt;) := &lt;expr&gt;’ is a special
+     case of a *note memoizing function::.  ‘&lt;f&gt;[&lt;x_1&gt;, ..., &lt;x_n&gt;]’ is
+     a ‘memoizing function’ which returns a lambda expression with
+     arguments ‘&lt;y_1&gt;, ..., &lt;y_m&gt;’.  The function body is evaluated once
+     for each distinct value of ‘&lt;x_1&gt;, ..., &lt;x_n&gt;’, and the body of the
+     lambda expression is that value.
+
+     When the last or only function argument &lt;x_n&gt; is a list of one
+     element, the function defined by ‘:=’ accepts a variable number of
+     arguments.  Actual arguments are assigned one-to-one to formal
+     arguments &lt;x_1&gt;, ..., &lt;x_(n - 1)&gt;, and any further actual
+     arguments, if present, are assigned to &lt;x_n&gt; as a list.
+
+     All function definitions appear in the same namespace; defining a
+     function ‘f’ within another function ‘g’ does not automatically
+     limit the scope of ‘f’ to ‘g’.  However, ‘local(f)’ makes the
+     definition of function ‘f’ effective only within the block or other
+     compound expression in which ‘local’ appears.
+
+     If some formal argument &lt;x_k&gt; is a quoted symbol, the function
+     defined by ‘:=’ does not evaluate the corresponding actual
+     argument.  Otherwise all actual arguments are evaluated.
+
+     See also ‘define’ and *note ::=::.
+
+     Examples:
+
+     ‘:=’ never evaluates the function body (unless explicitly evaluated
+     by quote-quote).
+
+          (%i1) expr : cos(y) - sin(x);
+          (%o1)                    cos(y) - sin(x)
+          (%i2) F1 (x, y) := expr;
+          (%o2)                   F1(x, y) := expr
+          (%i3) F1 (a, b);
+          (%o3)                    cos(y) - sin(x)
+          (%i4) F2 (x, y) := ''expr;
+          (%o4)              F2(x, y) := cos(y) - sin(x)
+          (%i5) F2 (a, b);
+          (%o5)                    cos(b) - sin(a)
+
+     ‘f(&lt;x_1&gt;, ..., &lt;x_n&gt;) := ...’ defines an ordinary function.
+
+          (%i1) G1(x, y) := (print (&quot;Evaluating G1 for x=&quot;, x, &quot;and y=&quot;, y),
+           x.y - y.x);
+          (%o1) G1(x, y) := (print(&quot;Evaluating G1 for x=&quot;, x, &quot;and y=&quot;,
+                                                         y), x . y - y . x)
+          (%i2) G1([1, a], [2, b]);
+          Evaluating G1 for x= [1, a] and y= [2, b]
+          (%o2)                           0
+          (%i3) G1([1, a], [2, b]);
+          Evaluating G1 for x= [1, a] and y= [2, b]
+          (%o3)                           0
+
+     ‘f[&lt;x_1&gt;, ..., &lt;x_n&gt;] := ...’ defines a *note memoizing function::.
+
+          (%i1) G2[a] := (print (&quot;Evaluating G2 for a=&quot;, a), a^2);
+                                                               2
+          (%o1)     G2  := (print(&quot;Evaluating G2 for a=&quot;, a), a )
+                      a
+          (%i2) G2[1234];
+          Evaluating G2 for a= 1234
+          (%o2)                        1522756
+          (%i3) G2[1234];
+          (%o3)                        1522756
+          (%i4) G2[2345];
+          Evaluating G2 for a= 2345
+          (%o4)                        5499025
+          (%i5) arrayinfo (G2);
+          (%o5)              [hashed, 1, [1234], [2345]]
+          (%i6) listarray (G2);
+          (%o6)                  [1522756, 5499025]
+
+     ‘&lt;f&gt;[&lt;x_1&gt;, ..., &lt;x_n&gt;](&lt;y_1&gt;, ..., &lt;y_m&gt;) := &lt;expr&gt;’ is a special
+     case of a *note memoizing function::.
+
+          (%i1) G3[n](x) := (print (&quot;Evaluating G3 for n=&quot;, n), diff (sin(x)^2,
+           x, n));
+          (%o1) G3 (x) := (print(&quot;Evaluating G3 for n=&quot;, n),
+                  n
+                                                               2
+                                                       diff(sin (x), x, n))
+          (%i2) G3[2];
+          Evaluating G3 for n= 2
+                                          2           2
+          (%o2)          lambda([x], 2 cos (x) - 2 sin (x))
+          (%i3) G3[2];
+                                          2           2
+          (%o3)          lambda([x], 2 cos (x) - 2 sin (x))
+          (%i4) G3[2](1);
+                                     2           2
+          (%o4)                 2 cos (1) - 2 sin (1)
+          (%i5) arrayinfo (G3);
+          (%o5)                   [hashed, 1, [2]]
+          (%i6) listarray (G3);
+                                          2           2
+          (%o6)         [lambda([x], 2 cos (x) - 2 sin (x))]
+
+     When the last or only function argument &lt;x_n&gt; is a list of one
+     element, the function defined by ‘:=’ accepts a variable number of
+     arguments.
+
+          (%i1) H ([L]) := apply (&quot;+&quot;, L);
+          (%o1)                H([L]) := apply(&quot;+&quot;, L)
+          (%i2) H (a, b, c);
+          (%o2)                       c + b + a
+
+     ‘local’ makes a local function definition.
+
+          (%i1) foo (x) := 1 - x;
+          (%o1)                    foo(x) := 1 - x
+          (%i2) foo (100);
+          (%o2)                         - 99
+          (%i3) block (local (foo), foo (x) := 2 * x, foo (100));
+          (%o3)                          200
+          (%i4) foo (100);
+          (%o4)                         - 99
+
+</text></entry><related><name>::=</name></related>

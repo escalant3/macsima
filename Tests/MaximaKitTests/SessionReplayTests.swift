@@ -234,7 +234,8 @@ struct SessionReplayTests {
         var events: [CellEvent] = []
         await collect(&it, into: &events)
         #expect(events.last == .finished(.completed))
-        let afterSetup = Array(transport.sent.dropFirst(6))
+        #expect(transport.sent[6] == GlueLisp.macsimaCommand(), "Macsima's own Lisp after the setup lines")
+        let afterSetup = Array(transport.sent.dropFirst(7))
         #expect(afterSetup == [
             ":lisp-quiet (setq $linel 72)\n", ":lisp-quiet (setq *wx-cell-id* \"cell-1\")\n", "2+2;\n",
             ":lisp-quiet (setq $linel 72)\n", "3+3;\n",
@@ -250,8 +251,8 @@ struct SessionReplayTests {
         let line = ":lisp-quiet (setq $wxplot_pngcairo t)\n"
         let session = makeSession(transport) { $0.additionalSetupLines = [line] }
         try await session.start()
-        #expect(transport.sent.count == 7)
-        #expect(transport.sent[6] == line, "after the glue and the five standard lines")
+        #expect(transport.sent.count == 8)
+        #expect(transport.sent[7] == line, "after the glue, the five standard lines and macsima.lisp")
         var it = try await session.evaluate(cellID: "a", text: "integrate(sin(x), x);").makeAsyncIterator()
         var events: [CellEvent] = []
         await collect(&it, into: &events)

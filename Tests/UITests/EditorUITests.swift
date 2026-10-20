@@ -72,6 +72,22 @@ final class EditorUITests: XCTestCase {
     }
 
     @MainActor
+    func testF1OpensTheManual() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("expand(x)")
+        app.typeKey(.leftArrow, modifierFlags: [])
+        app.typeKey(.leftArrow, modifierFlags: [])
+        app.typeKey(.leftArrow, modifierFlags: [])
+        app.typeKey(.F1, modifierFlags: [])
+        let entry = app.descendants(matching: .any)["help-entry"].firstMatch
+        XCTAssertTrue(entry.waitForExistence(timeout: 10))
+        XCTAssertEqual(app.textFields["help-search"].value as? String, "expand")
+    }
+
+    @MainActor
     func testUndoTypingThenDeleteCell() throws {
         waitForReady()
         let input = app.textViews["cell-input-0"]

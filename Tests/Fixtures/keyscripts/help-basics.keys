@@ -1,0 +1,52 @@
+# The manual panel (Phase 3, step 10). Dumps go to .build/keyscripts/ and are
+# checked by run.sh.
+wait 3
+# F1 (Help > Look Up in Maxima Manual) on the name at the caret.
+type x: integrate(sin(t), t)
+key left
+key left
+key left
+key left
+key left
+key left
+key left
+key left
+key left
+key left
+key left
+key left
+menu Look Up in Maxima Manual
+wait 2
+dump .build/keyscripts/help-1.json
+shot .build/keyscripts/help-1.png
+# A link in the panel, then Back.
+help quad_qag
+wait 2
+dump .build/keyscripts/help-2.json
+help-back
+wait 2
+dump .build/keyscripts/help-3.json
+# An operator, a name with several entries, and one the manual lacks.
+key 0 cmd
+type f(x) := x
+key left
+key left
+key left
+menu Look Up in Maxima Manual
+wait 2
+dump .build/keyscripts/help-4.json
+help diff
+wait 2
+dump .build/keyscripts/help-5.json
+help nosuchtopic
+wait 2
+dump .build/keyscripts/help-6.json
+# While Maxima waits for an answer, a lookup waits too.
+key 0 cmd
+type asksign(y);
+key return shift
+wait 2
+help expand
+wait 1
+dump .build/keyscripts/help-7.json
+quit

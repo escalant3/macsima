@@ -18,6 +18,14 @@ public enum GlueLisp {
         return text
     }
 
+    /// Macsima's own Lisp (`macsima.lisp`), sent after the glue as one
+    /// `:lisp-quiet` line. Empty when the file is missing: help then gets no reply.
+    public static func macsimaCommand() -> String {
+        guard let url = Bundle.module.url(forResource: "macsima", withExtension: "lisp"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return "" }
+        return command(from: text)
+    }
+
     /// Builds the one-line `:lisp-quiet` command: strip leading indentation
     /// and `;` comments outside strings, join the lines with spaces.
     public static func command(from lisp: String) -> String {

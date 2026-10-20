@@ -397,6 +397,7 @@ public actor MaximaSession {
                                         token: token, tempDirectory: transport.tempDirectory) {
             transport.send(line)
         }
+        transport.send(GlueLisp.macsimaCommand())
         for line in configuration.additionalSetupLines { transport.send(line) }
         setState(.idle)
         authWaiter?.resolve(.success(()))
@@ -454,5 +455,30 @@ public actor MaximaSession {
         guard new != state else { return }
         state = new
         eventSink.yield(.state(new))
+        if new == .idle { sendQueries() }
+    }
+
+    // MARK: - Background queries
+
+    /// `:lisp-quiet` lines waiting for Maxima to be idle. Sent while a
+    /// question waits, one would be read as the answer.
+    private var queries: [String] = []
+
+    /// Looks `topic` up in Maxima's manual. The reply comes as
+    /// `.tag("macsima-help", ...)` (see `MaximaHelp.parse`), once Maxima is idle.
+    public func help(_ topic: String) {
+        query(":lisp-quiet (macsima-help \(GlueLisp.lispString(topic)))\n")
+    }
+
+    private func query(_ line: String) {
+        queries.append(line)
+        sendQueries()
+    }
+
+    private func sendQueries() {
+        guard state == .idle, current == nil, queue.isEmpty, let transport else { return }
+        let lines = queries
+        queries.removeAll()
+        for line in lines { transport.send(line) }
     }
 }

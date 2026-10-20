@@ -1,0 +1,178 @@
+<topic>integrate</topic><entry><name>integrate</name><section>Functions and Variables for Integration</section><text>
+ -- Function: integrate
+          integrate (&lt;expr&gt;, &lt;x&gt;)
+          integrate (&lt;expr&gt;, &lt;x&gt;, &lt;a&gt;, &lt;b&gt;)
+
+     Attempts to symbolically compute the integral of &lt;expr&gt; with
+     respect to &lt;x&gt;.  ‘integrate (&lt;expr&gt;, &lt;x&gt;)’ is an indefinite
+     integral, while ‘integrate (&lt;expr&gt;, &lt;x&gt;, &lt;a&gt;, &lt;b&gt;)’ is a definite
+     integral, with limits of integration &lt;a&gt; and &lt;b&gt;.  The limits
+     should not contain &lt;x&gt;, although ‘integrate’ does not enforce this
+     restriction.  &lt;a&gt; need not be less than &lt;b&gt;.  If &lt;b&gt; is equal to
+     &lt;a&gt;, ‘integrate’ returns zero.
+
+     See ‘quad_qag’ and related functions for numerical approximation of
+     definite integrals.  See ‘residue’ for computation of residues
+     (complex integration).  See ‘antid’ for an alternative means of
+     computing indefinite integrals.
+
+     The integral (an expression free of ‘integrate’) is returned if
+     ‘integrate’ succeeds.  Otherwise the return value is the noun form
+     of the integral (the quoted operator ‘'integrate’) or an expression
+     containing one or more noun forms.  The noun form of ‘integrate’ is
+     displayed with an integral sign.
+
+     In some circumstances it is useful to construct a noun form by
+     hand, by quoting ‘integrate’ with a single quote, e.g., ‘'integrate
+     (&lt;expr&gt;, &lt;x&gt;)’.  For example, the integral may depend on some
+     parameters which are not yet computed.  The noun may be applied to
+     its arguments by ‘ev (&lt;i&gt;, nouns)’ where &lt;i&gt; is the noun form of
+     interest.
+
+     ‘integrate’ handles definite integrals separately from indefinite,
+     and employs a range of heuristics to handle each case.  Special
+     cases of definite integrals include limits of integration equal to
+     zero or infinity (‘inf’ or ‘minf’), trigonometric functions with
+     limits of integration equal to zero and ‘%pi’ or ‘2 %pi’, rational
+     functions, integrals related to the definitions of the ‘beta’ and
+     ‘psi’ functions, and some logarithmic and trigonometric integrals.
+     Processing rational functions may include computation of residues.
+     If an applicable special case is not found, an attempt will be made
+     to compute the indefinite integral and evaluate it at the limits of
+     integration.  This may include taking a limit as a limit of
+     integration goes to infinity or negative infinity; see also *note
+     ldefint::.
+
+     Special cases of indefinite integrals include trigonometric
+     functions, exponential and logarithmic functions, and rational
+     functions.  ‘integrate’ may also make use of a short table of
+     elementary integrals.
+
+     ‘integrate’ may carry out a change of variable if the integrand has
+     the form ‘f(g(x)) * diff(g(x), x)’.  ‘integrate’ attempts to find a
+     subexpression ‘g(x)’ such that the derivative of ‘g(x)’ divides the
+     integrand.  This search may make use of derivatives defined by the
+     ‘gradef’ function.  See also ‘changevar’ and *note antid::.
+
+     If none of the preceding heuristics find the indefinite integral,
+     the Risch algorithm is executed.  The flag ‘risch’ may be set as an
+     ‘evflag’, in a call to ‘ev’ or on the command line, e.g., ‘ev
+     (integrate (&lt;expr&gt;, &lt;x&gt;), risch)’ or ‘integrate (&lt;expr&gt;, &lt;x&gt;),
+     risch’.  If ‘risch’ is present, ‘integrate’ calls the ‘risch’
+     function without attempting heuristics first.  See also *note
+     risch::.
+
+     ‘integrate’ works only with functional relations represented
+     explicitly with the ‘f(x)’ notation.  ‘integrate’ does not respect
+     implicit dependencies established by the ‘depends’ function.
+
+     ‘integrate’ may need to know some property of a parameter in the
+     integrand.  ‘integrate’ will first consult the ‘assume’ database,
+     and, if the variable of interest is not there, ‘integrate’ will ask
+     the user.  Depending on the question, suitable responses are ‘yes;’
+     or ‘no;’, or ‘pos;’, ‘zero;’, or ‘neg;’.
+
+     ‘integrate’ is not, by default, declared to be linear.  See
+     ‘declare’ and ‘linear’.
+
+     ‘integrate’ attempts integration by parts only in a few special
+     cases.
+
+     Examples:
+
+        • Elementary indefinite and definite integrals.
+
+               (%i1) integrate (sin(x)^3, x);
+                                          3
+                                       cos (x)
+               (%o1)                   ------- - cos(x)
+                                          3
+               (%i2) integrate (x/ sqrt (b^2 - x^2), x);
+                                                2    2
+               (%o2)                    - sqrt(b  - x )
+               (%i3) integrate (cos(x)^2 * exp(x), x, 0, %pi);
+                                              %pi
+                                          3 %e      3
+               (%o3)                      ------- - -
+                                             5      5
+               (%i4) integrate (x^2 * exp(-x^2), x, minf, inf);
+                                           sqrt(%pi)
+               (%o4)                       ---------
+                                               2
+
+        • Use of ‘assume’ and interactive query.
+
+               (%i1) assume (a &gt; 1)$
+               (%i2) integrate (x**a/(x+1)**(5/2), x, 0, inf);
+               Is a an integer?
+               no;
+
+               Is 2 a - 1 positive, negative or zero?
+               neg;
+                                           3
+               (%o2)                  beta(- - a, a + 1)
+                                           2
+               Is 2 a - 1 positive, negative or zero?
+               no;
+                                           3
+               (%o2)                  beta(- - a, a + 1)
+                                           2
+               (%i3) neg;
+
+        • Change of variable.  There are two changes of variable in this
+          example: one using a derivative established by ‘gradef’, and
+          one using the derivation ‘diff(r(x))’ of an unspecified
+          function ‘r(x)’.
+
+               (%i1) gradef (q(x), sin(x**2));
+               (%o1)                         q(x)
+               (%i2) diff (log (q (r (x))), x);
+                                     d               2
+                                    (-- (r(x))) sin(r (x))
+                                     dx
+               (%o2)                ----------------------
+                                           q(r(x))
+               (%i3) integrate (%, x);
+               (%o3)                     log(q(r(x)))
+
+        • Return value contains the ‘'integrate’ noun form.  In this
+          example, Maxima can extract one factor of the denominator of a
+          rational function, but cannot factor the remainder or
+          otherwise find its integral.  ‘grind’ shows the noun form
+          ‘'integrate’ in the result.  See also ‘integrate_use_rootsof’
+          for more on integrals of rational functions.
+
+               (%i1) expand ((x-4) * (x^3+2*x+1));
+                                   4      3      2
+               (%o1)              x  - 4 x  + 2 x  - 7 x - 4
+               (%i2) integrate (1/%, x);
+                                             /  2
+                                             | x  + 4 x + 18
+                                             | ------------- dx
+                                             |  3
+                                log(x - 4)   / x  + 2 x + 1
+               (%o2)            ---------- - ------------------
+                                    73               73
+               (%i3) grind (%);
+               log(x-4)/73-('integrate((x^2+4*x+18)/(x^3+2*x+1),x))/73$
+               (%o3)                         done
+
+        • Defining a function in terms of an integral.  The body of a
+          function is not evaluated when the function is defined.  Thus
+          the body of ‘f_1’ in this example contains the noun form of
+          ‘integrate’.  The quote-quote operator ‘''’ causes the
+          integral to be evaluated, and the result becomes the body of
+          ‘f_2’.
+
+               (%i1) f_1 (a) := integrate (x^3, x, 1, a);
+                                                    3
+               (%o1)           f_1(a) := integrate(x , x, 1, a)
+               (%i2) ev (f_1 (7), nouns);
+               (%o2)                          600
+               (%i3) /* Note parentheses around integrate(...) here */      f_2 (a) := ''(integrate (x^3, x, 1, a));
+                                                  4
+                                                 a    1
+               (%o3)                   f_2(a) := -- - -
+                                                 4    4
+               (%i4) f_2 (7);
+               (%o4)                          600</text></entry><related><name>integrate_use_rootsof</name></related>

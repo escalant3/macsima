@@ -32,7 +32,7 @@ public struct TagScanner: Sendable {
     public static let genericTags: Set<String> = [
         "variables", "wxxml-symbols", "suppressOutput", "statusbar", "wxxml-key",
         "wxxml-asciimath", "wxasync", "watch_variables_add", "html-manual-keywords",
-        "worksheetexport",
+        "worksheetexport", "macsima-help",
     ]
 
     private static let openTags: [(name: String, bytes: [UInt8])] =

@@ -278,6 +278,17 @@ elif script == "complete-basics":
     check(c(11) is None and line(11) == "diff", "Esc closes the list, the text unchanged")
     check(c(12) is None and line(12) == "plot(", f"( closes the list and is typed: {line(12)!r}")
     check(c(13) is not None and c(13)["worksheet"] == ["velocity"], f"velocity is the worksheet's: {c(13) and c(13)['worksheet']}")
+elif script == "help-basics":
+    h = lambda n: dump("help", n)["help"]
+    check(h(1)["visible"] and h(1)["topic"] == "integrate" and h(1)["entries"] == ["integrate"],
+          f"F1 in integrate opens the panel on its entry: {h(1)}")
+    check(h(2)["topic"] == "quad_qag" and h(2)["history"] == ["integrate"], f"a link goes to quad_qag: {h(2)}")
+    check(h(3)["topic"] == "integrate" and h(3)["history"] == [], f"Back returns to integrate: {h(3)}")
+    check(h(4)["topic"] == ":=" and h(4)["entries"] == [":="], f"F1 on := looks up the operator: {h(4)}")
+    check(h(5)["entries"] == ["diff", "diff <1>", "diff <2>"], f"diff has three entries, all shown: {h(5)}")
+    check(h(6)["entries"] == [] and h(6)["error"] is None, f"no entry for nosuchtopic: {h(6)}")
+    check(h(7)["pending"] == "expand" and dump("help", 7)["state"] == "question",
+          f"while asksign waits, the lookup waits: {h(7)}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

@@ -1,0 +1,111 @@
+<topic>diff</topic><entry><name>diff</name><section>Functions and Variables for Differentiation</section><text>
+ -- Special symbol: diff
+
+     When ‘diff’ is present as an ‘evflag’ in call to ‘ev’, all
+     differentiations indicated in ‘expr’ are carried out.</text></entry><entry><name>diff &lt;1&gt;</name><section>Functions and Variables for Differentiation</section><text>
+ -- Function: diff
+          diff (&lt;expr&gt;, &lt;x_1&gt;, &lt;n_1&gt;, ..., &lt;x_m&gt;, &lt;n_m&gt;)
+          diff (&lt;expr&gt;, &lt;x&gt;, &lt;n&gt;)
+          diff (&lt;expr&gt;, &lt;x&gt;)
+          diff (&lt;expr&gt;)
+
+     Returns the derivative or differential of &lt;expr&gt; with respect to
+     some or all variables in &lt;expr&gt;.
+
+     ‘diff (&lt;expr&gt;, &lt;x&gt;, &lt;n&gt;)’ returns the &lt;n&gt;'th derivative of &lt;expr&gt;
+     with respect to &lt;x&gt;.
+
+     ‘diff (&lt;expr&gt;, &lt;x_1&gt;, &lt;n_1&gt;, ..., &lt;x_m&gt;, &lt;n_m&gt;)’ returns the mixed
+     partial derivative of &lt;expr&gt; with respect to &lt;x_1&gt;, ..., &lt;x_m&gt;.  It
+     is equivalent to ‘diff (... (diff (&lt;expr&gt;, &lt;x_m&gt;, &lt;n_m&gt;) ...),
+     &lt;x_1&gt;, &lt;n_1&gt;)’.
+
+     ‘diff (&lt;expr&gt;, &lt;x&gt;)’ returns the first derivative of &lt;expr&gt; with
+     respect to the variable &lt;x&gt;.
+
+     ‘diff (&lt;expr&gt;)’ returns the total differential of &lt;expr&gt;, that is,
+     the sum of the derivatives of &lt;expr&gt; with respect to each its
+     variables times the differential ‘del’ of each variable.  No
+     further simplification of ‘del’ is offered.
+
+     The noun form of ‘diff’ is required in some contexts, such as
+     stating a differential equation.  In these cases, ‘diff’ may be
+     quoted (as ‘'diff’) to yield the noun form instead of carrying out
+     the differentiation.
+
+     When ‘derivabbrev’ is ‘true’, derivatives are displayed as
+     subscripts.  Otherwise, derivatives are displayed in the Leibniz
+     notation, ‘dy/dx’.
+
+     See also ‘depends’, ‘del’, ‘derivdegree’, ‘derivabbrev’, and *note
+     gradef::.
+
+     Examples:
+
+          (%i1) diff (exp (f(x)), x, 2);
+                               2
+                        f(x)  d               f(x)  d         2
+          (%o1)       %e     (--- (f(x))) + %e     (-- (f(x)))
+                                2                   dx
+                              dx
+          (%i2) derivabbrev: true$
+          (%i3) 'integrate (f(x, y), y, g(x), h(x));
+                                   h(x)
+                                  /
+                                  |
+          (%o3)                   |     f(x, y) dy
+                                  |
+                                  /
+                                   g(x)
+          (%i4) diff (%, x);
+                 h(x)
+                /
+                |
+          (%o4) |     (f(x, y))  dy + f(x, h(x)) (h(x))
+                |              x                       x
+                /
+                 g(x)
+                                                       - f(x, g(x)) (g(x))
+                                                                          x
+
+     For the tensor package, the following modifications have been
+     incorporated:
+
+     (1) The derivatives of any indexed objects in &lt;expr&gt; will have the
+     variables &lt;x_i&gt; appended as additional arguments.  Then all the
+     derivative indices will be sorted.
+
+     (2) The &lt;x_i&gt; may be integers from 1 up to the value of the
+     variable ‘dimension’ [default value: 4].  This will cause the
+     differentiation to be carried out with respect to the &lt;x_i&gt;'th
+     member of the list ‘coordinates’ which should be set to a list of
+     the names of the coordinates, e.g., ‘[x, y, z, t]’.  If
+     ‘coordinates’ is bound to an atomic variable, then that variable
+     subscripted by &lt;x_i&gt; will be used for the variable of
+     differentiation.  This permits an array of coordinate names or
+     subscripted names like ‘X[1]’, ‘X[2]’, ... to be used.  If
+     ‘coordinates’ has not been assigned a value, then the variables
+     will be treated as in (1) above.</text></entry><entry><name>diff &lt;2&gt;</name><section>Functions and Variables for itensor</section><text>
+ -- Function: diff (&lt;expr&gt;, &lt;v_1&gt;, [&lt;n_1&gt;, [&lt;v_2&gt;, &lt;n_2&gt;] ...])
+
+     is the usual Maxima differentiation function which has been
+     expanded in its abilities for ‘itensor’.  It takes the derivative
+     of &lt;expr&gt; with respect to &lt;v_1&gt; &lt;n_1&gt; times, with respect to &lt;v_2&gt;
+     &lt;n_2&gt; times, etc.  For the tensor package, the function has been
+     modified so that the &lt;v_i&gt; may be integers from 1 up to the value
+     of the variable ‘dim’.  This will cause the differentiation to be
+     carried out with respect to the &lt;v_i&gt;th member of the list
+     ‘vect_coords’.  If ‘vect_coords’ is bound to an atomic variable,
+     then that variable subscripted by &lt;v_i&gt; will be used for the
+     variable of differentiation.  This permits an array of coordinate
+     names or subscripted names like ‘x[1]’, ‘x[2]’, ...  to be used.
+
+     A further extension adds the ability to ‘diff’ to compute
+     derivatives with respect to an indexed variable.  In particular,
+     the tensor package knows how to differentiate expressions
+     containing combinations of the metric tensor and its derivatives
+     with respect to the metric tensor and its first and second
+     derivatives.  This capability is particularly useful when
+     considering Lagrangian formulations of a gravitational theory,
+     allowing one to derive the Einstein tensor and field equations from
+     the action principle.</text></entry><related><name>Functions and Variables for Differential Equations</name><name>Functions and Variables for Differentiation</name><name>Functions and Variables for impdiff</name><name>Functions for numerical solution of differential equations</name><name>Introduction to Differential Equations</name><name>Introduction to numerical solution of differential equations</name><name>antidiff</name><name>AntiDifference</name><name>at_difference</name><name>covdiff</name><name>evundiff</name><name>ext_diff</name><name>extdiff</name><name>idiff</name><name>lie_diff</name><name>liediff</name><name>poisdiff</name><name>ratdiff</name><name>rediff</name><name>setdifference</name><name>symmdifference</name><name>test_means_difference</name><name>test_proportions_difference</name><name>undiff</name></related>
