@@ -310,6 +310,31 @@ elif script == "panels-basics":
     s8, s9 = dump("panels", 8)["statusBar"], dump("panels", 9)["statusBar"]
     check(s8["busy"] and s8["cpu"] > 50, f"while the loop runs: the clock runs and Maxima uses a core: {s8}")
     check(not s9["busy"] and s9["last"] > 2, f"afterwards, how long it took: {s9}")
+elif script == "modes-basics":
+    d = lambda n: dump("modes", n)
+    def cell(n, start):
+        return [c for c in d(n)["cells"] if c["input"].startswith(start)][0]
+    check(d(1)["state"] == "question", f"asksign waits for an answer: {d(1)['state']}")
+    q = cell(2, "asksign")["outputs"]
+    check(d(2)["state"] == "idle" and any(o.startswith("error interrupted") for o in q),
+          f"Interrupt while it waits: the cell ends as interrupted, Maxima is idle: {d(2)['state']} {q}")
+    check(d(3)["state"] == "debugger" and d(3)["debugger"]["level"] == 1 and d(3)["debugger"]["debugOnError"],
+          f"Debug on Error: 1/0 stops in the debugger at level 1: {d(3)['debugger']}")
+    h = " | ".join(cell(4, "h(x)")["outputs"])
+    check("answer=x; | math - 0" in h, f"x evaluates in h's frame (0): {h[-300:]}")
+    check("#0: h(x=0)" in h, f":bt shows the frame: {h[-300:]}")
+    check(d(5)["state"] == "idle" and d(5)["debugger"]["level"] == -1, f":top leaves the debugger: {d(5)['state']}")
+    check(d(6)["state"] == "debugger" and d(6)["debugger"]["location"] == "debug-f.mac:4"
+          and d(6)["debugger"]["source"] == "y: x^2,", f"the breakpoint stops at line 4 of the file, shown: {d(6)['debugger']}")
+    check(d(7)["debugger"]["location"] == "debug-f.mac:5", f"Step Over goes to line 5: {d(7)['debugger']}")
+    f = " | ".join(cell(8, ":break")["outputs"])
+    check(d(8)["state"] == "idle" and "math %o" in f and "100" in f, f"Continue finishes f(3) = 100: {f[-200:]}")
+    lisp = cell(9, "(+ 1 2)")
+    check(d(9)["debugger"]["lisp"] and lisp["label"] == -1 and any(o == "text 3" for o in lisp["outputs"]),
+          f"in Lisp mode, (+ 1 2) gives 3 and no input label: {lisp['label']} {lisp['outputs']}")
+    last = cell(10, "2+2")
+    check(not d(10)["debugger"]["lisp"] and d(10)["state"] == "idle" and last["label"] > 0 and "math" in last["outputs"][0],
+          f"Return to Maxima: 2+2 runs with a label again: {last['label']} {last['outputs']}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

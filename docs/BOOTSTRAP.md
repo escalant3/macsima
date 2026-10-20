@@ -64,6 +64,8 @@ The glue Lisp's first line prints `<wxxml-key>TOKEN</wxxml-key>` with the value 
 - Before evaluating, wxMaxima sends `:lisp-quiet (setq $linel N)` (worksheet width in columns) and, when the cell changed, `:lisp-quiet (setq *wx-cell-id* "<uuid>")`. The `:lisp-quiet` prefix is skipped in Lisp mode.
 - Send one statement at a time. The next goes out only when a main prompt arrives.
 - Background queries run only when the queue is empty and Maxima is idle: `(wx-query-variable "x")`, `(wx-print-gui-variables)`, `(wxPrint_autocompletesymbols)`.
+- Break commands at the `(%iN)` prompt (`:break f 1`, `:info :bkpt`, `:delete`) print `*mread-prompt*`, which every `:lisp-quiet` line blanks until `:lisp` or the next statement restores it (`mdebug.lisp`, 5.50.0). After a `:lisp-quiet` line they print no prompt at all, and a front end waiting for one hangs. Macsima sends `:lisp-quiet nil`, the command, then `:lisp (values)`: exactly one prompt either way.
+- At a `(dbm:N)` prompt an expression needs its `;` (without it Maxima waits for more input); break commands take none. Where the debugger stops in a file, Maxima prints `^Z^Z/path/file.mac:LINE::` (Emacs annotation). Functions typed at the prompt have no line numbers, so breakpoints need a loaded file.
 
 ### Tags Maxima sends
 
@@ -274,6 +276,8 @@ What changes for Phase 1:
 - **Fixtures.** They contain machine-specific text (home path, temp names, ports, PIDs, memory addresses); the fixtures README lists them so tests do not compare them literally.
 
 Not tested yet: restart, the 5-second connect watchdog, kill while busy, orphan cleanup, the `(dbm:N)` debugger, LDB, `to_lisp()` mode, SVG plots, animations (`slide`), `wxdraw`, the help-format and version setup commands, paths with spaces or non-ASCII characters, a second Maxima release, and whether gnuplot needs `DISPLAY` (both plots went to PNG with none set).
+
+Tested since (Phase 3 step 12, 2026-10-20, `ModesIntegrationTests` and the `modes-basics` key script): the `(dbm:N)` debugger (debugmode errors, breakpoints and stepping in a loaded file), `to_lisp()` mode and back, interrupting while a question waits (channel and SIGINT). LDB, SBCL's low-level debugger, is still untested.
 
 Tooling note (fixed by installing Xcode): with only the Command Line Tools installed, plain `swift test` builds, runs zero tests and exits 0, which looks like a pass. Tests need `swift test -Xswiftc -F/Library/Developer/CommandLineTools/Library/Developer/Frameworks` until Xcode is installed.
 

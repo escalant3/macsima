@@ -177,6 +177,14 @@ struct StatusBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            if controller.inLispMode {
+                Text("Lisp mode: cells are read as Lisp.")
+                    .foregroundStyle(.orange)
+                Button("Return to Maxima") { controller.returnToMaxima() }
+                    .controlSize(.small)
+                    .disabled(controller.sessionState != .lisp)
+                    .accessibilityIdentifier("return-to-maxima")
+            }
             Text(controller.statusMessage ?? "")
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)

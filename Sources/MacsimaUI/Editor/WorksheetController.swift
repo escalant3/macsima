@@ -53,6 +53,15 @@ public final class WorksheetController {
     /// Maxima's CPU use over the last second while busy, in percent of one core.
     public private(set) var cpuPercent: Double?
     @ObservationIgnored private var cpuSampler: Task<Void, Never>?
+
+    /// The debugger's level while Maxima is at a `(dbm:N)` prompt.
+    public private(set) var debugLevel: Int?
+    /// Where the debugger stopped, when Maxima said (functions from a file).
+    public private(set) var debugLocation: DebugLocation?
+    /// Maxima › Debug on Error: `debugmode`, for this window's Maxima.
+    public private(set) var debugOnError = false
+    /// After `to_lisp()`, until `(to-maxima)`: cells are read as Lisp.
+    public private(set) var inLispMode = false
     /// The status message came from Maxima's `statusbar` tag.
     @ObservationIgnored private var statusFromMaxima = false
     /// Cells sent to Maxima and not finished yet.
@@ -391,6 +400,37 @@ public final class WorksheetController {
         help.lookUp(editor(for: id).helpTopic ?? "")
     }
 
+    // MARK: - Debugger and Lisp mode
+
+    /// A debugger command (`:next`, `:bt`) or an expression, as typed into
+    /// the prompt's field.
+    public func debugCommand(_ command: String) {
+        guard sessionState == .debugger, let id = asking else { return }
+        answer(command, for: id)
+    }
+
+    public func setDebugOnError(_ on: Bool) {
+        debugOnError = on
+        Task { await session?.setOption("debugmode", on) }
+    }
+
+    /// Leaves Lisp mode: `(to-maxima)`, run apart from the cells. Its
+    /// output ("Returning to Maxima", to_lisp's value) is dropped.
+    public func returnToMaxima() {
+        guard inLispMode, let session else { return }
+        Task {
+            guard let stream = try? await session.evaluate(cellID: "macsima-to-maxima", text: "(to-maxima)") else { return }
+            for await event in stream { if case .prompt(let label) = event { nextLabel = label } }
+        }
+    }
+
+    /// `^Z^Z/path/f.mac:3::`, which Maxima prints where the debugger stops.
+    static func debugMarker(_ line: String) -> (path: String, line: Int)? {
+        guard line.hasPrefix("\u{1A}\u{1A}"), let m = line.dropFirst(2).wholeMatch(of: /(.+):(\d+)::/),
+              let number = Int(m.2) else { return nil }
+        return (String(m.1), number)
+    }
+
     /// The status bar's clock and CPU figure: from leaving idle (or Lisp
     /// mode) to coming back, questions included.
     private func trackBusyTime(from old: SessionState, to new: SessionState) {
@@ -467,6 +507,7 @@ public final class WorksheetController {
         do {
             statusMessage = nil
             try await session.start()
+            if debugOnError { await session.setOption("debugmode", true) }
         } catch {
             statusMessage = "Maxima did not start: \(error)"
         }
@@ -521,6 +562,12 @@ public final class WorksheetController {
             if state == .idle, sessionState != .idle { variables.refresh() }
             trackBusyTime(from: sessionState, to: state)
             sessionState = state
+            if state == .lisp { inLispMode = true }
+            if state == .idle || state == .dead {
+                inLispMode = false
+                debugLevel = nil
+                debugLocation = nil
+            }
         case .died(let reason):
             // A restart the user asked for is not news.
             if reason != "restarted" { statusMessage = "Maxima stopped: \(reason)" }
@@ -613,7 +660,12 @@ public final class WorksheetController {
             guard let session else { await start(); return }
             statusMessage = nil
             nextLabel = 1
-            do { try await session.restart() } catch { statusMessage = "Maxima did not restart: \(error)" }
+            do {
+                try await session.restart()
+                if debugOnError { await session.setOption("debugmode", true) }
+            } catch {
+                statusMessage = "Maxima did not restart: \(error)"
+            }
         }
     }
 
@@ -621,9 +673,11 @@ public final class WorksheetController {
     public func answer(_ text: String, for id: UUID) {
         guard asking == id, let session else { return }
         asking = nil
-        // Keep what Maxima gets (the session adds a missing ";"), as wxMaxima stores it.
+        // Keep what Maxima gets (the session adds a missing ";", not to a
+        // debugger command), as wxMaxima stores it.
         var sent = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !sent.hasSuffix(";") && !sent.hasSuffix("$") { sent += ";" }
+        let command = sessionState == .debugger && sent.hasPrefix(":")
+        if !command, !sent.hasSuffix(";") && !sent.hasSuffix("$") { sent += ";" }
         enqueue(id, .answered(sent))
         Task {
             do { try await session.answer(text) } catch { statusMessage = "\(error)" }
@@ -649,7 +703,8 @@ public final class WorksheetController {
         switch event {
         case .started(let index, _):
             currentStatement[id] = index
-            if index == 0 { enqueue(id, .label(nextLabel)) }
+            // Lisp mode has no input labels.
+            if index == 0, !inLispMode { enqueue(id, .label(nextLabel)) }
             enqueue(id, .appendText(Self.statementMark))
         case .math(let xml):
             let out = TranslationCache.shared.translate(xml)
@@ -680,12 +735,17 @@ public final class WorksheetController {
                 enqueue(id, .append(.math(xml: Self.storedMath(xml))))
             }
         case .text(let line):
+            // The debugger's location goes to its controls, not the output.
+            if let (path, number) = Self.debugMarker(line) {
+                debugLocation = DebugLocation(path: path, line: number)
+                return
+            }
             enqueue(id, .appendText(line))
         case .question(let prompt):
             enqueue(id, .append(.question(prompt: Self.storedMath(prompt), answer: nil)))
             asking = id
         case .debugger(let level):
-            // Debugger UI beyond answering prompts is Phase 3.
+            debugLevel = level
             enqueue(id, .append(.question(prompt: "<math><st>Maxima debugger (dbm:\(level))</st></math>", answer: nil)))
             asking = id
         case .error(let kind, let message):

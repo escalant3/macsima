@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* For the modes-basics key script: a function loaded from a file has line numbers for the debugger. */
+f(x) := block([y],
+  y: x^2,
+  y: y + 1,
+  y * 10)$

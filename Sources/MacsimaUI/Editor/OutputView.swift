@@ -11,6 +11,7 @@ struct OutputView: View {
     let output: Output
     var cellID: UUID?
     @Environment(\.worksheetScale) private var scale
+    @Environment(WorksheetController.self) private var controller
 
     var body: some View {
         switch output {
@@ -40,7 +41,11 @@ struct OutputView: View {
                         .font(.system(size: WorksheetMetrics(scale: scale).answerFontSize, design: .monospaced))
                         .textSelection(.enabled)
                 } else if let cellID {
-                    AnswerField(cellID: cellID)
+                    if controller.sessionState == .debugger, controller.asking == cellID {
+                        DebuggerControls(cellID: cellID)
+                    } else {
+                        AnswerField(cellID: cellID)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

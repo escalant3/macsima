@@ -128,6 +128,27 @@ struct WorksheetCommands: Commands {
             Button("Interrupt") { controller?.interrupt() }
                 .keyboardShortcut(".", modifiers: .command)
             Button("Restart Maxima") { controller?.restart() }
+            Divider()
+            Toggle("Debug on Error", isOn: Binding(get: { controller?.debugOnError ?? false },
+                                                   set: { controller?.setDebugOnError($0) }))
+            // Xcode's keys for the debugger's commands.
+            let inDebugger = controller?.sessionState == .debugger
+            Button("Step Over") { controller?.debugCommand(":next") }
+                .keyboardShortcut(KeyEquivalent(Character(UnicodeScalar(NSF6FunctionKey)!)), modifiers: [])
+                .disabled(!inDebugger)
+            Button("Step Into") { controller?.debugCommand(":step") }
+                .keyboardShortcut(KeyEquivalent(Character(UnicodeScalar(NSF7FunctionKey)!)), modifiers: [])
+                .disabled(!inDebugger)
+            Button("Continue") { controller?.debugCommand(":resume") }
+                .keyboardShortcut("y", modifiers: [.command, .control])
+                .disabled(!inDebugger)
+            Button("Show Backtrace") { controller?.debugCommand(":bt") }
+                .disabled(!inDebugger)
+            Button("Leave Debugger") { controller?.debugCommand(":top") }
+                .disabled(!inDebugger)
+            Divider()
+            Button("Return to Maxima from Lisp") { controller?.returnToMaxima() }
+                .disabled(!(controller?.inLispMode ?? false) || controller?.sessionState != .lisp)
         }
     }
 }

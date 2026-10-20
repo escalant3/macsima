@@ -1,0 +1,61 @@
+# Questions, the debugger and Lisp mode (Phase 3, step 12). Dumps go to
+# .build/keyscripts/ and are checked by run.sh. Maxima's working directory
+# is the repository root, where run.sh starts the app.
+wait 3
+# Interrupting while a question waits.
+type asksign(y); 3;
+key return shift
+wait 2
+dump .build/keyscripts/modes-1.json
+interrupt
+wait 2
+dump .build/keyscripts/modes-2.json
+# Debug on Error: the error stops in the debugger; buttons and the field.
+debug-on-error on
+type h(x) := 1/x$ h(0);
+key return shift
+wait 3
+dump .build/keyscripts/modes-3.json
+shot .build/keyscripts/modes-3.png
+debug x
+wait 1.5
+debug :bt
+wait 1.5
+dump .build/keyscripts/modes-4.json
+debug :top
+wait 2
+dump .build/keyscripts/modes-5.json
+debug-on-error off
+# A breakpoint in a function loaded from a file; Step Over and Continue.
+type batchload("Tests/Fixtures/scripts/debug-f.mac")$
+key return shift
+wait 2
+type :break f 1
+key return
+type f(3);
+key return shift
+wait 3
+dump .build/keyscripts/modes-6.json
+shot .build/keyscripts/modes-6.png
+menu Step Over
+wait 1.5
+dump .build/keyscripts/modes-7.json
+menu Continue
+wait 2
+dump .build/keyscripts/modes-8.json
+# Lisp mode: no input labels; Return to Maxima.
+type to_lisp();
+key return shift
+wait 2
+type (+ 1 2)
+key return shift
+wait 2
+dump .build/keyscripts/modes-9.json
+shot .build/keyscripts/modes-9.png
+to-maxima
+wait 2
+type 2+2;
+key return shift
+wait 2
+dump .build/keyscripts/modes-10.json
+quit

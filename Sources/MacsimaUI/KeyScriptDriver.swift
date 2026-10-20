@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option] [control]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `debug <command>`, `debug-on-error on|off`, `to-maxima`, `interrupt`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -168,6 +168,15 @@ enum KeyScriptDriver {
         case "watch":
             // `watch <name> ...`: typed into the variables panel.
             WorksheetController.keyController?.variables.add(rest.split(separator: " ").map(String.init))
+        case "debug":
+            // `debug <command>`: a debugger button (:next, :bt) or the field.
+            WorksheetController.keyController?.debugCommand(rest)
+        case "debug-on-error":
+            WorksheetController.keyController?.setDebugOnError(rest != "off")
+        case "to-maxima":
+            WorksheetController.keyController?.returnToMaxima()
+        case "interrupt":
+            WorksheetController.keyController?.interrupt()
         case "watch-all":
             WorksheetController.keyController?.variables.addAll()
         case "unwatch":
@@ -358,6 +367,9 @@ enum KeyScriptDriver {
         info["help"] = ["visible": controller.showsSidebar && controller.sidebarTab == .manual, "pending": help.pending ?? NSNull(), "topic": help.page?.topic ?? NSNull(),
                         "entries": help.page?.entries.map(\.name) ?? [], "related": help.page?.related.count ?? 0,
                         "error": help.page?.error ?? NSNull(), "history": help.history] as [String: Any]
+        info["debugger"] = ["level": controller.debugLevel ?? -1, "debugOnError": controller.debugOnError,
+                            "location": controller.debugLocation.map { "\(URL(filePath: $0.path).lastPathComponent):\($0.line)" } ?? "",
+                            "source": controller.debugLocation?.source ?? "", "lisp": controller.inLispMode] as [String: Any]
         info["statusBar"] = ["busy": controller.busySince != nil, "cpu": controller.cpuPercent ?? -1,
                              "last": controller.lastDuration.map { Double($0.components.seconds) + Double($0.components.attoseconds) / 1e18 } ?? -1] as [String: Any]
         info["sidebar"] = controller.showsSidebar ? controller.sidebarTab.rawValue : "hidden"
