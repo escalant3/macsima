@@ -14,7 +14,7 @@ import WorksheetKit
 ///
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option] [control]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
-/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
+/// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
 /// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
@@ -160,6 +160,24 @@ enum KeyScriptDriver {
         case "help":
             // `help <topic>`: what clicking a link in the manual panel does.
             WorksheetController.keyController?.help.lookUp(rest)
+        case "sidebar":
+            // `sidebar contents|variables|manual|hide`.
+            if let c = WorksheetController.keyController {
+                if let tab = SidebarTab(rawValue: rest) { c.showSidebar(tab) } else { c.showsSidebar = false }
+            }
+        case "watch":
+            // `watch <name> ...`: typed into the variables panel.
+            WorksheetController.keyController?.variables.add(rest.split(separator: " ").map(String.init))
+        case "watch-all":
+            WorksheetController.keyController?.variables.addAll()
+        case "unwatch":
+            WorksheetController.keyController?.variables.remove(rest)
+        case "contents-click":
+            // `contents-click <n>`: the n-th heading (0-based) in the contents panel.
+            if let n = Int(rest), let c = WorksheetController.keyController {
+                let headings = c.document.worksheet.cells.filter { $0.kind.isHeading }
+                if n < headings.count { c.focus(headings[n].id, caret: .end) }
+            }
         case "help-back":
             WorksheetController.keyController?.help.back()
         case "toggle-fold":
@@ -337,9 +355,15 @@ enum KeyScriptDriver {
             info["findSelection"] = [editor.selectedRange().location, editor.selectedRange().length]
         }
         let help = controller.help
-        info["help"] = ["visible": help.isVisible, "pending": help.pending ?? NSNull(), "topic": help.page?.topic ?? NSNull(),
+        info["help"] = ["visible": controller.showsSidebar && controller.sidebarTab == .manual, "pending": help.pending ?? NSNull(), "topic": help.page?.topic ?? NSNull(),
                         "entries": help.page?.entries.map(\.name) ?? [], "related": help.page?.related.count ?? 0,
                         "error": help.page?.error ?? NSNull(), "history": help.history] as [String: Any]
+        info["sidebar"] = controller.showsSidebar ? controller.sidebarTab.rawValue : "hidden"
+        info["watch"] = controller.variables.names.map { name -> [String: Any] in
+            let v = controller.variables.values[name]
+            return ["name": name, "kind": v.map { "\($0.kind)" } ?? "pending", "text": v?.text ?? "", "cut": v?.isCut ?? false]
+        }
+        info["watchAttributes"] = controller.document.worksheet.extraAttributes.filter { $0.key.hasPrefix("variables_") }
         if let popup = CompletionPopup.current, popup.isShown {
             info["completion"] = ["items": popup.items.map(\.insertion),
                                   "selected": popup.selected?.insertion ?? NSNull(),

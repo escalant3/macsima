@@ -289,6 +289,24 @@ elif script == "help-basics":
     check(h(6)["entries"] == [] and h(6)["error"] is None, f"no entry for nosuchtopic: {h(6)}")
     check(h(7)["pending"] == "expand" and dump("help", 7)["state"] == "question",
           f"while asksign waits, the lookup waits: {h(7)}")
+elif script == "panels-basics":
+    w = lambda n: {v["name"]: v for v in dump("panels", n)["watch"]}
+    check(dump("panels", 1)["sidebar"] == "variables", "the variables panel is open")
+    check(w(1).get("x", {}).get("text") == "3" and w(1)["f"]["kind"] == "function" and w(1)["f"]["text"] == "f(t):=t^2",
+          f"after evaluating, x is 3 and f shows its definition: {w(1)}")
+    check(w(2)["x"]["text"] == "4", f"evaluating again updates x: {w(2).get('x')}")
+    check("big" in w(3) and w(3)["big"]["cut"] and list(w(3))[:2] == ["x", "f"],
+          f"Add All adds big (cut, it is long) after the names already watched: {list(w(3))}")
+    attrs = dump("panels", 4)["watchAttributes"]
+    names = list(w(4))
+    check("f" not in names and attrs.get("variables_num") == str(len(names))
+          and [attrs.get(f"variables_{i}") for i in range(len(names) + 1)] == names + [""],
+          f"Stop Watching f; the list is in the file's attributes as wxMaxima writes them: {attrs}")
+    focused = lambda n: [i for i, c in enumerate(dump("panels", n)["cells"]) if c["focused"]]
+    check(dump("panels", 5)["sidebar"] == "contents" and focused(5) == [4], f"a click on Intro focuses it: {focused(5)}")
+    check(dump("panels", 6)["cells"][3]["folded"], "the title is folded")
+    check(focused(7) == [6] and not dump("panels", 7)["cells"][3]["folded"],
+          f"a click on Detail unfolds the title and focuses Detail: {focused(7)}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

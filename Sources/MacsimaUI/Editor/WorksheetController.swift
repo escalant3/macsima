@@ -75,8 +75,21 @@ public final class WorksheetController {
 
     /// Find and Replace for this window.
     public let find = FindController()
-    /// The manual panel.
+    /// The sidebar and its panels.
+    public var showsSidebar = false
+    public var sidebarTab: SidebarTab = .contents
     public let help = HelpModel()
+    public let variables = VariablesModel()
+
+    /// Shows the sidebar on `tab`, or hides it when it already shows that tab.
+    public func toggleSidebar(_ tab: SidebarTab) {
+        if showsSidebar && sidebarTab == tab { showsSidebar = false } else { showSidebar(tab) }
+    }
+
+    public func showSidebar(_ tab: SidebarTab) {
+        sidebarTab = tab
+        showsSidebar = true
+    }
 
     public init(document: WorksheetDocument) {
         self.document = document
@@ -84,6 +97,23 @@ public final class WorksheetController {
         help.ask = { [weak self] topic in
             guard let session = self?.session else { return false }
             Task { await session.help(topic) }
+            return true
+        }
+        help.onShow = { [weak self] in self?.showSidebar(.manual) }
+        variables.load(document.worksheet.watchedVariables)
+        variables.onChange = { [weak self] names in
+            guard let self, self.document.worksheet.watchedVariables != names else { return }
+            self.document.worksheet.watchedVariables = names
+            self.markEdited()
+        }
+        variables.askValues = { [weak self] names in
+            guard let session = self?.session else { return false }
+            Task { await session.values(of: names) }
+            return true
+        }
+        variables.askNames = { [weak self] in
+            guard let session = self?.session else { return false }
+            Task { await session.variableNames() }
             return true
         }
     }
@@ -350,7 +380,7 @@ public final class WorksheetController {
     /// Help › Look Up in Maxima Manual (F1): the name at the caret of the
     /// focused code cell, or the selection; with neither, just the panel.
     public func lookUpHelp() {
-        guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return help.isVisible = true }
+        guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return showSidebar(.manual) }
         help.lookUp(editor(for: id).helpTopic ?? "")
     }
 
@@ -445,6 +475,8 @@ public final class WorksheetController {
     private func handle(_ event: SessionEvent) {
         switch event {
         case .state(let state):
+            // Back to idle after an evaluation, or started: the watched values may have changed.
+            if state == .idle, sessionState != .idle { variables.refresh() }
             sessionState = state
         case .died(let reason):
             // A restart the user asked for is not news.
@@ -458,6 +490,10 @@ public final class WorksheetController {
             statusFromMaxima = true
         case .tag("macsima-help", let content):
             help.received(MaximaHelp.parse(content))
+        case .tag("macsima-values", let content):
+            variables.received(MaximaVariables.parse(content))
+        case .tag("macsima-variable-names", let content):
+            variables.receivedNames(MaximaVariables.parseNames(content))
         case .tag("wxxml-symbols", let content):
             MaximaSymbols.shared.ingestInBackground(content)
         case .interruptChannelReady, .tag, .output:

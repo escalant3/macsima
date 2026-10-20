@@ -90,8 +90,8 @@ struct WorksheetWindow: View {
                     .background(.bar)
             }
         }
-        .inspector(isPresented: Bindable(controller.help).isVisible) {
-            HelpPanel(help: controller.help, maximaBusy: controller.sessionState != .idle)
+        .inspector(isPresented: $controller.showsSidebar) {
+            SidebarView(controller: controller)
         }
         .environment(\.worksheetScale, controller.scale)
         .toolbar { WorksheetToolbar(controller: controller) }

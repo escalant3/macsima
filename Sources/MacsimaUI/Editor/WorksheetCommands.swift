@@ -93,6 +93,18 @@ struct WorksheetCommands: Commands {
             Button("Zoom Out") { controller?.zoomOut() }
                 .keyboardShortcut("-", modifiers: .command)
             Button("Actual Size") { controller?.actualSize() }
+            Divider()
+            // As Xcode's inspectors: Cmd+Opt+0 the sidebar, Cmd+Opt+1... a panel.
+            Button(controller?.showsSidebar == true ? "Hide Sidebar" : "Show Sidebar") {
+                if let c = controller { c.showsSidebar ? (c.showsSidebar = false) : c.showSidebar(c.sidebarTab) }
+            }
+            .keyboardShortcut("0", modifiers: [.command, .option])
+            Button("Contents") { controller?.toggleSidebar(.contents) }
+                .keyboardShortcut("1", modifiers: [.command, .option])
+            Button("Variables") { controller?.toggleSidebar(.variables) }
+                .keyboardShortcut("2", modifiers: [.command, .option])
+            Button("Manual") { controller?.toggleSidebar(.manual) }
+                .keyboardShortcut("3", modifiers: [.command, .option])
         }
         // Text cells: bold, italic, ... (wxMaxima's formats, GH #492).
         CommandMenu("Format") {
@@ -110,10 +122,6 @@ struct WorksheetCommands: Commands {
         CommandGroup(before: .help) {
             Button("Look Up in Maxima Manual") { controller?.lookUpHelp() }
                 .keyboardShortcut(KeyEquivalent(Character(UnicodeScalar(NSF1FunctionKey)!)), modifiers: [])
-            Button(controller?.help.isVisible == true ? "Hide Manual" : "Show Manual") {
-                if let help = controller?.help { help.isVisible.toggle() }
-            }
-            .keyboardShortcut("0", modifiers: [.command, .option])
             Divider()
         }
         CommandMenu("Maxima") {

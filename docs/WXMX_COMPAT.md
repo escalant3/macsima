@@ -35,7 +35,7 @@ feature.
 | `wxMaximaDocument version` | yes; a warning above 1.5 | `1.5` | full | |
 | `zoom` | yes, applied to the view | yes, the current zoom (View › Zoom In and Out) | full | |
 | `activecell` | kept | written back unchanged (not updated from Macsima's focus) | partial | |
-| `variables_num`, `variables_N` (watch list) | kept | written back | full (kept) | |
+| `variables_num`, `variables_N` (watch list) | read: the variables panel's list (Phase 3 step 11); `variables_num` capped at 1000 | written as wxMaxima writes it: the count, the names, and one empty `variables_N` more (its grid's empty row, WXMXformat.cpp) | full | Format taken from wxMaxima's source; no wxMaxima-written file with a watch list among the fixtures yet |
 | Unknown document attributes | kept, warned | written back | full (kept) | |
 | Unknown document-level elements | kept, warned | written back at the end of the document | partial: position not preserved | |
 

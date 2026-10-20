@@ -138,6 +138,26 @@ public struct Worksheet: Equatable, Sendable {
     /// A new worksheet with one empty code cell.
     public static func empty() -> Worksheet { Worksheet(cells: [Cell(kind: .code)]) }
 
+    /// The variables panel's watch list, kept where wxMaxima keeps it: the
+    /// root's `variables_num` and `variables_0` ... attributes, so a file
+    /// round-trips unchanged. wxMaxima writes one more `variables_N` than
+    /// `variables_num` counts (its grid's empty last row, WXMXformat.cpp);
+    /// so does this. Capped at 1000 names: the count is untrusted input.
+    public var watchedVariables: [String] {
+        get {
+            let count = min(max(0, Int(extraAttributes["variables_num"] ?? "") ?? 0), 1000)
+            return (0..<count).compactMap { extraAttributes["variables_\($0)"] }.filter { !$0.isEmpty }
+        }
+        set {
+            for key in extraAttributes.keys where key.hasPrefix("variables_") { extraAttributes[key] = nil }
+            let names = newValue.filter { !$0.isEmpty }
+            guard !names.isEmpty else { return }
+            extraAttributes["variables_num"] = String(names.count)
+            for (i, name) in names.enumerated() { extraAttributes["variables_\(i)"] = name }
+            extraAttributes["variables_\(names.count)"] = ""
+        }
+    }
+
     public func index(of id: UUID) -> Int? { cells.firstIndex { $0.id == id } }
 
     public subscript(id: UUID) -> Cell? {

@@ -470,6 +470,18 @@ public actor MaximaSession {
         query(":lisp-quiet (macsima-help \(GlueLisp.lispString(topic)))\n")
     }
 
+    /// The values of watched variables, as `.tag("macsima-values", ...)`
+    /// (see `MaximaVariables.parse`), once Maxima is idle.
+    public func values(of names: [String]) {
+        guard !names.isEmpty else { return }
+        query(":lisp-quiet (macsima-values '(\(names.map(GlueLisp.lispString).joined(separator: " "))))\n")
+    }
+
+    /// The user's variables (Maxima's `values`), as `.tag("macsima-variable-names", ...)`.
+    public func variableNames() {
+        query(":lisp-quiet (macsima-variable-names)\n")
+    }
+
     private func query(_ line: String) {
         queries.append(line)
         sendQueries()

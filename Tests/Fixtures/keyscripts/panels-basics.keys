@@ -1,0 +1,41 @@
+# The sidebar's panels (Phase 3, step 11): variables, then contents.
+# Dumps go to .build/keyscripts/ and are checked by run.sh.
+wait 3
+sidebar variables
+watch x f
+type x: 3$ f(t) := t^2$ big: makelist(i, i, 1, 2000)$
+key return shift
+wait 3
+dump .build/keyscripts/panels-1.json
+shot .build/keyscripts/panels-1.png
+# Values follow each evaluation.
+type x: x+1$
+key return shift
+wait 3
+dump .build/keyscripts/panels-2.json
+# Add All: every variable with a value; long values are cut.
+watch-all
+wait 3
+dump .build/keyscripts/panels-3.json
+unwatch f
+dump .build/keyscripts/panels-4.json
+# Contents: headings, a click goes there, unfolding on the way.
+key 2 cmd
+type Notes
+key 3 cmd
+type Intro
+key 0 cmd
+type a: 1;
+key 4 cmd
+type Detail
+key 0 cmd
+type b: 2;
+sidebar contents
+contents-click 1
+dump .build/keyscripts/panels-5.json
+shot .build/keyscripts/panels-5.png
+toggle-fold 3
+dump .build/keyscripts/panels-6.json
+contents-click 2
+dump .build/keyscripts/panels-7.json
+quit

@@ -8,7 +8,6 @@ import SwiftUI
 @MainActor
 @Observable
 public final class HelpModel {
-    public var isVisible = false
     /// The search field.
     public var query = ""
     public private(set) var page: HelpPage?
@@ -19,13 +18,15 @@ public final class HelpModel {
 
     /// Asks this window's Maxima; false when it isn't running.
     @ObservationIgnored var ask: ((String) -> Bool)?
+    /// Brings the panel into view.
+    @ObservationIgnored var onShow: (() -> Void)?
 
     init() {}
 
     /// Shows the panel and looks `topic` up.
     public func lookUp(_ topic: String, remember: Bool = true) {
         let topic = topic.trimmingCharacters(in: .whitespacesAndNewlines)
-        isVisible = true
+        onShow?()
         guard !topic.isEmpty else { return }
         if remember, let current = page?.topic, current != topic { history.append(current) }
         query = topic
@@ -80,7 +81,6 @@ struct HelpPanel: View {
             help.lookUp(url.absoluteString.dropFirst("macsima-help:".count).removingPercentEncoding ?? "")
             return .handled
         })
-        .inspectorColumnWidth(min: 320, ideal: 520, max: 900)
     }
 
     @ViewBuilder private var content: some View {
