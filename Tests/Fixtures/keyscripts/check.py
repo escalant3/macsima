@@ -251,6 +251,33 @@ elif script == "zoom-basics":
     with zipfile.ZipFile(".build/keyscripts/zoom-basics.wxmx") as f:
         doc = re.search(r"<wxMaximaDocument[^>]*>", f.read("content.xml").decode()).group(0)
     check(z(4) == 110 and 'zoom="110"' in doc, f"Actual Size, Cmd+=, Cmd+S: the file says {doc}")
+elif script == "complete-basics":
+    c = lambda n: dump("complete", n).get("completion")
+    line = lambda n: [x["input"] for x in dump("complete", n)["cells"] if x["focused"]][0].split("\n")[-1]
+    sel = lambda n: dump("complete", n)["editor"]["selection"]
+    first = "velocity: 3$ myfun(a, b) := a*b$\n"
+    check(c(1) is not None and "integrate(<expr>, <x>)" in c(1)["items"] and c(1)["selected"] == c(1)["items"][0],
+          f"Esc after integ opens the list, first entry selected: {c(1) and c(1)['items'][:6]}")
+    check(c(2) is not None and c(2)["selected"] == c(2)["items"][1], "Down selects the next entry")
+    check(c(3) is not None and all(i.startswith("integrat") for i in c(3)["items"])
+          and c(3)["items"][:2] == ["integrate(<expr>, <x>)", "integrate(<expr>, <x>, <a>, <b>)"],
+          f"typing rat narrows the list to integrat...: {c(3) and c(3)['items']}")
+    base = len(first)
+    check(c(4) is None and line(4) == "integrate(<expr>, <x>, <a>, <b>)" and sel(4) == [base + 10, 6],
+          f"Down, Return: the template is inserted, <expr> selected: {line(4)!r} {sel(4)}")
+    check(line(5) == "integrate(sin(t), <x>, <a>, <b>)" and sel(5) == [base + 18, 3],
+          f"typing replaces <expr>; Tab selects <x>: {line(5)!r} {sel(5)}")
+    check(sel(6) == [base + 18, 3], f"Tab, Shift+Tab: back on <x>: {sel(6)}")
+    check(line(7) == "integrate(sin(t), t, 0, 1, velocity)" and c(7) is None,
+          f"one match (a worksheet name) is inserted at once: {line(7)!r}")
+    check(line(8).endswith(", myfun(<a>, <b>))") and sel(8)[1] == 3,
+          f"a worksheet function comes with its template, <a> selected: {line(8)!r} {sel(8)}")
+    check(line(9).endswith(", myf)"), f"Cmd+Z takes the completion back in one step: {line(9)!r}")
+    check(c(10) is not None and len(c(10)["items"]) == 5 and all(i.startswith("diff(") for i in c(10)["items"]),
+          f"Show Template lists diff's five templates: {c(10) and c(10)['items']}")
+    check(c(11) is None and line(11) == "diff", "Esc closes the list, the text unchanged")
+    check(c(12) is None and line(12) == "plot(", f"( closes the list and is typed: {line(12)!r}")
+    check(c(13) is not None and c(13)["worksheet"] == ["velocity"], f"velocity is the worksheet's: {c(13) and c(13)['worksheet']}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

@@ -49,6 +49,29 @@ final class EditorUITests: XCTestCase {
     }
 
     @MainActor
+    func testCompleteWithEsc() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        // One match: inserted at once.
+        app.typeText("integrate_use_r")
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertEqual(input.value as? String, "integrate_use_rootsof")
+        // Several: the list; Down, Return takes the second, its first argument selected.
+        app.typeText("$ integrat")
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertTrue(app.descendants(matching: .any)["completion-list"].waitForExistence(timeout: 5))
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeKey(.return, modifierFlags: [])
+        XCTAssertEqual(input.value as? String, "integrate_use_rootsof$ integrate(<expr>, <x>, <a>, <b>)")
+        app.typeText("sin(t)")
+        app.typeKey(.tab, modifierFlags: [])
+        app.typeText("t")
+        XCTAssertEqual(input.value as? String, "integrate_use_rootsof$ integrate(sin(t), t, <a>, <b>)")
+    }
+
+    @MainActor
     func testUndoTypingThenDeleteCell() throws {
         waitForReady()
         let input = app.textViews["cell-input-0"]

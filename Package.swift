@@ -33,7 +33,7 @@ let package = Package(
         .target(
             name: "MaximaKit",
             exclude: ["Resources/README.md"],
-            resources: [.copy("Resources/wxMathML.lisp")]
+            resources: [.copy("Resources/wxMathML.lisp"), .copy("Resources/builtin_commands.txt")]
         ),
         .target(name: "WXMLKit"),
         .target(name: "WorksheetKit", dependencies: [.product(name: "ZIPFoundation", package: "ZIPFoundation")]),

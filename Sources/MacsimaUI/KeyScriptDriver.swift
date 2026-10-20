@@ -330,6 +330,11 @@ enum KeyScriptDriver {
            let editor = controller.existingEditor(for: find.matches[current].cell) {
             info["findSelection"] = [editor.selectedRange().location, editor.selectedRange().length]
         }
+        if let popup = CompletionPopup.current, popup.isShown {
+            info["completion"] = ["items": popup.items.map(\.insertion),
+                                  "selected": popup.selected?.insertion ?? NSNull(),
+                                  "worksheet": popup.items.filter { $0.source == .worksheet }.map(\.insertion)] as [String: Any]
+        }
         if let editor = NSApp.keyWindow?.firstResponder as? CellTextView {
             info["editor"] = describe(editor)
         }

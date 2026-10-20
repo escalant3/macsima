@@ -164,6 +164,7 @@ public final class WorksheetController {
         editor.onLeave = { [weak self] up, x in self?.leave(id, up: up, x: x) ?? false }
         editor.onSelectCells = { [weak self] up in self?.startCellSelection(from: id, up: up) }
         editor.onPasteCells = { [weak self] in self?.pasteCells(after: id) ?? false }
+        editor.completionSymbols = { [weak self] word in self?.completionSymbols(skipping: word, in: id) ?? CompletionIndex() }
         editor.onFormatsChange = { [weak self] formats in
             guard let self, self.document.worksheet[id]?.textFormats != formats else { return }
             self.document.worksheet.update(id) { $0.textFormats = formats }
@@ -312,6 +313,7 @@ public final class WorksheetController {
         editor.toggleFormat(flag, base: base)
     }
 
+    var focusedCellIsCode: Bool { focusedCell.flatMap { document.worksheet[$0] }?.kind == .code }
     var focusedCellIsText: Bool { focusedCell.flatMap { document.worksheet[$0] }?.kind == .text }
 
     // MARK: - Zoom
@@ -335,6 +337,22 @@ public final class WorksheetController {
         guard zoom != document.worksheet.zoom else { return }
         document.worksheet.zoom = zoom
         markEdited()
+    }
+
+    /// Cell › Complete Word and Show Template, in the focused code cell.
+    public func complete(templatesOnly: Bool) {
+        guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return }
+        editor(for: id).showCompletions(templatesOnly: templatesOnly)
+    }
+
+    /// The names every code cell uses and the functions it defines, for
+    /// completion; in the cell `id`, without the word being completed.
+    func completionSymbols(skipping word: NSRange, in id: UUID) -> CompletionIndex {
+        var index = CompletionIndex()
+        for cell in document.worksheet.cells where cell.kind == .code {
+            index.merge(MaximaCompletion.symbols(in: cell.input, skipping: cell.id == id ? word : nil))
+        }
+        return index
     }
 
     /// Cmd+/ in the focused code cell.

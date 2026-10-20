@@ -14,7 +14,7 @@ final class MaximaSymbols {
 
     /// Names highlighted as built-ins.
     private(set) var names: Set<String> = []
-    /// Function templates (`name` → `name(<x>, <y>)`), for autocompletion later.
+    /// Function templates (`name` → `name(<x>, <y>)`) from `add_function_template`.
     private(set) var templates: [String: String] = [:]
 
     /// Adds the names in one `<wxxml-symbols>` tag's content.
@@ -30,10 +30,23 @@ final class MaximaSymbols {
         }
     }
 
+    /// Names and templates for completion: wxMaxima's built-in list and
+    /// what this Maxima sent.
+    var completionIndex: CompletionIndex {
+        if let cachedIndex { return cachedIndex }
+        var index = CompletionIndex.builtin
+        index.names.formUnion(names)
+        for (name, template) in templates { index.add(name: name, template: template) }
+        cachedIndex = index
+        return index
+    }
+    private var cachedIndex: CompletionIndex?
+
     private func add(_ parsed: (names: Set<String>, templates: [String: String])) {
         let before = names.count
         names.formUnion(parsed.names)
         templates.merge(parsed.templates) { _, new in new }
+        cachedIndex = nil
         if names.count != before { NotificationCenter.default.post(name: Self.didChange, object: nil) }
     }
 

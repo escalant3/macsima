@@ -123,6 +123,9 @@ final class CellTextView: NSTextView {
     override func setSelectedRanges(_ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool) {
         super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
         updateBracketMatch()
+        // The caret left the word (a click, an arrow key): after typing has
+        // settled, the list follows or closes.
+        if completion != nil { DispatchQueue.main.async { [weak self] in self?.updateCompletion() } }
     }
 
     /// Redraws the backgrounds: Find's matches, then the bracket next to the
@@ -139,6 +142,13 @@ final class CellTextView: NSTextView {
                     if let range = textRange(shown) {
                         layout.addRenderingAttribute(.backgroundColor, value: color, for: range)
                     }
+                }
+            }
+        }
+        if highlightsSyntax {
+            for mark in MaximaCompletion.placeholders(in: string) {
+                if let range = textRange(mark) {
+                    layout.addRenderingAttribute(.backgroundColor, value: Self.placeholderColor, for: range)
                 }
             }
         }
@@ -175,6 +185,12 @@ final class CellTextView: NSTextView {
             ? NSColor.systemOrange.withAlphaComponent(0.35) : NSColor.systemOrange.withAlphaComponent(0.3)
     }
 
+    /// A template's `<argument>`, which Tab selects.
+    static let placeholderColor = NSColor(name: "MacsimaPlaceholder") { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor.systemBlue.withAlphaComponent(0.35) : NSColor.systemBlue.withAlphaComponent(0.18)
+    }
+
     static let bracketColor = NSColor(name: "MacsimaBracketMatch") { appearance in
         appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
             ? NSColor.systemYellow.withAlphaComponent(0.35) : NSColor.systemYellow.withAlphaComponent(0.45)
@@ -205,6 +221,7 @@ final class CellTextView: NSTextView {
         super.didChangeText()
         rehighlight()
         invalidateIntrinsicContentSize()
+        updateCompletion()
     }
 
     override var undoManager: UndoManager? { undoSource?() ?? super.undoManager }
@@ -254,6 +271,12 @@ final class CellTextView: NSTextView {
         return ceil(max(height, lineHeight) + 2 * textContainerInset.height)
     }
 
+    override func resignFirstResponder() -> Bool {
+        let ok = super.resignFirstResponder()
+        if ok { closeCompletion() }
+        return ok
+    }
+
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
         if ok { onFocus?() }
@@ -261,6 +284,7 @@ final class CellTextView: NSTextView {
     }
 
     override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil { closeCompletion() }
         if newWindow == nil, let window, window.firstResponder === self { hadFocusWhenRemoved = true }
         super.viewWillMove(toWindow: newWindow)
     }
@@ -405,11 +429,125 @@ final class CellTextView: NSTextView {
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if handleCompletionKey(event) { return }
+        if event.keyCode == 53, flags.isEmpty, highlightsSyntax {   // Esc
+            return showCompletions(templatesOnly: false)
+        }
         if event.keyCode == 36 || event.keyCode == 76, flags == .shift {   // Return, keypad Enter
+            closeCompletion()
             onEvaluate?()
             return
         }
         super.keyDown(with: event)
+    }
+
+    // MARK: - Completion (code cells)
+
+    /// The names the worksheet's code cells use and the functions they
+    /// define, leaving out the word being completed (its range here).
+    var completionSymbols: ((NSRange) -> CompletionIndex)?
+    private var completion: CompletionPopup?
+
+    var isCompleting: Bool { completion != nil }
+
+    /// NSTextView's own completion keys (Option+Esc, F5); Esc is caught in keyDown.
+    override func complete(_ sender: Any?) { showCompletions(templatesOnly: false) }
+
+    /// Cell › Complete Word (Esc, Ctrl+Space) and Show Template
+    /// (Ctrl+Shift+Space). One entry is inserted at once, as in wxMaxima;
+    /// several open the list.
+    func showCompletions(templatesOnly: Bool) {
+        let caret = selectedRange()
+        guard highlightsSyntax, caret.length == 0,
+              let word = MaximaCompletion.word(in: string, caret: caret.location) else { return NSSound.beep() }
+        let sheet = completionSymbols?(word.range) ?? MaximaCompletion.symbols(in: string, skipping: word.range)
+        let items = MaximaCompletion.completions(of: word.prefix, maxima: MaximaSymbols.shared.completionIndex,
+                                                 worksheet: sheet, templatesOnly: templatesOnly)
+        guard !items.isEmpty else { return NSSound.beep() }
+        if items.count == 1 { return accept(items[0]) }
+        let popup = CompletionPopup(worksheet: sheet, templatesOnly: templatesOnly,
+                                    font: font ?? .monospacedSystemFont(ofSize: 14, weight: .regular))
+        popup.onAccept = { [weak self] item in self?.accept(item) }
+        completion = popup
+        present(items)
+    }
+
+    private func present(_ items: [CompletionItem]) {
+        guard let completion, let window, let word = MaximaCompletion.word(in: string, caret: selectedRange().location),
+              let rect = caretRect(at: word.range.location) else { return closeCompletion() }
+        let screen = window.convertToScreen(convert(rect, to: nil))
+        completion.show(items, at: screen, in: window)
+    }
+
+    /// After typing or a caret move: narrows the list, or closes it when the
+    /// caret is no longer in a name or nothing matches.
+    private func updateCompletion() {
+        guard let completion else { return }
+        let caret = selectedRange()
+        guard caret.length == 0, let word = MaximaCompletion.word(in: string, caret: caret.location) else { return closeCompletion() }
+        let items = MaximaCompletion.completions(of: word.prefix, maxima: MaximaSymbols.shared.completionIndex,
+                                                 worksheet: completion.worksheet, templatesOnly: completion.templatesOnly)
+        if items.isEmpty { closeCompletion() } else if items != completion.items { present(items) }
+    }
+
+    func closeCompletion() {
+        completion?.close()
+        completion = nil
+    }
+
+    /// Replaces the word at the caret with `item`, as one undo step; a
+    /// template's first placeholder is selected, ready to type over.
+    private func accept(_ item: CompletionItem) {
+        closeCompletion()
+        guard let word = MaximaCompletion.word(in: string, caret: selectedRange().location) else { return }
+        breakUndoCoalescing()
+        replace(word.range, with: item.insertion)
+        undoManager?.setActionName("Completion")
+        breakUndoCoalescing()
+        let inserted = NSRange(location: word.range.location, length: (item.insertion as NSString).length)
+        if let first = MaximaCompletion.placeholders(in: string).first(where: { NSLocationInRange($0.location, inserted) }) {
+            setSelectedRange(first)
+        } else {
+            setSelectedRange(NSRange(location: NSMaxRange(inserted), length: 0))
+        }
+        scrollRangeToVisible(selectedRange())
+    }
+
+    /// While the list is open: Up and Down choose, Return or Tab accepts,
+    /// Esc closes it. Everything else is typing.
+    private func handleCompletionKey(_ event: NSEvent) -> Bool {
+        guard let completion else { return false }
+        guard event.modifierFlags.intersection([.command, .option, .control, .shift]).isEmpty else { return false }
+        switch event.keyCode {
+        case 125: completion.move(by: 1)                              // Down
+        case 126: completion.move(by: -1)                             // Up
+        case 121: completion.move(by: 10)                             // Page Down
+        case 116: completion.move(by: -10)                            // Page Up
+        case 36, 76, 48: if let item = completion.selected { accept(item) }   // Return, Enter, Tab
+        case 53: closeCompletion()                                    // Esc
+        default: return false
+        }
+        return true
+    }
+
+    /// Tab selects the next `<argument>` of a template, Shift+Tab the one
+    /// before (wxMaxima's FindNextTemplate). Without one, Tab is a tab.
+    override func insertTab(_ sender: Any?) {
+        if highlightsSyntax, let next = MaximaCompletion.nextPlaceholder(in: string, after: selectedRange()) {
+            setSelectedRange(next)
+            scrollRangeToVisible(next)
+        } else {
+            super.insertTab(sender)
+        }
+    }
+
+    override func insertBacktab(_ sender: Any?) {
+        if highlightsSyntax, let next = MaximaCompletion.nextPlaceholder(in: string, after: selectedRange(), backwards: true) {
+            setSelectedRange(next)
+            scrollRangeToVisible(next)
+        } else {
+            super.insertBacktab(sender)
+        }
     }
 }
 

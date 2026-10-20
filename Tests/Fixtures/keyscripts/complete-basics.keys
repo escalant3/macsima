@@ -1,0 +1,60 @@
+# Autocompletion (Phase 3, step 9). Dumps go to .build/keyscripts/ and are
+# checked by run.sh. Esc completes, as in every macOS text view.
+wait 3
+type velocity: 3$ myfun(a, b) := a*b$
+key return
+type integ
+key escape
+dump .build/keyscripts/complete-1.json
+shot .build/keyscripts/complete-1.png
+key down
+dump .build/keyscripts/complete-2.json
+# Typing narrows the list; Return inserts the template, its first argument selected.
+type rat
+dump .build/keyscripts/complete-3.json
+key down
+key return
+dump .build/keyscripts/complete-4.json
+shot .build/keyscripts/complete-4.png
+# Typing replaces the argument, Tab goes to the next, Shift+Tab back.
+type sin(t)
+key tab
+dump .build/keyscripts/complete-5.json
+key tab
+key tab shift
+dump .build/keyscripts/complete-6.json
+type t
+key tab
+type 0
+key tab
+type 1
+# One match is inserted at once: a worksheet name, then a worksheet function.
+type , velo
+key escape
+dump .build/keyscripts/complete-7.json
+type , myf
+key escape
+dump .build/keyscripts/complete-8.json
+# One undo step takes the completion back.
+key z cmd
+dump .build/keyscripts/complete-9.json
+# Show Template lists diff's five templates; Esc closes the list.
+key 0 cmd
+type diff
+menu Show Template
+dump .build/keyscripts/complete-10.json
+key escape
+dump .build/keyscripts/complete-11.json
+# A character that ends the name closes the list and is typed.
+key return
+type plot
+key escape
+type (
+dump .build/keyscripts/complete-12.json
+# The worksheet's names are marked in the list.
+key return
+type v
+key escape
+dump .build/keyscripts/complete-13.json
+shot .build/keyscripts/complete-13.png
+quit

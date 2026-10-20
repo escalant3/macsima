@@ -32,6 +32,15 @@ struct WorksheetCommands: Commands {
                 .keyboardShortcut("4", modifiers: .command)
             Button("Insert Image…") { controller?.chooseImage() }
             Divider()
+            // wxMaxima's Ctrl+Space and Ctrl+Shift+Space. Esc completes too,
+            // as in every macOS text view; Ctrl+Space is often the input
+            // source switcher, which then takes it first.
+            Button("Complete Word") { controller?.complete(templatesOnly: false) }
+                .keyboardShortcut(.space, modifiers: .control)
+                .disabled(!(controller?.focusedCellIsCode ?? false))
+            Button("Show Template") { controller?.complete(templatesOnly: true) }
+                .keyboardShortcut(.space, modifiers: [.control, .shift])
+                .disabled(!(controller?.focusedCellIsCode ?? false))
             Button("Comment or Uncomment") { controller?.toggleComment() }
                 .keyboardShortcut("/", modifiers: .command)
                 .disabled(controller?.focusedCell == nil)
