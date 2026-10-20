@@ -325,6 +325,26 @@ What Phase 3 inherits:
 - **Kept but not shown.** Folding, hidden cells, text formatting, zoom, image cells and animations are preserved and listed.
 - **Testing the editor.** The key-script driver posts synthesized key events to the app's own event queue; it needs no Accessibility permission, and undo grouping behaves as with a keyboard. Real-keyboard checks by hand (the Delete key, typing) passed.
 
+### Phase 3 results (2026-10-20)
+
+The daily driver is built, and all three checkpoints are approved; the week of real use is under way. See `docs/PHASE3_REPORT.md`.
+
+The app:
+- **Editor:** `NSTextView` on TextKit 2 per cell, kept for the document's lifetime. Syntax colours, brackets, Find and Replace, autocomplete with templates, the manual (F1).
+- **Math:** long outputs break at the window width, copy in four forms, animations, SVG plots.
+- **Panels:** a sidebar (contents, variables, manual) and a status bar.
+- **Modes:** debugger controls, Lisp mode.
+- **Files:** HTML, LaTeX and `.mac` export; `.wxm` open and save.
+- **Settings.**
+- **Tests:** 173 Swift Testing tests, 28 key scripts and 11 XCUITest tests.
+
+Corrections to the sections above, found in Phase 3:
+- **Help.** Homebrew's 5.50.0 has the HTML manual's index but not its pages: the text manual is shown instead (Roadmap, What the GUI owns).
+- **Macsima's own Lisp.** `macsima.lisp` sits next to the unmodified glue, inside `<suppressOutput>`: an SBCL note quoting its source was read as a reply.
+- **Break commands.** The prompt quirk, the debugger's `^Z^Z file:line::` marker and the `;` expressions need are in "Sending a command".
+- **Abort on error** is wxMaxima's: the queue stops, not just the cell.
+- **Roadmap.** Phase 3 took two days of sessions, not 8 to 12 weeks.
+
 ## Bootstrap kit
 
 ### Repository layout
@@ -338,7 +358,8 @@ Macsima/
   CLAUDE.md              project rules and pointers for Claude Code
   Sources/
     MaximaKit/           engine: process, socket, scanner, session
-      Resources/         wxMathML.lisp, unmodified, notices kept (GPL), a SwiftPM resource
+      Resources/         wxMathML.lisp and builtin_commands.txt from wxMaxima, unmodified, notices kept (GPL);
+                         macsima.lisp, Macsima's own (help, watched values)
     WXMLKit/             math XML (glue and .wxmx dialects) to MathML
     WorksheetKit/        cell model, .wxmx read/write (ZIPFoundation)
     MacsimaUI/           everything the app shows: document, editor, rendering, controller
@@ -350,7 +371,7 @@ Macsima/
     BOOTSTRAP.md         this document
     WXMX_COMPAT.md       compatibility ledger
     PARITY.md            feature parity with wxMaxima
-    PHASE0_REPORT.md, PHASE1_REPORT.md, PHASE2_REPORT.md
+    PHASE0_REPORT.md ... PHASE3_REPORT.md, phase3-screenshots/, phase3-snapshots/
   Tests/
     Fixtures/transcripts/   captured Maxima sessions, README, record.sh
     Fixtures/wxmx/          wxMaxima samples, Macsima-written sessions, wxMaxima re-saves

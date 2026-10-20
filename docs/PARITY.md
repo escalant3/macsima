@@ -1,6 +1,6 @@
 # Feature parity with wxMaxima
 
-Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated during Phase 3. The first table follows the "What the GUI owns" table in `docs/BOOTSTRAP.md`, row by row. The second lists what turned up along the way. Status is done, partial or missing. Phase is where the gap belongs, following BOOTSTRAP.md's MVP column and roadmap. File-format details are in `docs/WXMX_COMPAT.md`.
+Where Macsima stands against wxMaxima, as of the end of Phase 3 (2026-10-20). The first table follows the "What the GUI owns" table in `docs/BOOTSTRAP.md`, row by row. The second lists what turned up along the way. Status is done, partial or missing. Phase is where the gap belongs, following BOOTSTRAP.md's MVP column and roadmap. File-format details are in `docs/WXMX_COMPAT.md`.
 
 ## The GUI table from BOOTSTRAP.md
 
@@ -31,8 +31,6 @@ Where Macsima stands against wxMaxima, as of Phase 2 (2026-10-18), updated durin
 | Folded sections | Fold and unfold under headings | A triangle on each heading with cells under it folds its section (up to the next heading of its level or higher), with "N cells folded" in its place; Fold All (Cmd+Opt+[), Unfold All (Cmd+Opt+]). Arrow keys skip folded cells; Find and moving the focus unfold. Read from and written to `<fold>` as wxMaxima does, nested folds too; wxMaxima 26.09 reads Macsima's folds and writes them back (Phase 3 step 8) | done | |
 | Hidden cells | Hide a code or text cell's output, showing its first line | The triangle (on hover) or Cell › Hide or Show Cell shows a code or text cell as its first line, outputs hidden; read from and written to `hide="true"` (Phase 3 step 8) | done | |
 | Text formatting in text cells | Bold, italic, underline, strike-through, superscript, subscript (after 26.09) | The same six, shown and edited from the Format menu (Cmd+B, Cmd+I, Cmd+U, Cmd+Ctrl+= and Cmd+Ctrl+-); typing continues the format before the caret; undo covers it; saved as wxMaxima saves it (Phase 3 step 8). Pasting brings plain text | done | pasting formatted text: later |
-| Hidden output (`hide`) | Hides a cell's output | Kept and saved back, not applied | missing | 3 |
-| Text formatting in text cells | Bold, colours and more, stored on `line` | Kept while the text is unchanged; editing drops it; no formatting tools | missing | 3 |
 | Box labels (`boxname`) | Shows the label | The box shows, the label doesn't | partial | 3 |
 | Plot resolution | Uses `ppi` to show plots sharp | pngcairo plots are 600×450 at 1×, slightly soft on Retina; `ppi` is kept but not applied | partial | 3 |
 | Matrix brackets | `bracketParens`, `angledParens`, `straightParens`, `noneParens`, round by default | All of them | done | |
