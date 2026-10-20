@@ -80,7 +80,7 @@ feature.
 | `t type="error"` | yes | yes, plus `errorkind` (maxima, syntax, lisp, interrupted), which wxMaxima keeps as an unknown attribute | full | |
 | `t type="ASCII-Art"` (plain-text output, `display2d:false`, `tex()`) | yes, monospaced | yes; one element per output, where wxMaxima writes one per line | full | |
 | `t` without a type, `type="warning"`, `type="Operator"` | as math (rendered as text) | written back | partial | |
-| `img` with `ppi`, `rect`, `maxWidth`, `gnuplotdata_gz`, ... | yes (PNG, JPEG, SVG); the attributes are kept | written back; the gnuplot data stays an attachment | partial: `ppi` and size not applied when showing | |
+| `img` with `ppi`, `rect`, `maxWidth`, `gnuplotdata_gz`, ... | yes (PNG, JPEG, SVG); the attributes are kept | written back; the gnuplot data stays an attachment; Macsima's own plots carry `ppi="192"` | partial: `ppi` applied when showing (pixels × 72 / ppi points); `rect` and `maxWidth` not | |
 | `slide` (animations) | yes: frames read from the archive, played with Play/Pause and a slider; `fr`, `running`, `frame` used; other attributes kept | yes, frames as `imageN.ext`, attributes as read (the shown frame and playing state are not saved yet) | partial | |
 | Highlighting (`hl` boxes) | yes, as a box | written back | full | |
 | `boxname` on `hl` | kept, not shown | written back | partial | |

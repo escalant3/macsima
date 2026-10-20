@@ -95,6 +95,10 @@ elif script == "plots-basics":
     check(c[1]["outputs"][0].startswith("image %t3 png"), "wxdraw2d gives a PNG plot")
     check(any(o.startswith("image %t5 svg") for o in c[2]["outputs"]), "with wxplot_usesvg, an SVG plot: " + str(c[2]["outputs"]))
     check(d["status"] == "", "Maxima's progress text is gone once evaluation ends: " + repr(d["status"]))
+    im = lambda n, i: dump("plots", n)["cells"][i]["images"]
+    check(im(1, 0) == [{"ppi": "192", "pixels": 1600}], f"the animation's frames are 2x, marked ppi 192: {im(1, 0)}")
+    check(im(1, 1) == [{"ppi": "", "pixels": 800}], f"wxdraw2d stays 1x, unmarked: {im(1, 1)}")
+    check(im(2, 3) == [{"ppi": "192", "pixels": 1600}], f"wxplot2d draws 1600 pixels, marked ppi 192: {im(2, 3)}")
 elif script == "kinds-basics":
     c1 = dump("kinds", 1)["cells"]
     image = [c for c in c1 if c["kind"] == "image"]

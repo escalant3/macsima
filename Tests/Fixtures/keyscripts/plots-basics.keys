@@ -12,4 +12,10 @@ key return shift
 wait 3
 dump .build/keyscripts/plots-1.json
 shot .build/keyscripts/plots-1.png
+# A PNG plot at twice the pixels, marked ppi 192 (sharp on Retina).
+type wxplot_usesvg:false$ wxplot2d(sin(x),[x,0,%pi]);
+key return shift
+wait 3
+dump .build/keyscripts/plots-2.json
+shot .build/keyscripts/plots-2.png
 quit

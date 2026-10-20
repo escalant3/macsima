@@ -72,5 +72,36 @@
                   (remove-if-not #'symbolp (cdr $values))))
   (finish-output))
 
+;; Plots for a Retina screen: wxplot2d and friends draw with pngcairo at
+;; twice $wxplot_size's pixels (fonts and lines twice as large too), and the
+;; image is marked ppi="192" so it shows at the size a 96 ppi plot of
+;; $wxplot_size would have (wxMaxima reads ppi the same way). Replaces the
+;; glue's $wxplot_preamble and wxxml-tag (wxMathML.lisp, wxMaxima 13e4aee);
+;; draw's plots don't use the preamble and stay as they are, unmarked.
+(defvar *macsima-plot-scale* 2)
+(defvar *macsima-scaled-plot* nil)
+
+(defun $wxplot_preamble ()
+  (let ((w ($first $wxplot_size)) (h ($second $wxplot_size)) (k *macsima-plot-scale*))
+    (cond ((and (not $wxplot_usesvg) $wxplot_pngcairo)
+           (setq *macsima-scaled-plot* t)
+           (format nil "set terminal pngcairo dashed background \"white\" enhanced font \"arial,10\" fontscale ~d linewidth ~d size ~d,~d; set zeroaxis;"
+                   k k (* k w) (* k h)))
+          ((not $wxplot_usesvg) (format nil "set terminal png size ~d,~d; set zeroaxis;" w h))
+          (t (format nil "set terminal svg size ~d,~d; set zeroaxis;" w h)))))
+
+(defun wxxml-tag (x l r)
+  (let* ((name (cadr x))
+         (tag (caddr x))
+         (prop (cadddr x))
+         (image (member tag '("img" "slide") :test #'equal)))
+    (when (and image *macsima-scaled-plot*)
+      (setq prop (if prop (format nil "~a ppi=\"~d\"" prop (* 96 *macsima-plot-scale*))
+                     (format nil "ppi=\"~d\"" (* 96 *macsima-plot-scale*)))))
+    (when image (setq *macsima-scaled-plot* nil))
+    (if prop
+        (append l (list (format nil "<~a ~a lisp=\"wxxml-tag\">~a</~a>" tag prop name tag)) r)
+        (append l (list (format nil "<~a lisp=\"wxxml-tag\">~a</~a>" tag name tag)) r))))
+
 (format t "~:@c/suppressOutput~:@c~%" (code-char 60) (code-char 62))
 (finish-output)

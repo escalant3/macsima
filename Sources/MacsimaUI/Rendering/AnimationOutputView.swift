@@ -27,7 +27,7 @@ struct AnimationOutputView: View {
         let metrics = WorksheetMetrics(scale: scale)
         VStack(alignment: .leading, spacing: 4 * scale) {
             if images.indices.contains(index) {
-                ImageOutputView(image: images[index], label: label)
+                ImageOutputView(image: images[index], label: label, ppi: attributes["ppi"])
             } else {
                 Color.clear.frame(height: 40)
             }
@@ -41,7 +41,7 @@ struct AnimationOutputView: View {
                 if images.count > 1 {
                     Slider(value: Binding(get: { Double(index) }, set: { index = Int($0.rounded()) }),
                            in: 0...Double(images.count - 1), step: 1)
-                        .frame(maxWidth: min(images.first?.size.width ?? 400, 640) * scale - 90)
+                        .frame(maxWidth: (images.first.map { ImageOutputView.width(of: $0, ppi: attributes["ppi"]) } ?? 400) * scale - 90)
                         .accessibilityIdentifier("animation-slider")
                 }
                 Text("\(index + 1) / \(max(images.count, 1))")

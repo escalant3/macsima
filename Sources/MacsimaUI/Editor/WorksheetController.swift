@@ -746,7 +746,10 @@ public final class WorksheetController {
             for path in out.imagePaths {
                 if let data = FileManager.default.contents(atPath: path) {
                     let format = URL(filePath: path).pathExtension.lowercased()
-                    enqueue(id, .append(.image(data: data, format: format.isEmpty ? "png" : format, label: out.label)))
+                    // ppi is kept with the image, so the file says it too (wxMaxima reads it).
+                    let attributes = out.imagePPI[path].map { ["ppi": $0] } ?? [:]
+                    enqueue(id, .append(.image(data: data, format: format.isEmpty ? "png" : format, label: out.label,
+                                               attributes: attributes)))
                 } else {
                     enqueue(id, .append(.error(kind: nil, message: "The plot file \(path) was gone before it could be read.")))
                 }

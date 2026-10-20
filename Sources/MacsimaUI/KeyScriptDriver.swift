@@ -379,6 +379,15 @@ enum KeyScriptDriver {
              "folded": cell.isFolded, "hidden": cell.isHidden,
              "formats": TextFormatting.attributes(cell.textFormats).map { "\($0.0)=\($0.1)" },
              "editorText": controller.existingEditor(for: cell.id)?.string ?? NSNull(),
+             "images": cell.outputs.compactMap { output -> [String: Any]? in
+                 switch output {
+                 case .image(let data, _, _, let a):
+                     return ["ppi": a["ppi"] ?? "", "pixels": NSBitmapImageRep(data: data)?.pixelsWide ?? -1]
+                 case .animation(let frames, _, _, let a):
+                     return ["ppi": a["ppi"] ?? "", "pixels": frames.first.flatMap { NSBitmapImageRep(data: $0)?.pixelsWide } ?? -1]
+                 default: return nil
+                 }
+             },
              "inWindow": controller.existingEditor(for: cell.id)?.window != nil,
              "backgrounds": controller.existingEditor(for: cell.id).map { describe($0)["backgrounds"] ?? [] } ?? [],
              "errorMarks": controller.errorMarks[cell.id].map { marks -> [String: Any] in

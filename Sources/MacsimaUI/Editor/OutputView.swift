@@ -23,9 +23,9 @@ struct OutputView: View {
             MessageText(text: text, isError: false)
         case .error(_, let message):
             MessageText(text: message.isEmpty ? "Error (see the output above)" : message, isError: true)
-        case .image(let data, let format, let label, _):
+        case .image(let data, let format, let label, let attributes):
             if let image = ImageDecoding.image(data, format: format) {
-                ImageOutputView(image: image, label: label)
+                ImageOutputView(image: image, label: label, ppi: attributes["ppi"])
             }
         case .animation(let frames, let format, let label, let attributes):
             // A container, so its controls keep their own identifiers.

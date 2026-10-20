@@ -138,10 +138,23 @@ public struct MathOutputView: View {
 public struct ImageOutputView: View {
     let image: NSImage
     let label: String?
+    /// The image's `ppi`, when it says (Macsima's 2× plots, wxMaxima's files).
+    let ppi: String?
 
-    public init(image: NSImage, label: String?) {
+    public init(image: NSImage, label: String?, ppi: String? = nil) {
         self.image = image
         self.label = label
+        self.ppi = ppi
+    }
+
+    /// The width shown at 100% zoom, at most 640 points: with a ppi, its
+    /// pixels at that many per inch (72 points); without, its own size.
+    static func width(of image: NSImage, ppi: String?) -> CGFloat {
+        let pixels = image.representations.map(\.pixelsWide).max() ?? 0
+        if let ppi = ppi.flatMap(Double.init), ppi >= 24, pixels > 0 {
+            return min(CGFloat(pixels) * 72 / ppi, 640)
+        }
+        return min(image.size.width, 640)
     }
 
     @Environment(\.worksheetScale) private var scale
@@ -156,7 +169,7 @@ public struct ImageOutputView: View {
             Image(nsImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: min(image.size.width, 640) * scale)
+                .frame(maxWidth: Self.width(of: image, ppi: ppi) * scale)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
