@@ -29,7 +29,7 @@ Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadma
 - Does my SBCL have threads: `sbcl --noinform --eval '(progn (format t "threads: ~a~%" (if (member :sb-thread *features*) "yes" "no")) (quit))'`
 
 ## Current phase
-Phase 2 is done: Macsima is a working worksheet app (see `docs/PHASE2_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` and `docs/PHASE1_REPORT.md`). Phase 3 (daily driver, `docs/PHASE3_PROMPT.md`) is in progress: Parts A (the editor) and B (math output) are done and approved; Part C (the Maxima side, steps 9 to 14, then the report in step 15) is next. Arrow keys stopping on outputs are deferred past Phase 3.
+Phase 2 is done: Macsima is a working worksheet app (see `docs/PHASE2_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` and `docs/PHASE1_REPORT.md`). Phase 3 (daily driver, `docs/PHASE3_PROMPT.md`) is in progress: Parts A (the editor) and B (math output) are done and approved; Part C (the Maxima side, steps 9 to 14) is built and waits for approval at checkpoint C; the report (step 15) comes after. Arrow keys stopping on outputs and Esc-sequences for Greek letters (Esc completes now) are deferred past Phase 3.
 
 Facts to keep in mind (details in the reports, BOOTSTRAP.md, WXMX_COMPAT.md and PARITY.md):
 - **Build the app.** `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build`. All code lives in the package (`MacsimaUI`); `App/Macsima` only holds `@main`.
@@ -41,4 +41,7 @@ Facts to keep in mind (details in the reports, BOOTSTRAP.md, WXMX_COMPAT.md and 
 - **Long math** breaks into lines in the page's own script (`MathLineBreaking.swift`), after wxMaxima's BreakLines; `macsima-render verify` checks it. The translator, `MaximaInputText` and `LaTeXTranslator` recurse up to 400 levels on the main thread's stack: keep their recursive functions' frames small (a bigger frame crashed a full test run once).
 - **Folding** keeps one flat cell list; a heading's `isFolded` hides its section in the view only. `.wxmx` and `.wxm` write the section into `<fold>`/fold markers.
 - **wxMaxima as a reference.** Run it only on copies, with `-f <private ini>` and a scratch `HOME`; check that its settings are unchanged afterwards. Batch mode (`-b`) saves but never exits, and stops at errors and questions.
-- **Fixtures.** Re-record session fixtures with `MACSIMA_RECORD_WXMX=1` and translator snapshots with `MACSIMA_RECORD_SNAPSHOTS=1`.
+- **Macsima's own Lisp** is `Sources/MaximaKit/Resources/macsima.lisp` (help, watched values), sent after the unmodified glue, inside `<suppressOutput>` so compiler notes never look like replies. Background queries (`MaximaSession.help`, `values`, `setOption`) are `:lisp-quiet` lines that wait until Maxima is idle: one sent during a question would be read as the answer.
+- **Break commands** at the `(%iN)` prompt get no prompt after a `:lisp-quiet` line; the session wraps them (`:lisp-quiet nil`, the command, `:lisp (values)`). See BOOTSTRAP.md.
+- **Settings** live in `AppSettings.store`; key scripts and UI tests get their own store, emptied at launch. Never write the user's settings from a script.
+- **Fixtures.** Re-record help and variable replies with `MACSIMA_RECORD_HELP=1` and `MACSIMA_RECORD_VARIABLES=1`. Re-record session fixtures with `MACSIMA_RECORD_WXMX=1` and translator snapshots with `MACSIMA_RECORD_SNAPSHOTS=1`.

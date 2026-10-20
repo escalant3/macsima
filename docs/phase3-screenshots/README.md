@@ -27,3 +27,19 @@ Before-and-after snapshots of line breaking are in `docs/phase3-snapshots/`.
 | `12-folded.png` | Two sections folded with Fold All; "3 cells folded" | `folds-basics` |
 | `13-text-formats.png` | Italic text with an underlined superscript (Format menu) | `format-basics` |
 | `14-wxdraw-svg.png` | A `wxdraw2d` plot, then an SVG plot (`wxplot_usesvg:true`) | `plots-basics` |
+
+## Checkpoint C: the Maxima side
+
+| File | What it shows | Script |
+| --- | --- | --- |
+| `15-completion.png` | Esc after `integ`: the completion list, names and templates, arguments in grey | `complete-basics` |
+| `16-template.png` | `integrate(<expr>, <x>, <a>, <b>)` inserted, `<expr>` selected; Tab goes on to `<x>` | `complete-basics` |
+| `17-manual.png` | F1 on `integrate`: the manual's entry in the sidebar, prose rewrapped, references as links | `help-basics` |
+| `18-variables.png` | The variables panel watching `x` and `f`, after evaluating | `panels-basics` |
+| `19-contents.png` | The contents panel; Intro, where the focus is, marked | `panels-basics` |
+| `20-status-bar.png` | The status bar while a loop runs: 3.0 s, CPU 100% | `panels-basics` |
+| `21-debugger.png` | An interrupted question; a debugmode error in the debugger (`x`, `:bt`, `:top`); a breakpoint in `debug-f.mac` with the controls and the stop's file, line and source | `modes-basics` |
+| `22-lisp-mode.png` | After `to_lisp()`: a Lisp cell without a label, the status bar's note and Return to Maxima | `modes-basics` |
+| `23-export-html.png` | File › Export › HTML, opened in WebKit: inputs, MathML, the plot | `files-basics` |
+| `24-settings.png` | The Settings window, Maxima tab (the scripts' own settings store) | `settings-basics` |
+| `25-fonts.png` | Code font Menlo 20 and math size 30 from Settings, applied at once | `settings-basics` |
