@@ -144,6 +144,7 @@ Line-breaking before-and-after snapshots are in `docs/phase3-snapshots/`.
 - **Contents:** reordering sections from the contents panel.
 - **Selection:** drag-selecting cells; pasting formatted text.
 - **Tooling:** a diff viewer.
+- **App icon:** the icon is flat (an `.appiconset`); a layered Icon Composer version is for later (`docs/icon/README.md`).
 
 ## Still untested
 
