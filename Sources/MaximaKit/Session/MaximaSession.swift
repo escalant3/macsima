@@ -213,11 +213,12 @@ public actor MaximaSession {
         return stream
     }
 
-    /// Replies to a question (adds `;` when missing) or sends a debugger command.
+    /// Replies to a question or sends a debugger command. Adds the `;` an
+    /// answer or an expression needs; break commands (`:bt`, `:next`) take none.
     public func answer(_ text: String) throws(MaximaError) {
         guard let transport, state == .question || state == .debugger else { throw .noQuestion }
         var line = text.trimmingWhitespace
-        if state == .question && !line.hasSuffix(";") && !line.hasSuffix("$") { line += ";" }
+        if !(state == .debugger && line.hasPrefix(":")) && !line.hasSuffix(";") && !line.hasSuffix("$") { line += ";" }
         setState(.busy)
         transport.send(line + "\n")
     }
@@ -267,7 +268,17 @@ public actor MaximaSession {
         statementText.removeAll()
         job.sink.yield(.started(index: job.next, statement))
         setState(.busy)
-        transport.send(statement.text + "\n")
+        if !lispMode, GlueLisp.isBreakCommand(statement) {
+            // A break command prints the prompt `:lisp-quiet` blanked, so
+            // whether one comes depends on what ran before (checked on
+            // 5.50.0). Blank it for sure, then restore it with `:lisp`,
+            // which prints no value for (values) and exactly one prompt.
+            transport.send(":lisp-quiet nil\n")
+            transport.send(statement.text + "\n")
+            transport.send(":lisp (values)\n")
+        } else {
+            transport.send(statement.text + "\n")
+        }
         // Maxima answers a :lisp-quiet line with no prompt (fixture 26), so
         // waiting for one would hang the cell: the statement ends here.
         if statement.terminator == .line && statement.text.hasPrefix(":lisp-quiet") {
@@ -475,6 +486,13 @@ public actor MaximaSession {
     public func values(of names: [String]) {
         guard !names.isEmpty else { return }
         query(":lisp-quiet (macsima-values '(\(names.map(GlueLisp.lispString).joined(separator: " "))))\n")
+    }
+
+    /// Sets a Maxima option such as `debugmode` the way `option: value` does
+    /// (running its assign function), without an input label; once Maxima is idle.
+    public func setOption(_ name: String, _ value: Bool) {
+        guard name.wholeMatch(of: /[a-z_0-9]+/) != nil else { return }
+        query(":lisp-quiet (meval '((msetq) $\(name) \(value ? "t" : "nil")))\n")
     }
 
     /// The user's variables (Maxima's `values`), as `.tag("macsima-variable-names", ...)`.

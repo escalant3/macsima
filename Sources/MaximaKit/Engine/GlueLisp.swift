@@ -69,6 +69,12 @@ public enum GlueLisp {
         ]
     }
 
+    /// A top-level break command (`:break f 1`, `:delete`, `:info :bkpt`),
+    /// not `:lisp` or `:lisp-quiet`. See `MaximaSession.sendStatement`.
+    public static func isBreakCommand(_ statement: Statement) -> Bool {
+        statement.terminator == .line && statement.text.hasPrefix(":") && !statement.text.hasPrefix(":lisp")
+    }
+
     /// Sent before each statement (not in Lisp mode).
     public static func lineWidthLine(_ columns: Int) -> String {
         ":lisp-quiet (setq $linel \(columns))\n"
