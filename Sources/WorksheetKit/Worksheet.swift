@@ -138,6 +138,28 @@ public struct Worksheet: Equatable, Sendable {
     /// A new worksheet with one empty code cell.
     public static func empty() -> Worksheet { Worksheet(cells: [Cell(kind: .code)]) }
 
+    /// The cells wxMaxima counts for `activecell`: those not inside a
+    /// folded section (a folded heading carries its section along).
+    public var topLevelIndices: [Int] { cells.indices.filter { foldedAncestors(of: $0).isEmpty } }
+
+    /// wxMaxima's `activecell`: the cell the cursor was in, as its 0-based
+    /// position among the top-level cells (WXMXformat.cpp); wxMaxima puts its
+    /// cursor just before that cell when it reads the file (MaximaFileIO.cpp).
+    /// A position past the end (batch mode leaves the cursor after the last
+    /// cell) means the last cell. Nil when absent or not a number.
+    public var activeCell: UUID? {
+        guard let k = Int(extraAttributes["activecell"] ?? ""), k >= 0, !cells.isEmpty else { return nil }
+        let top = topLevelIndices
+        guard !top.isEmpty else { return nil }
+        return cells[top[min(k, top.count - 1)]].id
+    }
+
+    /// Records `id` as the cell with the cursor (nil leaves the attribute as it is).
+    public mutating func setActiveCell(_ id: UUID?) {
+        guard let id, let i = index(of: id), let k = topLevelIndices.firstIndex(of: i) else { return }
+        extraAttributes["activecell"] = String(k)
+    }
+
     /// The variables panel's watch list, kept where wxMaxima keeps it: the
     /// root's `variables_num` and `variables_0` ... attributes, so a file
     /// round-trips unchanged. wxMaxima writes one more `variables_N` than

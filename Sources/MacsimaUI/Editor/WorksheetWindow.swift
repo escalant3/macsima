@@ -90,7 +90,7 @@ struct WorksheetWindow: View {
         .onAppear {
             controller.becameKey()
             controller.undoManager = undoManager
-            if controller.focusedCell == nil { controller.focusedCell = document.worksheet.cells.first?.id }
+            if controller.focusedCell == nil { controller.focusedCell = controller.initialFocus() }
         }
         .onChange(of: undoManager) { _, new in controller.undoManager = new }
         .onChange(of: controller.asking) { _, asking in

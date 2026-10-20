@@ -20,6 +20,7 @@ public final class WorksheetController {
         didSet {
             if focusedCell != oldValue, !notingFocus { focusRequest &+= 1 }
             followsFocus = true
+            document.cursorCell = focusedCell
         }
     }
     @ObservationIgnored private var notingFocus = false
@@ -485,6 +486,36 @@ public final class WorksheetController {
                 last = now
             }
         }
+    }
+
+    /// Cell › Go to Next Error (⌘') and Previous Error (⌘"): the next code
+    /// cell after the focused one, round the worksheet, whose outputs hold an
+    /// error (an interrupt is none), with the failing statement selected.
+    /// False when there is none.
+    @discardableResult
+    public func goToError(forward: Bool = true) -> Bool {
+        let cells = document.worksheet.cells
+        let failed = cells.indices.filter { i in
+            cells[i].outputs.contains { if case .error(let kind, _) = $0 { kind != "interrupted" } else { false } }
+        }
+        guard !failed.isEmpty else { NSSound.beep(); return false }
+        let here = focusedCell.flatMap { document.worksheet.index(of: $0) } ?? (forward ? -1 : cells.count)
+        let next = forward ? failed.first { $0 > here } ?? failed[0] : failed.last { $0 < here } ?? failed[failed.count - 1]
+        let cell = cells[next]
+        if let marks = errorMarks[cell.id], marks.text == cell.input, let statement = marks.statements.first {
+            focus(cell.id, caret: .range(statement))
+        } else {
+            focus(cell.id, caret: .start)
+        }
+        return true
+    }
+
+    /// Where the focus goes when the window opens: the file's `activecell`,
+    /// or the next cell with an editor after it, else the first cell.
+    func initialFocus() -> UUID? {
+        let cells = document.worksheet.cells
+        guard let id = document.worksheet.activeCell, let i = document.worksheet.index(of: id) else { return cells.first?.id }
+        return cells[i...].first(where: \.hasEditor)?.id ?? cells.first?.id
     }
 
     /// Cell › Complete Word and Show Template, in the focused code cell.

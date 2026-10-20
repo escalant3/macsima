@@ -2,6 +2,8 @@
 # Cmd+S (in place, no panel), quit. Run with:
 #   Tests/Fixtures/keyscripts/run.sh save-basics Tests/Fixtures/wxmx/wxmaxima-written/basics.wxmx
 wait 5
+# The file opens at its activecell; go to the title first.
+contents-click 0
 key down cmd
 type  (edited in Macsima)
 wait 1

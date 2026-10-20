@@ -65,6 +65,12 @@ struct WorksheetCommands: Commands {
             Button("Unfold All") { controller?.setAllFolded(false) }
                 .keyboardShortcut("]", modifiers: [.command, .option])
             Divider()
+            // Xcode's keys for the next and previous issue.
+            Button("Go to Next Error") { controller?.goToError(forward: true) }
+                .keyboardShortcut("'", modifiers: .command)
+            Button("Go to Previous Error") { controller?.goToError(forward: false) }
+                .keyboardShortcut("\"", modifiers: [.command, .shift])
+            Divider()
             Button("Select All Cells") { controller?.selectAllCells() }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
             Button("Delete Cell") { controller?.deleteFocusedCell() }

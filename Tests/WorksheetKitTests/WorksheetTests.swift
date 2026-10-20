@@ -5,6 +5,29 @@ import Testing
 @testable import WorksheetKit
 
 struct WorksheetTests {
+    @Test func activeCell() throws {
+        var section = Cell(kind: .section, input: "S")
+        section.isFolded = true
+        var w = Worksheet(cells: [Cell(kind: .code, input: "a"), section, Cell(kind: .code, input: "hidden"),
+                                  Cell(kind: .section, input: "T"), Cell(kind: .code, input: "b")])
+        #expect(w.activeCell == nil)
+        // Top-level: a, S (with its folded section), T, b.
+        w.extraAttributes["activecell"] = "2"
+        #expect(w.activeCell == w.cells[3].id, "the folded cell doesn't count")
+        w.extraAttributes["activecell"] = "99"
+        #expect(w.activeCell == w.cells[4].id, "past the end: the last cell")
+        w.extraAttributes["activecell"] = "-1"
+        #expect(w.activeCell == nil)
+        w.setActiveCell(w.cells[4].id)
+        #expect(w.extraAttributes["activecell"] == "3")
+        w.setActiveCell(w.cells[2].id)
+        #expect(w.extraAttributes["activecell"] == "3", "a cell inside a fold has no position; unchanged")
+        // wxMaxima's sample: four cells, activecell="4", the cursor after the last.
+        let sample = try WXMXReader.read(try Data(contentsOf: URL(filePath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().appending(path: "Fixtures/wxmx/wxmaxima-samples/intervals.wxmx"))).worksheet
+        #expect(sample.cells.count == 4 && sample.activeCell == sample.cells[3].id)
+    }
+
     @Test func watchedVariables() throws {
         var w = Worksheet.empty()
         #expect(w.watchedVariables.isEmpty)

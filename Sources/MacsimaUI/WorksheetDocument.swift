@@ -24,6 +24,9 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
     @Published public var worksheet: Worksheet
     /// What the reader kept without being able to show it; shown when the file opens.
     @Published public var openWarnings: [String] = []
+    /// The cell with the keyboard focus, saved as `activecell` (set by the
+    /// window; not published: a focus change is no edit and redraws nothing).
+    public var cursorCell: UUID?
 
     public init(worksheet: Worksheet = .empty()) {
         self.worksheet = worksheet
@@ -56,7 +59,9 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
     }
 
     public func snapshot(contentType: UTType) throws -> Worksheet {
-        worksheet
+        var copy = worksheet
+        copy.setActiveCell(cursorCell)
+        return copy
     }
 
     /// `.wxm` keeps inputs, headings, text, images and answers, not outputs
