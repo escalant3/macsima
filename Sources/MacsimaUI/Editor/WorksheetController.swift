@@ -731,11 +731,15 @@ public final class WorksheetController {
     /// file disappears on kill and restart.
     func receive(_ event: CellEvent, for id: UUID) {
         switch event {
-        case .started(let index, _):
+        case .started(let index, let statement):
             currentStatement[id] = index
             if index == 0 { enqueue(id, .clearOutputs) }
-            // Lisp mode has no input labels.
-            if index == 0, !inLispMode { enqueue(id, .label(nextLabel)) }
+            // Lisp mode has no input labels. Its statements are whole lines
+            // without a terminator; normal statements end in ; or $ or are
+            // :commands. (The state event comes too early to go by: the
+            // to_lisp() cell itself has a label.)
+            let lisp = statement.terminator == .line && !statement.text.hasPrefix(":")
+            if index == 0, !lisp { enqueue(id, .label(nextLabel)) }
             enqueue(id, .appendText(Self.statementMark))
         case .math(let xml):
             let out = TranslationCache.shared.translate(xml)

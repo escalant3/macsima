@@ -332,6 +332,7 @@ elif script == "modes-basics":
     check(d(7)["debugger"]["location"] == "debug-f.mac:5", f"Step Over goes to line 5: {d(7)['debugger']}")
     f = " | ".join(cell(8, ":break")["outputs"])
     check(d(8)["state"] == "idle" and "math %o" in f and "100" in f, f"Continue finishes f(3) = 100: {f[-200:]}")
+    check(cell(9, "to_lisp")["label"] > 0, f"the to_lisp() cell has its input label: {cell(9, 'to_lisp')['label']}")
     lisp = cell(9, "(+ 1 2)")
     check(d(9)["debugger"]["lisp"] and lisp["label"] == -1 and any(o == "text 3" for o in lisp["outputs"]),
           f"in Lisp mode, (+ 1 2) gives 3 and no input label: {lisp['label']} {lisp['outputs']}")
