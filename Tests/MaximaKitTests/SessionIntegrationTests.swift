@@ -68,3 +68,24 @@ struct SessionIntegrationTests {
         await session.shutdown()
     }
 }
+
+@Suite(.serialized, .enabled(if: Integration.maximaAvailable))
+struct ProcessCPUTests {
+    @Test func busyMaximaUsesACore() async throws {
+        let session = MaximaSession()
+        try await session.start()
+        let group = try #require(await session.processGroup)
+        let idle = try #require(ProcessCPU.time(ofGroup: group))
+        // About two seconds of work.
+        let stream = try await session.evaluate(cellID: "a", text: "for i thru 3000000 do x: i^2$")
+        let clock = ContinuousClock()
+        let start = clock.now
+        try await Task.sleep(for: .seconds(1))
+        let busy = try #require(ProcessCPU.time(ofGroup: group))
+        let percent = ProcessCPU.percent(from: idle, to: busy, over: clock.now - start)
+        #expect(percent > 50 && percent < 200, "one busy SBCL thread: \(percent)%")
+        _ = await drain(stream)
+        await session.shutdown()
+        #expect(ProcessCPU.time(ofGroup: group) == nil, "nothing left to read after shutdown")
+    }
+}

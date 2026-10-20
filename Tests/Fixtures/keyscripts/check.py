@@ -307,6 +307,9 @@ elif script == "panels-basics":
     check(dump("panels", 6)["cells"][3]["folded"], "the title is folded")
     check(focused(7) == [6] and not dump("panels", 7)["cells"][3]["folded"],
           f"a click on Detail unfolds the title and focuses Detail: {focused(7)}")
+    s8, s9 = dump("panels", 8)["statusBar"], dump("panels", 9)["statusBar"]
+    check(s8["busy"] and s8["cpu"] > 50, f"while the loop runs: the clock runs and Maxima uses a core: {s8}")
+    check(not s9["busy"] and s9["last"] > 2, f"afterwards, how long it took: {s9}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

@@ -78,18 +78,7 @@ struct WorksheetWindow: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            if let message = controller.statusMessage {
-                Text(message)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(.bar)
-            }
-        }
+        .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(controller: controller) }
         .inspector(isPresented: $controller.showsSidebar) {
             SidebarView(controller: controller)
         }
@@ -177,5 +166,51 @@ struct OpenWarningsBanner: View {
         }
         .padding(10)
         .background(.bar)
+    }
+}
+
+/// The bottom bar: Maxima's own messages (`wxstatusbar`, start-up
+/// problems) on the left; on the right how long the running evaluation has
+/// taken and Maxima's CPU use, or how long the last one took.
+struct StatusBar: View {
+    let controller: WorksheetController
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(controller.statusMessage ?? "")
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier("status-message")
+            if let since = controller.busySince {
+                TimelineView(.periodic(from: since, by: 0.1)) { context in
+                    Text(Self.seconds(context.date.timeIntervalSince(since)))
+                        .monospacedDigit()
+                }
+                .accessibilityIdentifier("status-time")
+                if let cpu = controller.cpuPercent {
+                    Text("CPU \(Int(cpu.rounded()))%")
+                        .monospacedDigit()
+                        .help("Maxima's CPU use over the last second (100% is one core)")
+                }
+            } else if let last = controller.lastDuration {
+                Text("Last evaluation: " + Self.seconds(Double(last.components.seconds) + Double(last.components.attoseconds) / 1e18))
+                    .monospacedDigit()
+                    .accessibilityIdentifier("status-time")
+            }
+        }
+        .font(.callout)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+        .frame(minHeight: 24)
+        .background(.bar)
+        .overlay(alignment: .top) { Divider() }
+    }
+
+    /// `0.4 s`, `12.3 s`, `2 min 05 s`.
+    static func seconds(_ t: Double) -> String {
+        if t < 60 { return String(format: "%.1f s", t) }
+        let whole = Int(t)
+        return String(format: "%d min %02d s", whole / 60, whole % 60)
     }
 }

@@ -358,6 +358,8 @@ enum KeyScriptDriver {
         info["help"] = ["visible": controller.showsSidebar && controller.sidebarTab == .manual, "pending": help.pending ?? NSNull(), "topic": help.page?.topic ?? NSNull(),
                         "entries": help.page?.entries.map(\.name) ?? [], "related": help.page?.related.count ?? 0,
                         "error": help.page?.error ?? NSNull(), "history": help.history] as [String: Any]
+        info["statusBar"] = ["busy": controller.busySince != nil, "cpu": controller.cpuPercent ?? -1,
+                             "last": controller.lastDuration.map { Double($0.components.seconds) + Double($0.components.attoseconds) / 1e18 } ?? -1] as [String: Any]
         info["sidebar"] = controller.showsSidebar ? controller.sidebarTab.rawValue : "hidden"
         info["watch"] = controller.variables.names.map { name -> [String: Any] in
             let v = controller.variables.values[name]

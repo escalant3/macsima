@@ -79,3 +79,10 @@ Things to know when using these as test fixtures:
 `help/` holds the replies of `macsima-help` (`Sources/MaximaKit/Resources/macsima.lisp`) for `integrate`, `diff`,
 `:=` and `nosuchtopic`, as `<macsima-help>` tag contents, recorded 2026-10-20 from Homebrew Maxima 5.50.0 by
 `HelpIntegrationTests` with `MACSIMA_RECORD_HELP=1`. `HelpTests` parses them offline.
+
+## Variable replies
+
+`variables/` holds the replies of `macsima-values` and `macsima-variable-names` (macsima.lisp) after the
+statements in `VariablesFixtures.setup`, recorded 2026-10-20 from Homebrew Maxima 5.50.0 by
+`VariablesIntegrationTests` with `MACSIMA_RECORD_VARIABLES=1`. `names.txt` starts with `draw_command`, set by
+the recording user's `maxima-init.mac`; the tests only check the names they set.

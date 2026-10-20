@@ -38,4 +38,13 @@ toggle-fold 3
 dump .build/keyscripts/panels-6.json
 contents-click 2
 dump .build/keyscripts/panels-7.json
+# The status bar: time and CPU while Maxima works, then how long it took.
+key 0 cmd
+type for i thru 4000000 do y: i^2$
+key return shift
+wait 2.5
+dump .build/keyscripts/panels-8.json
+shot .build/keyscripts/panels-8.png
+wait 6
+dump .build/keyscripts/panels-9.json
 quit

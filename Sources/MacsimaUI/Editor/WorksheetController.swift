@@ -46,6 +46,13 @@ public final class WorksheetController {
     public private(set) var sessionState: SessionState = .dead
     /// Why Maxima is not running, or other news for the status line.
     public private(set) var statusMessage: String?
+    /// When Maxima left idle for the evaluation now running (the status bar's clock).
+    public private(set) var busySince: Date?
+    /// How long the last evaluation took, from leaving idle to idle again.
+    public private(set) var lastDuration: Duration?
+    /// Maxima's CPU use over the last second while busy, in percent of one core.
+    public private(set) var cpuPercent: Double?
+    @ObservationIgnored private var cpuSampler: Task<Void, Never>?
     /// The status message came from Maxima's `statusbar` tag.
     @ObservationIgnored private var statusFromMaxima = false
     /// Cells sent to Maxima and not finished yet.
@@ -384,6 +391,41 @@ public final class WorksheetController {
         help.lookUp(editor(for: id).helpTopic ?? "")
     }
 
+    /// The status bar's clock and CPU figure: from leaving idle (or Lisp
+    /// mode) to coming back, questions included.
+    private func trackBusyTime(from old: SessionState, to new: SessionState) {
+        let resting: Set<SessionState> = [.idle, .lisp, .dead]
+        if resting.contains(old), !resting.contains(new), [.busy, .question, .debugger].contains(new) {
+            busySince = Date()
+            cpuPercent = nil
+            startCPUSampler()
+        } else if !resting.contains(old), resting.contains(new), let since = busySince {
+            lastDuration = .seconds(Date().timeIntervalSince(since))
+            busySince = nil
+            cpuSampler?.cancel()
+            cpuSampler = nil
+            cpuPercent = nil
+        }
+    }
+
+    private func startCPUSampler() {
+        cpuSampler?.cancel()
+        cpuSampler = Task { [weak self] in
+            guard let group = await self?.session?.processGroup else { return }
+            let clock = ContinuousClock()
+            var last = (clock.now, ProcessCPU.time(ofGroup: group))
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled, let self else { return }
+                let now = (clock.now, ProcessCPU.time(ofGroup: group))
+                if let a = last.1, let b = now.1 {
+                    self.cpuPercent = ProcessCPU.percent(from: a, to: b, over: now.0 - last.0)
+                }
+                last = now
+            }
+        }
+    }
+
     /// Cell › Complete Word and Show Template, in the focused code cell.
     public func complete(templatesOnly: Bool) {
         guard let id = focusedCell, document.worksheet[id]?.kind == .code else { return }
@@ -477,6 +519,7 @@ public final class WorksheetController {
         case .state(let state):
             // Back to idle after an evaluation, or started: the watched values may have changed.
             if state == .idle, sessionState != .idle { variables.refresh() }
+            trackBusyTime(from: sessionState, to: state)
             sessionState = state
         case .died(let reason):
             // A restart the user asked for is not news.
