@@ -327,6 +327,7 @@ enum KeyScriptDriver {
             ["label": r.label ?? "", "wrap": r.wrap.map { Int($0) } ?? -1,
              "width": Int(r.size.width), "height": Int(r.size.height)]
         }
+        info["renderTimeouts"] = MathSnapshotRenderer.shared.timeouts
         info["windowWidth"] = Int(documentWindow?.contentLayoutRect.width ?? 0)
         let find = controller.find
         info["find"] = ["visible": find.isVisible, "query": find.query, "status": find.status,

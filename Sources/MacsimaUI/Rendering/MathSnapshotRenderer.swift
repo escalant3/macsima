@@ -28,6 +28,9 @@ public final class MathSnapshotRenderer {
     public private(set) var renderCount = 0
     /// The latest renders, for checks: label, width broken at (nil: none), size.
     public private(set) var recent: [(label: String?, wrap: CGFloat?, size: CGSize)] = []
+    /// Renders given up after `timeout` without an answer from the page.
+    public private(set) var timeouts = 0
+    static let timeout = Duration.seconds(10)
 
     private init() {
         // Kept on screen but fully transparent and behind everything: WebKit
@@ -71,6 +74,7 @@ public final class MathSnapshotRenderer {
         window.setContentSize(CGSize(width: frameWidth, height: 400))
         web.frame.size = CGSize(width: frameWidth, height: 400)
         var latest = CGSize.zero
+        var timedOut = false
         await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
             var resumed = false
             web.sizeObserver = { size in
@@ -79,6 +83,17 @@ public final class MathSnapshotRenderer {
             }
             web.show(mathML: mathML, label: label, scale: scale, wrap: wrap.map { .width($0) } ?? .none,
                      labelColumn: labelColumn)
+            // A page that never reports its size would keep the renderer
+            // busy, and every later output in the app would wait behind it.
+            Task { @MainActor in
+                try? await Task.sleep(for: Self.timeout)
+                if !resumed { resumed = true; timedOut = true; c.resume() }
+            }
+        }
+        if timedOut {
+            web.sizeObserver = nil
+            timeouts += 1
+            return nil
         }
         let natural = web.naturalWidth
         if labelColumn { naturalWidths[Self.key(mathML, label, dark, scale, nil)] = natural }
