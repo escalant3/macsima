@@ -149,9 +149,11 @@ public actor MaximaSession {
         }
     }
 
-    /// Kills Maxima and starts a new one. Open cells end with `.sessionDied`.
-    public func restart() async throws(MaximaError) {
+    /// Kills Maxima and starts a new one, with `configuration` when given.
+    /// Open cells end with `.sessionDied`.
+    public func restart(configuration: MaximaConfiguration? = nil) async throws(MaximaError) {
         await kill(reason: "restarted")
+        if let configuration { self.configuration = configuration }
         try await start()
     }
 

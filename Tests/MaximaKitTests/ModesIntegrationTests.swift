@@ -110,11 +110,12 @@ struct ModesIntegrationTests {
 
 @Suite(.serialized, .enabled(if: Integration.maximaAvailable))
 struct AbortOnErrorTests {
-    /// Three cells queued at once; the middle one fails.
-    private func run(abort: Bool) async throws -> [[CellEvent]] {
+    /// Three cells queued at once; the middle one fails. With `restartedWith`,
+    /// after a restart with that configuration instead of `setAbortOnError`.
+    private func run(abort: Bool, restartedWith restart: MaximaConfiguration? = nil) async throws -> [[CellEvent]] {
         let session = MaximaSession()
         try await session.start()
-        await session.setAbortOnError(abort)
+        if let restart { try await session.restart(configuration: restart) } else { await session.setAbortOnError(abort) }
         let streams = [
             try await session.evaluate(cellID: "a", text: "1+1;"),
             try await session.evaluate(cellID: "b", text: "1/0; 3;"),
@@ -133,6 +134,13 @@ struct AbortOnErrorTests {
         #expect(cells[1].contains(.skipped(Statement(text: "3;", terminator: .show))))
         #expect(cells[2].last == .finished(.cancelled), "the cell after the error is not run")
         #expect(!cells[2].contains { if case .started = $0 { true } else { false } })
+    }
+
+    @Test func restartTakesTheNewConfiguration() async throws {
+        var config = MaximaConfiguration()
+        config.abortCellOnError = false
+        let cells = try await run(abort: false, restartedWith: config)
+        #expect(cells[2].last == .finished(.completed), "abort on error is off after the restart")
     }
 
     @Test func offGoesOn() async throws {

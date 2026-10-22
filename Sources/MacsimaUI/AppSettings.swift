@@ -63,6 +63,9 @@ enum AppSettings {
     /// The zoom new worksheets start with, in percent.
     static var defaultZoom: Int { Int(number(defaultZoomKey, 100, 50...300)) }
 
+    /// Sent at start when plots are SVG.
+    static let svgSetupLine = ":lisp-quiet (setq $wxplot_usesvg t)\n"
+
     /// The session configuration: paths, abort on error, the plot format,
     /// and pngcairo plots when gnuplot has that terminal (as wxMaxima does).
     static func configuration() async -> MaximaConfiguration {
@@ -73,7 +76,7 @@ enum AppSettings {
         if await GnuplotProbe.shared.hasPNGCairo(gnuplot: config.gnuplotPath) {
             config.additionalSetupLines.append(":lisp-quiet (setq $wxplot_pngcairo t)\n")
         }
-        if plotsAsSVG { config.additionalSetupLines.append(":lisp-quiet (setq $wxplot_usesvg t)\n") }
+        if plotsAsSVG { config.additionalSetupLines.append(svgSetupLine) }
         return config
     }
 

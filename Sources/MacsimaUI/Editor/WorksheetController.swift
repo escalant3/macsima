@@ -553,7 +553,8 @@ public final class WorksheetController {
     /// Starts Maxima for this window.
     public func start() async {
         guard session == nil else { return }
-        let session = makeSession(await AppSettings.configuration())
+        let configuration = await AppSettings.configuration()
+        let session = makeSession(configuration)
         self.session = session
         nextLabel = 1
         sessionWatcher = Task { [weak self] in
@@ -563,12 +564,21 @@ public final class WorksheetController {
             statusMessage = nil
             try await session.start()
             if debugOnError { await session.setOption("debugmode", true) }
-            // The configuration had today's settings; changes are sent from here on.
-            appliedAbort = AppSettings.abortOnError
-            appliedSVG = AppSettings.plotsAsSVG
+            await settingsStarted(with: configuration, in: session)
         } catch {
             statusMessage = "Maxima did not start: \(error)"
         }
+    }
+
+    /// After a start or restart with `configuration`: sends what Settings
+    /// changed while Maxima was starting (`applySettings` skips changes
+    /// until then); changes are sent from here on.
+    private func settingsStarted(with configuration: MaximaConfiguration, in session: MaximaSession) async {
+        let abort = AppSettings.abortOnError, svg = AppSettings.plotsAsSVG
+        if abort != configuration.abortCellOnError { await session.setAbortOnError(abort) }
+        if svg != configuration.additionalSetupLines.contains(AppSettings.svgSetupLine) { await session.setOption("wxplot_usesvg", svg) }
+        appliedAbort = abort
+        appliedSVG = svg
     }
 
     @ObservationIgnored private var closeObserver: NSObjectProtocol?
@@ -725,8 +735,11 @@ public final class WorksheetController {
             statusMessage = nil
             nextLabel = 1
             do {
-                try await session.restart()
+                // Today's settings: the paths, abort on error, the plot format.
+                let configuration = await AppSettings.configuration()
+                try await session.restart(configuration: configuration)
                 if debugOnError { await session.setOption("debugmode", true) }
+                await settingsStarted(with: configuration, in: session)
             } catch {
                 statusMessage = "Maxima did not restart: \(error)"
             }
