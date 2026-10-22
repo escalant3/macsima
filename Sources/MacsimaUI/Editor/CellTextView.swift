@@ -95,6 +95,7 @@ final class CellTextView: NSTextView {
         // Formats changed by typing, undo or Format › Bold go to the model.
         if formatsText, !applyingFormats { onFormatsChange?(storageFormats()) }
         guard storage.editedMask.contains(.editedCharacters) else { return }
+        if window?.firstResponder === self { revealCaretOnGrowth = true }
         onTextChange?(storage.string)
         // After the edit is done: the layout follows the storage.
         DispatchQueue.main.async { [weak self] in
@@ -271,9 +272,43 @@ final class CellTextView: NSTextView {
         return ceil(max(height, lineHeight) + 2 * textContainerInset.height)
     }
 
+    /// Set by an edit while this view has the keyboard. SwiftUI gives the
+    /// view its new height only after the edit, when NSTextView has already
+    /// scrolled to the caret: a new or wrapped line in a cell at the bottom
+    /// of the worksheet stayed below the window. Once grown, scroll again.
+    private var revealCaretOnGrowth = false
+
+    override func setFrameSize(_ newSize: NSSize) {
+        let grew = newSize.height > frame.height
+        super.setFrameSize(newSize)
+        guard grew, revealCaretOnGrowth else { return }
+        revealCaretOnGrowth = false
+        // After this layout pass, when the worksheet has grown too.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, window?.firstResponder === self else { return }
+            revealCaret()
+        }
+    }
+
+    /// Scrolls the worksheet so the caret's line is above its bottom edge.
+    /// NSView's scrollRectToVisible counts the area under the status bar
+    /// (the scroll view's bottom inset) as visible, so it can't do this.
+    private func revealCaret() {
+        guard let scroll = enclosingScrollView, let caret = caretRect(at: selectedRange().location) else { return }
+        let clip = scroll.contentView
+        let line = clip.convert(caret, from: self).insetBy(dx: 0, dy: -textContainerInset.height)
+        let bottom = clip.bounds.maxY - scroll.contentInsets.bottom
+        guard line.maxY > bottom else { return }
+        clip.scroll(to: NSPoint(x: clip.bounds.minX, y: clip.bounds.minY + line.maxY - bottom))
+        scroll.reflectScrolledClipView(clip)
+    }
+
     override func resignFirstResponder() -> Bool {
         let ok = super.resignFirstResponder()
-        if ok { closeCompletion() }
+        if ok {
+            closeCompletion()
+            revealCaretOnGrowth = false
+        }
         return ok
     }
 

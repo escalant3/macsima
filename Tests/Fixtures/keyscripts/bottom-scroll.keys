@@ -1,0 +1,51 @@
+# The last cell at the bottom of the window grows: new lines and wrapped lines stay in view.
+wait 2
+resize 700 420
+type 1;
+key 0 cmd
+type 2;
+key 0 cmd
+type 3;
+key 0 cmd
+type 4;
+key 0 cmd
+type 5;
+key 0 cmd
+type 6;
+key 0 cmd
+type 7;
+key 0 cmd
+type 8;
+key 0 cmd
+type 9;
+key 0 cmd
+type 10;
+key 0 cmd
+type 11;
+key 0 cmd
+type 12;
+key 0 cmd
+type 13;
+key 0 cmd
+type 14;
+key 0 cmd
+type 15;
+key 0 cmd
+type a;
+key return
+type b;
+key return
+type c;
+key return
+type d;
+key return
+type e;
+wait 1
+dump .build/keyscripts/bottom-1.json
+type f+fffffffff+gggggggggg+hhhhhhhhhh+iiiiiiiiii+jjjjjjjjjj+kkkkkkkkkk+llllllllll+mmmmmmmmmm+nnnnnnnnnn
+wait 1
+dump .build/keyscripts/bottom-2.json
+key z cmd
+wait 1
+dump .build/keyscripts/bottom-3.json
+quit

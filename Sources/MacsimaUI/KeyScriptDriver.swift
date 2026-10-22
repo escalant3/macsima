@@ -408,6 +408,18 @@ enum KeyScriptDriver {
         }
         info["renderTimeouts"] = MathSnapshotRenderer.shared.timeouts
         info["windowWidth"] = Int(documentWindow?.contentLayoutRect.width ?? 0)
+        // The focused editor's caret against the worksheet's visible area, in window points.
+        if let editor = NSApp.keyWindow?.firstResponder as? CellTextView, let scroll = editor.enclosingScrollView,
+           let caret = editor.caretRect(at: editor.selectedRange().location) {
+            let c = editor.convert(caret, to: nil)
+            var v = scroll.convert(scroll.bounds, to: nil)
+            let insets = scroll.contentInsets
+            v.origin.y += insets.bottom
+            v.size.height -= insets.top + insets.bottom
+            info["caret"] = ["visible": v.minY <= c.minY && c.maxY <= v.maxY,
+                             "caretTop": Int(c.maxY), "caretBottom": Int(c.minY),
+                             "visibleTop": Int(v.maxY), "visibleBottom": Int(v.minY)]
+        }
         let find = controller.find
         info["find"] = ["visible": find.isVisible, "query": find.query, "status": find.status,
                         "current": find.current ?? -1, "count": find.matches.count] as [String: Any]

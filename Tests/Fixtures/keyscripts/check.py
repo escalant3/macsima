@@ -379,6 +379,14 @@ elif script == "settings-basics":
     check(s7["1/0;"]["outputs"][0].startswith("error") and s7["7;"]["outputs"] == ["math %o3 7"]
           and s7["8;"]["outputs"] == [] and d(7)["state"] == "idle",
           f"abort on error: Cmd+R stops at 1/0; 7; keeps its old (%o3), 8; is not run: {[(k, v['outputs']) for k, v in s7.items()]}")
+elif script == "bottom-scroll":
+    d1, d2, d3 = dump("bottom", 1), dump("bottom", 2), dump("bottom", 3)
+    last = d1["cells"][-1]
+    check(len(d1["cells"]) == 16 and last["input"] == "a;\nb;\nc;\nd;\ne;" and last["focused"],
+          f"16 cells, five lines in the last: {last['input']!r}")
+    check(d1["caret"]["visible"], f"after Return at the bottom, the new line is in view: {d1['caret']}")
+    check(d2["caret"]["visible"], f"a line that wraps at the bottom stays in view: {d2['caret']}")
+    check(d3["caret"]["visible"], f"after Cmd+Z, the caret is in view: {d3['caret']}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),
