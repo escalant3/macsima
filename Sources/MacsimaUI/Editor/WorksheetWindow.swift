@@ -120,9 +120,13 @@ struct WorksheetToolbar: ToolbarContent {
                 Text(Self.label(controller.sessionState))
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(.quaternary, in: Capsule())
                     .accessibilityIdentifier("session-state")
             }
         }
+        .sharedBackgroundVisibility(.hidden)
         ToolbarItem {
             Button("Interrupt", systemImage: "stop.fill") { controller.interrupt() }
                 .help("Interrupt (⌘.)")
