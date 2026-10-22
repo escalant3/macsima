@@ -245,4 +245,28 @@ final class EditorUITests: XCTestCase {
         app.typeKey("-", modifierFlags: .command)
         XCTAssertEqual(input.frame.height, before, accuracy: 1)
     }
+
+    /// File › Duplicate opens the copy with its name ready to edit; Return
+    /// takes the new name. The original is a copy under `.build/uitests/`,
+    /// so the duplicate is saved there too.
+    @MainActor
+    func testRenameAfterDuplicate() throws {
+        // Put there by the scheme's pre-action (the test runner is sandboxed).
+        let repo = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let original = repo.appending(path: ".build/uitests/rename.wxmx")
+        app.terminate()
+        app.launchArguments += [original.path]
+        app.launch()
+        XCTAssertTrue(app.windows["rename.wxmx"].waitForExistence(timeout: 10))
+        app.menuBars.menuBarItems["File"].click()
+        app.menuBars.menuItems["Duplicate"].click()
+        let field = app.windows["rename copy"].textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "the copy's name is ready to edit")
+        app.typeKey("a", modifierFlags: .command)
+        app.typeText("renamed")
+        app.typeKey(.return, modifierFlags: [])
+        XCTAssertTrue(app.windows["renamed"].waitForExistence(timeout: 10)
+                      || app.windows["renamed.wxmx"].waitForExistence(timeout: 1),
+                      "Return takes the name: \(app.windows.allElementsBoundByIndex.map(\.title))")
+    }
 }

@@ -29,6 +29,13 @@ schemes:
         Macsima: all
     test:
       targets: [MacsimaUITests]
+      # The test runner is sandboxed: files the tests open are put under .build/uitests here.
+      preActions:
+        - name: UI test files
+          settingsTarget: Macsima
+          script: |
+            rm -rf "$SRCROOT/.build/uitests" && mkdir -p "$SRCROOT/.build/uitests"
+            cp "$SRCROOT/Tests/Fixtures/wxmx/macsima-written/01-cell-kinds.wxmx" "$SRCROOT/.build/uitests/rename.wxmx"
 targets:
   Macsima:
     type: application
