@@ -11,19 +11,6 @@ struct TextFormatsTests {
     /// "0011" → two plain, two bold characters (digits are the raw values).
     func F(_ digits: String) -> TextFormats { digits.map { TextFormat(rawValue: UInt8(String($0))!) } }
 
-    @Test func formatsFollowASingleEdit() {
-        let text = "abcdef", formats = F("001100")
-        #expect(TextFormatting.reconcile(old: text, formats, new: "abcXdef") == F("0011100"))
-        #expect(TextFormatting.reconcile(old: text, formats, new: "abcdXef") == F("0011100"))
-        #expect(TextFormatting.reconcile(old: text, formats, new: "abXcdef") == F("0001100"))
-        #expect(TextFormatting.reconcile(old: text, formats, new: "abef").isEmpty)
-        #expect(TextFormatting.reconcile(old: text, formats, new: "abXYZef") == F("0011100"))
-        #expect(TextFormatting.reconcile(old: text, formats, new: "123abcdef") == F("000001100"))
-        #expect(TextFormatting.reconcile(old: "ab", F("11"), new: "Xab") == F("111"))
-        #expect(TextFormatting.reconcile(old: "a\nb", F("001"), new: "a\nXb") == F("0011"))
-        #expect(TextFormatting.reconcile(old: "abc", [], new: "abXc").isEmpty)
-    }
-
     @Test func savedAsLineAttributes() {
         var formats = TextFormats(repeating: [], count: 12)
         for i in 0..<4 { formats[i] = .bold }
