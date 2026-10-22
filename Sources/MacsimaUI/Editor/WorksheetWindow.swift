@@ -28,6 +28,7 @@ struct WorksheetWindow: View {
                             index: index,
                             isFocused: controller.focusedCell == cell.id && controller.selectedCells.isEmpty,
                             isSelected: controller.selectedCells.contains(cell.id),
+                            isStale: controller.staleCells.contains(cell.id),
                             onBarClick: { extend in controller.clickBar(cell.id, extend: extend) },
                             foldedCount: cell.isFolded ? sheet.foldRange(of: index).count : 0,
                             canFold: cell.kind.isHeading && !sheet.foldRange(of: index).isEmpty,

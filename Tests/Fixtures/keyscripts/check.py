@@ -47,6 +47,15 @@ elif script == "eval-basics":
           and d4["cells"][4]["outputs"] == ["error interrupted Interrupted"],
           f"after Restart, Cmd+R relabels from 1 in order and stops at the question: {[c['label'] for c in d4['cells']]}")
     check(d4["state"] == "question" and d4["status"] == "", "evaluation stops at the question; no status after a restart")
+elif script == "restart-basics":
+    def labels(n): return [c["label"] for c in dump("restart", n)["cells"]][:3]
+    def stale(n): return [c["stale"] for c in dump("restart", n)["cells"]][:3]
+    check(labels(1) == [1, 2, 3], f"three cells labelled 1..3: {labels(1)}")
+    check(labels(2) == [-1, -1, -1] and stale(2) == [True, True, True],
+          f"after Restart every label is --> and the outputs are stale: {labels(2)} {stale(2)}")
+    d3 = dump("restart", 3)["cells"]
+    check(labels(3) == [1, 2, 3] and stale(3) == [False, False, False] and d3[2]["outputs"] == ["math %o3 2"],
+          f"Cmd+R after the restart runs past 1/0 (abort on error off): {labels(3)} {d3[2]['outputs']}")
 elif script == "wrap-basics":
     def renders(n, label):
         return [r for r in dump("wrap", n)["renders"] if r["label"] == label]

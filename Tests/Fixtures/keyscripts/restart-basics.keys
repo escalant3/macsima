@@ -1,0 +1,23 @@
+# Restart Maxima: input labels go back to -->, the old outputs dim until
+# their cell runs again; with Abort on error off from the start, Evaluate
+# All after the restart runs past the error.
+setting AbortOnError false
+wait 3
+type a: 1;
+key return shift
+wait 2
+type 1/0;
+key return shift
+wait 2
+type b: 2;
+key return shift
+wait 2
+dump .build/keyscripts/restart-1.json
+menu Restart Maxima
+wait 4
+dump .build/keyscripts/restart-2.json
+shot .build/keyscripts/restart-2.png
+key r cmd
+wait 4
+dump .build/keyscripts/restart-3.json
+quit

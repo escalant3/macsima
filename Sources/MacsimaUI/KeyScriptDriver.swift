@@ -375,7 +375,8 @@ enum KeyScriptDriver {
         guard let controller = WorksheetController.keyController else { log("no controller"); return }
         let cells = controller.document.worksheet.cells.map { cell -> [String: Any] in
             ["kind": cell.kind.rawValue, "input": cell.input, "outputs": cell.outputs.map(describe),
-             "label": cell.inputLabel ?? -1, "focused": cell.id == controller.focusedCell,
+             "label": cell.inputLabel ?? -1, "stale": controller.staleCells.contains(cell.id),
+             "focused": cell.id == controller.focusedCell,
              "folded": cell.isFolded, "hidden": cell.isHidden,
              "formats": TextFormatting.attributes(cell.textFormats).map { "\($0.0)=\($0.1)" },
              "editorText": controller.existingEditor(for: cell.id)?.string ?? NSNull(),

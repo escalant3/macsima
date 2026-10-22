@@ -39,6 +39,8 @@ struct CellView: View {
     let isFocused: Bool
     /// Selected as a whole cell (CellSelection.swift).
     var isSelected = false
+    /// Its outputs came from a Maxima that has been restarted since: dimmed.
+    var isStale = false
     /// A click on the cell's bar or gutter; `extend` when Shift was held.
     var onBarClick: (_ extend: Bool) -> Void = { _ in }
     /// How many cells this folded heading hides (0 when not folded).
@@ -141,6 +143,7 @@ struct CellView: View {
             }
             ForEach(Array((cell.isHidden ? [] : cell.outputs).enumerated()), id: \.offset) { n, output in
                 OutputView(output: output, cellID: cell.id)
+                    .opacity(isStale ? 0.45 : 1)
                     .accessibilityIdentifier("cell-output-\(index)-\(n)")
             }
             if !cell.preserved.isEmpty {

@@ -69,6 +69,9 @@ public final class WorksheetController {
     public private(set) var running: Set<UUID> = []
     /// The cell whose question is waiting for an answer.
     public private(set) var asking: UUID?
+    /// Cells whose outputs came from a Maxima that was restarted since;
+    /// drawn dimmed until they run again. Not saved.
+    public private(set) var staleCells: Set<UUID> = []
 
     /// Where the last evaluation of a cell failed, for its editor.
     public private(set) var errorMarks: [UUID: ErrorMarks] = [:]
@@ -679,6 +682,7 @@ public final class WorksheetController {
                 streams.append((id, stream))
                 startReader()
             } catch {
+                staleCells.remove(id)
                 enqueue(id, .clearOutputs)
                 enqueue(id, .append(.error(kind: nil, message: "\(error)")))
                 // Unbalanced brackets: nothing was sent; mark the bracket.
@@ -715,6 +719,7 @@ public final class WorksheetController {
     }
 
     public func restart() {
+        resetInputLabels()
         Task {
             guard let session else { await start(); return }
             statusMessage = nil
@@ -725,6 +730,17 @@ public final class WorksheetController {
             } catch {
                 statusMessage = "Maxima did not restart: \(error)"
             }
+        }
+    }
+
+    /// What wxMaxima's ResetInputPrompts does on restart: every input label
+    /// back to `-->`. The outputs stay, dimmed, until their cell runs again.
+    /// Input labels are not saved, so the document is not edited.
+    private func resetInputLabels() {
+        flush()
+        for cell in document.worksheet.cells where cell.kind == .code {
+            if cell.inputLabel != nil { document.worksheet.update(cell.id) { $0.inputLabel = nil } }
+            if !cell.outputs.isEmpty { staleCells.insert(cell.id) }
         }
     }
 
@@ -764,7 +780,10 @@ public final class WorksheetController {
         switch event {
         case .started(let index, let statement):
             currentStatement[id] = index
-            if index == 0 { enqueue(id, .clearOutputs) }
+            if index == 0 {
+                staleCells.remove(id)
+                enqueue(id, .clearOutputs)
+            }
             // Lisp mode has no input labels. Its statements are whole lines
             // without a terminator; normal statements end in ; or $ or are
             // :commands. (The state event comes too early to go by: the
