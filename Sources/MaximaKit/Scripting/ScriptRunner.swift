@@ -215,7 +215,9 @@ public struct ScriptRunner: Sendable {
     }
 }
 
-/// Rough plain text for math XML, for logs only (Phase 2 parses it properly).
+/// Rough plain text for math XML: tags stripped, entities decoded. For the
+/// script runner's logs and `!expect-text`; WXMLKit's `MaximaInputText`
+/// gives proper Maxima input, but MaximaKit does not depend on WXMLKit.
 public enum MathText {
     public static func plain(_ xml: String) -> String {
         var out = ""
