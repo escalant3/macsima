@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 //
-// Phase 0 feasibility spike (see docs/BOOTSTRAP.md, "Phase 0 spike").
+// Records Maxima transcripts for the test fixtures (Tests/Fixtures/transcripts,
+// run by its record.sh). Born as the Phase 0 feasibility spike (see
+// docs/BOOTSTRAP.md, "Phase 0 spike"); kept apart from MaximaKit so the
+// recording does not depend on the code it tests.
 // Listens on 127.0.0.1, spawns `maxima -s <port>`, accepts Maxima's connection
-// and prints or records the raw bytes it sends. Not the engine: MaximaKit's
-// actor-based session replaces this in Phase 1.
+// and records the raw bytes it sends.
 //
 // Usage:
-//   maxima-spike [--glue <wxMathML.lisp>]
-//       send integrate(sin(x), x); and print everything Maxima sends
 //   maxima-spike record <scenario> <out-base> [--glue <wxMathML.lisp>]
 //       run a scenario file, write <out-base>.txt (bytes received, verbatim)
 //       and <out-base>.sent.txt (bytes sent)
@@ -75,7 +75,6 @@ final class Spike: @unchecked Sendable {
     let queue = DispatchQueue(label: "maxima-spike")
     let token: String
     let glue: Bool
-    let echo: Bool
 
     private var listener: NWListener?
     private var control: NWConnection?
@@ -91,10 +90,9 @@ final class Spike: @unchecked Sendable {
     private(set) var lastReceive = Date.distantPast
     private(set) var closed = false
 
-    init(token: String, glue: Bool, echo: Bool) {
+    init(token: String, glue: Bool) {
         self.token = token
         self.glue = glue
-        self.echo = echo
     }
 
     func start() throws {
@@ -175,7 +173,6 @@ final class Spike: @unchecked Sendable {
                 received.append(data)
                 sinceSend.append(data)
                 lastReceive = Date()
-                if echo { FileHandle.standardOutput.write(data) }
             }
             if done || error != nil {
                 closed = true
@@ -317,18 +314,17 @@ if let i = args.firstIndex(of: "--glue") {
     args.removeSubrange(i...(i + 1))
 }
 
-let recording = args.first == "record"
-if recording && args.count != 3 { fail("usage: maxima-spike record <scenario> <out-base> [--glue <lisp>]") }
+guard args.count == 3, args[0] == "record" else {
+    fail("usage: maxima-spike record <scenario> <out-base> [--glue <lisp>]")
+}
 
-let token = recording
-    ? "PHASE0-TEST-TOKEN"   // fixed, so fixtures hold no real secret
-    : (0..<64).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
+let token = "PHASE0-TEST-TOKEN"   // fixed, so fixtures hold no real secret
 
-let spike = Spike(token: token, glue: gluePath != nil, echo: !recording)
+let spike = Spike(token: token, glue: gluePath != nil)
 signal(SIGPIPE, SIG_IGN)
 try spike.start()
-let outBase = recording ? args[2] : nil
-spike.spawn(stdioLog: outBase.map { "\($0).stdio.txt" } ?? "/dev/null")
+let outBase = args[2]
+spike.spawn(stdioLog: "\(outBase).stdio.txt")
 spike.waitForConnection()
 log("first prompt: \(spike.waitForReply(timeout: 30))")
 
@@ -341,34 +337,29 @@ if let gluePath {
     log("interrupt channel ready: \(spike.snapshot { $0.interruptReady })")
 }
 
-if recording {
-    guard let scenario = try? String(contentsOfFile: args[1], encoding: .utf8) else {
-        fail("cannot read \(args[1])")
-    }
-    var timeout: TimeInterval = 15
-    for line in scenario.split(separator: "\n").map(String.init) {
-        if line.hasPrefix("#") || line.isEmpty { continue }
-        let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
-        switch parts[0] {
-        case "!send": spike.send(parts[1] + "\n")
-        case "!sleep": Thread.sleep(forTimeInterval: Double(parts[1]) ?? 1)
-        case "!wait": timeout = Double(parts[1]) ?? 15; continue
-        case "!sigint": spike.signal(SIGINT); log("reply: \(spike.waitForReply(timeout: timeout))")
-        case "!interrupt": spike.sendInterrupt(); log("reply: \(spike.waitForReply(timeout: timeout))")
-        default:
-            let started = Date()
-            spike.send(line + "\n")
-            let how = spike.waitForReply(timeout: timeout)
-            log(String(format: "%@ -> %@ (%.2f s)", line, how, Date().timeIntervalSince(started)))
-        }
-        timeout = 15
-    }
-    let (received, sent) = spike.snapshot { ($0.received, $0.sent) }
-    try received.write(to: URL(filePath: "\(outBase!).txt"))
-    try sent.write(to: URL(filePath: "\(outBase!).sent.txt"))
-    log("wrote \(received.count) bytes to \(outBase!).txt")
-} else {
-    spike.send("integrate(sin(x), x);\n")
-    log("reply: \(spike.waitForReply(timeout: 30))")
+guard let scenario = try? String(contentsOfFile: args[1], encoding: .utf8) else {
+    fail("cannot read \(args[1])")
 }
+var timeout: TimeInterval = 15
+for line in scenario.split(separator: "\n").map(String.init) {
+    if line.hasPrefix("#") || line.isEmpty { continue }
+    let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
+    switch parts[0] {
+    case "!send": spike.send(parts[1] + "\n")
+    case "!sleep": Thread.sleep(forTimeInterval: Double(parts[1]) ?? 1)
+    case "!wait": timeout = Double(parts[1]) ?? 15; continue
+    case "!sigint": spike.signal(SIGINT); log("reply: \(spike.waitForReply(timeout: timeout))")
+    case "!interrupt": spike.sendInterrupt(); log("reply: \(spike.waitForReply(timeout: timeout))")
+    default:
+        let started = Date()
+        spike.send(line + "\n")
+        let how = spike.waitForReply(timeout: timeout)
+        log(String(format: "%@ -> %@ (%.2f s)", line, how, Date().timeIntervalSince(started)))
+    }
+    timeout = 15
+}
+let (received, sent) = spike.snapshot { ($0.received, $0.sent) }
+try received.write(to: URL(filePath: "\(outBase).txt"))
+try sent.write(to: URL(filePath: "\(outBase).sent.txt"))
+log("wrote \(received.count) bytes to \(outBase).txt")
 spike.shutdown()
