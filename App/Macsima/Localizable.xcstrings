@@ -1,0 +1,2823 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+      "shouldTranslate" : false
+    },
+    "%@ is larger than this app accepts." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ es más grande de lo que esta app acepta."
+          }
+        }
+      }
+    },
+    "%@ is not an image Macsima can show." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no es una imagen que Macsima pueda mostrar."
+          }
+        }
+      }
+    },
+    "%@:%lld" : {
+      "shouldTranslate" : false
+    },
+    "%lld / %lld" : {
+      "shouldTranslate" : false
+    },
+    "%lld cells folded" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld cell folded"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld cells folded"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld celda plegada"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld celdas plegadas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld found" : {
+      "comment" : "Find bar: number of matches",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld encontradas"
+          }
+        }
+      }
+    },
+    "%lld of %lld" : {
+      "comment" : "Find bar: match 3 of 12",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld"
+          }
+        }
+      }
+    },
+    "%lld%%" : {
+      "shouldTranslate" : false
+    },
+    "(%@)" : {
+      "shouldTranslate" : false
+    },
+    "A command or number wasn't preceded by a \":\", a \"$\", a \";\" or a \",\".\nMost probable cause: A missing comma between two list items." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un comando o un número no iba precedido de \":\", \"$\", \";\" o \",\".\nCausa más probable: falta una coma entre dos elementos de una lista."
+          }
+        }
+      }
+    },
+    "Aa" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aa"
+          }
+        }
+      }
+    },
+    "Abort on error" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detenerse ante un error"
+          }
+        }
+      }
+    },
+    "Actual Size" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño real"
+          }
+        }
+      }
+    },
+    "Add All" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir todas"
+          }
+        }
+      }
+    },
+    "All" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo"
+          }
+        }
+      }
+    },
+    "Answer" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respuesta"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrás"
+          }
+        }
+      }
+    },
+    "Backtrace" : {
+      "comment" : "Debugger button",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pila de llamadas"
+          }
+        }
+      }
+    },
+    "Besides a division by 0 the reason for this error message can be a calculation that returns +/-infinity." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Además de una división entre 0, este mensaje de error puede deberse a un cálculo que da +/-infinito."
+          }
+        }
+      }
+    },
+    "Bold" : {
+      "comment" : "Format menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negrita"
+          }
+        }
+      }
+    },
+    "CPU %lld%%" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CPU %lld %%"
+          }
+        }
+      }
+    },
+    "Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celda"
+          }
+        }
+      }
+    },
+    "Change Cell Type" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar tipo de celda"
+          }
+        }
+      }
+    },
+    "Choose…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar…"
+          }
+        }
+      }
+    },
+    "Code" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código"
+          }
+        }
+      }
+    },
+    "Code font" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de letra del código"
+          }
+        }
+      }
+    },
+    "Code size: %lld pt" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño del código: %lld pt"
+          }
+        }
+      }
+    },
+    "Collapse" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contraer"
+          }
+        }
+      }
+    },
+    "Command or expression" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comando o expresión"
+          }
+        }
+      }
+    },
+    "Comment" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comentar"
+          }
+        }
+      }
+    },
+    "Comment or Uncomment" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comentar o descomentar"
+          }
+        }
+      }
+    },
+    "Complete Word" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completar palabra"
+          }
+        }
+      }
+    },
+    "Completion" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completado"
+          }
+        }
+      }
+    },
+    "Contents" : {
+      "comment" : "Sidebar panel",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenido"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "comment" : "Debugger button",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar"
+          }
+        }
+      }
+    },
+    "Continue the computation (⌃⌘Y)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar el cálculo (⌃⌘Y)"
+          }
+        }
+      }
+    },
+    "Copy MathML" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar MathML"
+          }
+        }
+      }
+    },
+    "Copy Value" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar valor"
+          }
+        }
+      }
+    },
+    "Copy as Image" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar como imagen"
+          }
+        }
+      }
+    },
+    "Copy as LaTeX" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar como LaTeX"
+          }
+        }
+      }
+    },
+    "Copy as Maxima Input" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar como entrada de Maxima"
+          }
+        }
+      }
+    },
+    "Could not export: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido exportar: %@"
+          }
+        }
+      }
+    },
+    "Could not open the local socket for Maxima: %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido abrir el socket local para Maxima: %@."
+          }
+        }
+      }
+    },
+    "Could not start Maxima: %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido iniciar Maxima: %@."
+          }
+        }
+      }
+    },
+    "Cut" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cortar"
+          }
+        }
+      }
+    },
+    "Debug on Error" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depurar al producirse un error"
+          }
+        }
+      }
+    },
+    "Delete Cell" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar celda"
+          }
+        }
+      }
+    },
+    "Delete Cells" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar celdas"
+          }
+        }
+      }
+    },
+    "Dismiss" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
+        }
+      }
+    },
+    "Division by 0." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "División entre 0."
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "Error (see the output above)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error (consulta la salida anterior)"
+          }
+        }
+      }
+    },
+    "Evaluate All Cells" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evaluar todas las celdas"
+          }
+        }
+      }
+    },
+    "Evaluate Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evaluar celda"
+          }
+        }
+      }
+    },
+    "Evaluating…" : {
+      "comment" : "Maxima's state in the toolbar",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evaluando…"
+          }
+        }
+      }
+    },
+    "Expand" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expandir"
+          }
+        }
+      }
+    },
+    "Explain" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explicar"
+          }
+        }
+      }
+    },
+    "Export" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar"
+          }
+        }
+      }
+    },
+    "Exported to %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportado a %@."
+          }
+        }
+      }
+    },
+    "Find" : {
+      "comment" : "Find bar placeholder",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar"
+          }
+        }
+      }
+    },
+    "Find Next" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar siguiente"
+          }
+        }
+      }
+    },
+    "Find Next (⌘G)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar siguiente (⌘G)"
+          }
+        }
+      }
+    },
+    "Find Previous" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar anterior"
+          }
+        }
+      }
+    },
+    "Find Previous (⇧⌘G)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar anterior (⇧⌘G)"
+          }
+        }
+      }
+    },
+    "Find and Replace…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar y reemplazar…"
+          }
+        }
+      }
+    },
+    "Find…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar…"
+          }
+        }
+      }
+    },
+    "Fold All" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plegar todo"
+          }
+        }
+      }
+    },
+    "Fold or Unfold Section" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plegar o desplegar sección"
+          }
+        }
+      }
+    },
+    "Fold this section" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plegar esta sección"
+          }
+        }
+      }
+    },
+    "Folded" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plegada"
+          }
+        }
+      }
+    },
+    "Folded cells: kept and saved back, not shown yet." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celdas plegadas: se conservan y se vuelven a guardar, pero aún no se muestran."
+          }
+        }
+      }
+    },
+    "Fonts" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipos de letra"
+          }
+        }
+      }
+    },
+    "Format" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formato"
+          }
+        }
+      }
+    },
+    "Found" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encontrado"
+          }
+        }
+      }
+    },
+    "Go to Next Error" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir al siguiente error"
+          }
+        }
+      }
+    },
+    "Go to Previous Error" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir al error anterior"
+          }
+        }
+      }
+    },
+    "HTML…" : {
+      "comment" : "File › Export menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTML…"
+          }
+        }
+      }
+    },
+    "Heading 5" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encabezado 5"
+          }
+        }
+      }
+    },
+    "Heading 6" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encabezado 6"
+          }
+        }
+      }
+    },
+    "Headings scale with the text size. The worksheet's zoom comes on top." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los encabezados se ajustan al tamaño del texto. El zoom de la hoja se aplica además."
+          }
+        }
+      }
+    },
+    "Hidden: click to show the whole cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculta: haz clic para mostrar la celda entera"
+          }
+        }
+      }
+    },
+    "Hide Replace" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar reemplazo"
+          }
+        }
+      }
+    },
+    "Hide Sidebar" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar barra lateral"
+          }
+        }
+      }
+    },
+    "Hide or Show Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar o mostrar celda"
+          }
+        }
+      }
+    },
+    "Hide: show the first line only" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar: mostrar solo la primera línea"
+          }
+        }
+      }
+    },
+    "If the thing maxima complains about actually looks like a polynomial you can try running it through ratdisrep() in order to fix that problem." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si lo que Maxima rechaza parece realmente un polinomio, puedes probar a pasarlo por ratdisrep() para resolver el problema."
+          }
+        }
+      }
+    },
+    "Image" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imagen"
+          }
+        }
+      }
+    },
+    "In the debugger" : {
+      "comment" : "Maxima's state in the toolbar",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En el depurador"
+          }
+        }
+      }
+    },
+    "Insert Cell" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar celda"
+          }
+        }
+      }
+    },
+    "Insert Code Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar celda de código"
+          }
+        }
+      }
+    },
+    "Insert Image" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar imagen"
+          }
+        }
+      }
+    },
+    "Insert Image…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar imagen…"
+          }
+        }
+      }
+    },
+    "Insert Section Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar celda de sección"
+          }
+        }
+      }
+    },
+    "Insert Subsection Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar celda de subsección"
+          }
+        }
+      }
+    },
+    "Insert Text Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar celda de texto"
+          }
+        }
+      }
+    },
+    "Insert Title Cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insertar celda de título"
+          }
+        }
+      }
+    },
+    "Interrupt" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrumpir"
+          }
+        }
+      }
+    },
+    "Interrupt (⌘.)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrumpir (⌘.)"
+          }
+        }
+      }
+    },
+    "Interrupted" : {
+      "comment" : "Shown in a cell whose evaluation was interrupted",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrumpido"
+          }
+        }
+      }
+    },
+    "Italic" : {
+      "comment" : "Format menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursiva"
+          }
+        }
+      }
+    },
+    "Kept %@ (%lld times)." : {
+      "comment" : "Open warning; the argument is a phrase such as “an unknown <x> element”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kept %1$@ (%2$lld times)."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se conserva %1$@ (%2$lld veces)."
+          }
+        }
+      }
+    },
+    "Kept %@." : {
+      "comment" : "Open warning; the argument is a phrase such as “an unknown <x> element”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se conserva %@."
+          }
+        }
+      }
+    },
+    "LaTeX…" : {
+      "comment" : "File › Export menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LaTeX…"
+          }
+        }
+      }
+    },
+    "Last evaluation: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última evaluación: %@"
+          }
+        }
+      }
+    },
+    "Leave Debugger" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir del depurador"
+          }
+        }
+      }
+    },
+    "Leave Level" : {
+      "comment" : "Debugger button",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir del nivel"
+          }
+        }
+      }
+    },
+    "Leave the debugger and stop the computation" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir del depurador y detener el cálculo"
+          }
+        }
+      }
+    },
+    "Leave this debugger level" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir de este nivel del depurador"
+          }
+        }
+      }
+    },
+    "Lisp mode" : {
+      "comment" : "Maxima's state in the toolbar",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo Lisp"
+          }
+        }
+      }
+    },
+    "Lisp mode: cells are read as Lisp." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo Lisp: las celdas se leen como Lisp."
+          }
+        }
+      }
+    },
+    "Look Up in Maxima Manual" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar en el manual de Maxima"
+          }
+        }
+      }
+    },
+    "Look Up “%@” in Maxima Manual" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar “%@” en el manual de Maxima"
+          }
+        }
+      }
+    },
+    "Looking up “%@”…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando “%@”…"
+          }
+        }
+      }
+    },
+    "Macsima can't export %@ yet." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macsima todavía no puede exportar %@."
+          }
+        }
+      }
+    },
+    "Manual" : {
+      "comment" : "Sidebar panel: the Maxima manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manual"
+          }
+        }
+      }
+    },
+    "Match Case" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distinguir mayúsculas y minúsculas"
+          }
+        }
+      }
+    },
+    "Math size: %lld px" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño de las fórmulas: %lld px"
+          }
+        }
+      }
+    },
+    "Maxima" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima"
+          }
+        }
+      }
+    },
+    "Maxima Batch File…" : {
+      "comment" : "File › Export menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivo por lotes de Maxima…"
+          }
+        }
+      }
+    },
+    "Maxima asked for an export Macsima did not understand." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima ha pedido una exportación que Macsima no entiende."
+          }
+        }
+      }
+    },
+    "Maxima closed the connection" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima ha cerrado la conexión"
+          }
+        }
+      }
+    },
+    "Maxima did not authenticate: %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima no se ha autenticado: %@."
+          }
+        }
+      }
+    },
+    "Maxima did not connect within %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima no se ha conectado en %@."
+          }
+        }
+      }
+    },
+    "Maxima did not restart: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima no se ha reiniciado: %@"
+          }
+        }
+      }
+    },
+    "Maxima did not start: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima no se ha iniciado: %@"
+          }
+        }
+      }
+    },
+    "Maxima exited" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima ha terminado"
+          }
+        }
+      }
+    },
+    "Maxima exited before connecting, %lld times. Its last output:\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Maxima exited before connecting, %1$lld times. Its last output:\n%2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima ha terminado antes de conectarse, %1$lld veces. Su última salida:\n%2$@"
+          }
+        }
+      }
+    },
+    "Maxima is already running." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima ya está en ejecución."
+          }
+        }
+      }
+    },
+    "Maxima is not asking a question." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima no está haciendo ninguna pregunta."
+          }
+        }
+      }
+    },
+    "Maxima is not running." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima no está en ejecución."
+          }
+        }
+      }
+    },
+    "Maxima is slow to start…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima está tardando en iniciarse…"
+          }
+        }
+      }
+    },
+    "Maxima manual" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manual de Maxima"
+          }
+        }
+      }
+    },
+    "Maxima not running" : {
+      "comment" : "Maxima's state in the toolbar",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima no está en ejecución"
+          }
+        }
+      }
+    },
+    "Maxima stopped: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima se ha detenido: %@"
+          }
+        }
+      }
+    },
+    "Maxima tried to find out where between two points a curve crosses the zero line. Since the curve is on the same side of the zero line in both points its algorithms fails here. Set find_root_error to false if you want it to return false instead of an error." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima ha intentado averiguar en qué punto entre dos puntos una curva cruza el eje cero. Como la curva está del mismo lado del cero en ambos puntos, sus algoritmos fallan aquí. Asigna false a find_root_error si prefieres que devuelva false en vez de un error."
+          }
+        }
+      }
+    },
+    "Maxima was restarted" : {
+      "comment" : "Why a session ended",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima se ha reiniciado"
+          }
+        }
+      }
+    },
+    "Maxima was shut down" : {
+      "comment" : "Why a session ended",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima se ha cerrado"
+          }
+        }
+      }
+    },
+    "Maxima was stopped" : {
+      "comment" : "Why a session ended",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima se ha detenido"
+          }
+        }
+      }
+    },
+    "Maxima's CPU use over the last second (100% is one core)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uso de CPU de Maxima en el último segundo (100 % es un núcleo)"
+          }
+        }
+      }
+    },
+    "Might also indicate a missing multiplication sign (\"*\")." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "También puede indicar que falta un signo de multiplicación (\"*\")."
+          }
+        }
+      }
+    },
+    "Might be caused by reading an csv file with an empty last line:\nTechnically that line can be described as having the length 0 which differs from the other lines of this file." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puede deberse a la lectura de un archivo CSV con una última línea vacía:\ntécnicamente, esa línea tiene longitud 0, distinta de la del resto de líneas del archivo."
+          }
+        }
+      }
+    },
+    "Most probable cause: A dot instead a comma between two list items containing assignments." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Causa más probable: un punto en lugar de una coma entre dos elementos de una lista que contienen asignaciones."
+          }
+        }
+      }
+    },
+    "Most probable cause: A function was called with a parameter that causes it to return infinity and/or -infinity." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Causa más probable: se ha llamado a una función con un parámetro que hace que devuelva infinito y/o -infinito."
+          }
+        }
+      }
+    },
+    "Most probable cause: Two commas or similar separators in a row." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Causa más probable: dos comas u otros separadores seguidos."
+          }
+        }
+      }
+    },
+    "Most probable cause: an operator was directly followed by a closing parenthesis." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Causa más probable: un operador va seguido directamente de un paréntesis de cierre."
+          }
+        }
+      }
+    },
+    "Most probably it was attempted to append something to a list that isn't a list.\nEnclosing the new element for the list in brackets ([]) converts it to a list and makes it appendable." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo más probable es que se haya intentado añadir algo a una lista que no es una lista.\nSi encierras el nuevo elemento entre corchetes ([]), se convierte en una lista y se puede añadir."
+          }
+        }
+      }
+    },
+    "New worksheets" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hojas nuevas"
+          }
+        }
+      }
+    },
+    "Next" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente"
+          }
+        }
+      }
+    },
+    "No Maxima executable at %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ningún ejecutable de Maxima en %@."
+          }
+        }
+      }
+    },
+    "No entry for “%@” in the manual." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ninguna entrada para “%@” en el manual."
+          }
+        }
+      }
+    },
+    "No headings yet. Title, section and subsection cells (⌘2, ⌘3, ⌘4) show up here." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no hay encabezados. Aquí aparecen las celdas de título, sección y subsección (⌘2, ⌘3, ⌘4)."
+          }
+        }
+      }
+    },
+    "No matches" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay coincidencias"
+          }
+        }
+      }
+    },
+    "Normally computers use floating-point numbers that can be handled incredibly fast while being accurate to dozens of digits. They will, though, introduce a small error into some common numbers. For example 0.1 is represented as 3602879701896397/36028797018963968.\nAs mathematics is based on the fact that numbers that are exactly equal cancel each other out small errors can quickly add up to big errors (see Wilkinson's Polynomials or Rump's Polynomials). Some maxima commands therefore use rat() in order to automatically convert floats to exact numbers (like 1/10 or sqrt(2)/2) where floating-point errors might add up.\n\nThis error message doesn't occur if exact numbers (1/10 instead of 0.1) are used.\nThe info that numbers have automatically been converted can be suppressed by setting ratprint to false." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normalmente los ordenadores usan números de coma flotante, que se manejan a enorme velocidad con una precisión de decenas de cifras. Sin embargo, introducen un pequeño error en algunos números habituales. Por ejemplo, 0.1 se representa como 3602879701896397/36028797018963968.\nComo las matemáticas se basan en que números exactamente iguales se anulan entre sí, los pequeños errores pueden acumularse rápidamente hasta convertirse en errores grandes (véanse los polinomios de Wilkinson o de Rump). Por eso algunos comandos de Maxima usan rat() para convertir automáticamente los números de coma flotante en números exactos (como 1/10 o sqrt(2)/2) donde los errores de coma flotante podrían acumularse.\n\nEste mensaje no aparece si se usan números exactos (1/10 en lugar de 0.1).\nEl aviso de que los números se han convertido automáticamente se puede suprimir asignando false a ratprint."
+          }
+        }
+      }
+    },
+    "Not finished: %@." : {
+      "comment" : "A cell left unfinished; the argument says what happened to Maxima",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin terminar: %@."
+          }
+        }
+      }
+    },
+    "Not found or not executable: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encuentra o no es ejecutable: %@"
+          }
+        }
+      }
+    },
+    "Often caused by recursive function calls. Some lisps allow increasing the control stack size using command-line arguments." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suele deberse a llamadas recursivas a funciones. Algunos Lisp permiten aumentar el tamaño de la pila de control con argumentos de la línea de comandos."
+          }
+        }
+      }
+    },
+    "PNG" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PNG"
+          }
+        }
+      }
+    },
+    "Page Break" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salto de página"
+          }
+        }
+      }
+    },
+    "Page break" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salto de página"
+          }
+        }
+      }
+    },
+    "Panel" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel"
+          }
+        }
+      }
+    },
+    "Parts of this cell are kept and saved back, not shown." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partes de esta celda se conservan y se vuelven a guardar, pero no se muestran."
+          }
+        }
+      }
+    },
+    "Parts of this file are kept but not shown. They are saved back unchanged." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partes de este archivo se conservan pero no se muestran. Se vuelven a guardar sin cambios."
+          }
+        }
+      }
+    },
+    "Paste" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar"
+          }
+        }
+      }
+    },
+    "Pause" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa"
+          }
+        }
+      }
+    },
+    "Play" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir"
+          }
+        }
+      }
+    },
+    "Plots" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gráficas"
+          }
+        }
+      }
+    },
+    "Press F1 in a code cell to look up the name at the caret, or search above." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsa F1 en una celda de código para buscar el nombre que hay en el cursor, o busca arriba."
+          }
+        }
+      }
+    },
+    "Previous" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anterior"
+          }
+        }
+      }
+    },
+    "Ready" : {
+      "comment" : "Maxima's state in the toolbar",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
+        }
+      }
+    },
+    "Related topics" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temas relacionados"
+          }
+        }
+      }
+    },
+    "Replace" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar"
+          }
+        }
+      }
+    },
+    "Replace All" : {
+      "comment" : "Undo action name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar todo"
+          }
+        }
+      }
+    },
+    "Restart Maxima" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar Maxima"
+          }
+        }
+      }
+    },
+    "Return to Maxima" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a Maxima"
+          }
+        }
+      }
+    },
+    "Return to Maxima from Lisp" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a Maxima desde Lisp"
+          }
+        }
+      }
+    },
+    "Run to the next line, into calls (F7)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutar hasta la línea siguiente, entrando en las llamadas (F7)"
+          }
+        }
+      }
+    },
+    "Run to the next line, over calls (F6)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutar hasta la línea siguiente, sin entrar en las llamadas (F6)"
+          }
+        }
+      }
+    },
+    "SVG" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG"
+          }
+        }
+      }
+    },
+    "Section" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sección"
+          }
+        }
+      }
+    },
+    "Select All Cells" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar todas las celdas"
+          }
+        }
+      }
+    },
+    "Select Math" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar fórmula"
+          }
+        }
+      }
+    },
+    "Select cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar celda"
+          }
+        }
+      }
+    },
+    "Show Backtrace" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar pila de llamadas"
+          }
+        }
+      }
+    },
+    "Show Sidebar" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar barra lateral"
+          }
+        }
+      }
+    },
+    "Show Template" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar plantilla"
+          }
+        }
+      }
+    },
+    "Show as Image" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar como imagen"
+          }
+        }
+      }
+    },
+    "Show the stack frames" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar los marcos de la pila"
+          }
+        }
+      }
+    },
+    "Show the whole cell" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar la celda entera"
+          }
+        }
+      }
+    },
+    "Starting Maxima…" : {
+      "comment" : "Maxima's state in the toolbar",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando Maxima…"
+          }
+        }
+      }
+    },
+    "Step Into" : {
+      "comment" : "Debugger button",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrar"
+          }
+        }
+      }
+    },
+    "Step Over" : {
+      "comment" : "Debugger button",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasar por encima"
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "comment" : "Debugger button",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener"
+          }
+        }
+      }
+    },
+    "Stop Watching" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar de vigilar"
+          }
+        }
+      }
+    },
+    "Strikethrough" : {
+      "comment" : "Format menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tachado"
+          }
+        }
+      }
+    },
+    "Subscript" : {
+      "comment" : "Format menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subíndice"
+          }
+        }
+      }
+    },
+    "Subsection" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subsección"
+          }
+        }
+      }
+    },
+    "Subsubsection" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subsubsección"
+          }
+        }
+      }
+    },
+    "Superscript" : {
+      "comment" : "Format menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Superíndice"
+          }
+        }
+      }
+    },
+    "System monospaced" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monoespaciado del sistema"
+          }
+        }
+      }
+    },
+    "Text" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto"
+          }
+        }
+      }
+    },
+    "Text size: %lld pt" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño del texto: %lld pt"
+          }
+        }
+      }
+    },
+    "The .wxm file is over 64 MB." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo .wxm ocupa más de 64 MB."
+          }
+        }
+      }
+    },
+    "The [] or the part() command tried to access a list or matrix element that doesn't exist." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El operador [] o el comando part() ha intentado acceder a un elemento de una lista o matriz que no existe."
+          }
+        }
+      }
+    },
+    "The animation's frames were gone before they could be read." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los fotogramas de la animación desaparecieron antes de poder leerlos."
+          }
+        }
+      }
+    },
+    "The archive contains an unsafe path: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo comprimido contiene una ruta no segura: %@"
+          }
+        }
+      }
+    },
+    "The archive has %lld files, more than this app accepts." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo comprimido tiene %lld archivos, más de los que esta app acepta."
+          }
+        }
+      }
+    },
+    "The archive has no content.xml." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo comprimido no tiene content.xml."
+          }
+        }
+      }
+    },
+    "The archive has no mimetype entry." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo comprimido no tiene la entrada mimetype."
+          }
+        }
+      }
+    },
+    "The archive is damaged: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo comprimido está dañado: %@"
+          }
+        }
+      }
+    },
+    "The archive's contents are larger than this app accepts." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El contenido del archivo comprimido es más grande de lo que esta app acepta."
+          }
+        }
+      }
+    },
+    "The argument of a function was of the wrong type. Most probably an equation was expected but was lacking an \"=\"." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El argumento de una función era de un tipo incorrecto. Lo más probable es que se esperara una ecuación y le faltara un \"=\"."
+          }
+        }
+      }
+    },
+    "The comment starting at %@ is never closed." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El comentario que empieza en %@ no se cierra nunca."
+          }
+        }
+      }
+    },
+    "The file is not a .wxmx (zip) archive." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo no es un archivo comprimido .wxmx (zip)."
+          }
+        }
+      }
+    },
+    "The file uses format version %@; this app knows up to 1.5. Unknown parts are kept." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo usa la versión de formato %@; esta app conoce hasta la 1.5. Las partes desconocidas se conservan."
+          }
+        }
+      }
+    },
+    "The first argument of subst() isn't an equation or a list of equations. Most probably it was lacking an \"=\"." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El primer argumento de subst() no es una ecuación ni una lista de ecuaciones. Lo más probable es que le falte un \"=\"."
+          }
+        }
+      }
+    },
+    "The list of time-dependent variables to solve to doesn't match the time-dependent variables the list of dgls contains." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La lista de variables dependientes del tiempo que hay que resolver no coincide con las variables dependientes del tiempo que contiene la lista de ecuaciones diferenciales."
+          }
+        }
+      }
+    },
+    "The mimetype entry is \"%@\", not text/x-wxmathml." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La entrada mimetype es \"%@\", no text/x-wxmathml."
+          }
+        }
+      }
+    },
+    "The plot file %@ was gone before it could be read." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo de la gráfica %@ desapareció antes de poder leerlo."
+          }
+        }
+      }
+    },
+    "The second argument of at() isn't an equation or a list of equations. Most probably it was lacking an \"=\"." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El segundo argumento de at() no es una ecuación ni una lista de ecuaciones. Lo más probable es que le falte un \"=\"."
+          }
+        }
+      }
+    },
+    "The string starting at %@ is never closed." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cadena que empieza en %@ no se cierra nunca."
+          }
+        }
+      }
+    },
+    "The value of few special variables is assigned by Maxima and cannot be changed by the user. Also a few constructs aren't variable names and therefore cannot be written to." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maxima asigna el valor de algunas variables especiales y el usuario no puede cambiarlo. Además, algunas construcciones no son nombres de variable y, por tanto, no se les puede asignar nada."
+          }
+        }
+      }
+    },
+    "These apply to open worksheets at once." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se aplican al momento a las hojas abiertas."
+          }
+        }
+      }
+    },
+    "This error message is most probably caused by a try to assign a value to a number instead of a variable name.\nOne probable cause is using a variable that already has a numeric value as a loop counter." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo más probable es que este mensaje de error se deba a un intento de asignar un valor a un número en lugar de a un nombre de variable.\nUna causa probable es usar como contador de un bucle una variable que ya tiene un valor numérico."
+          }
+        }
+      }
+    },
+    "This message can appear when trying to numerically find an optimum. In this case it might indicate that a starting point lies in a local optimum that fits the data best if one parameter is increased to infinity or decreased to -infinity. It also can indicate that an attempt was made to fit data to an equation that actually matches the data best if one parameter is set to +/- infinity." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este mensaje puede aparecer al buscar un óptimo numéricamente. En ese caso puede indicar que un punto de partida está en un óptimo local que se ajusta mejor a los datos si un parámetro aumenta hasta infinito o disminuye hasta -infinito. También puede indicar que se intentó ajustar los datos a una ecuación que se ajusta mejor a ellos si un parámetro vale +/- infinito."
+          }
+        }
+      }
+    },
+    "This warning can be deactivated by setting factor_max_degree_print_warning to false." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este aviso se puede desactivar asignando false a factor_max_degree_print_warning."
+          }
+        }
+      }
+    },
+    "Title" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título"
+          }
+        }
+      }
+    },
+    "Topics containing “%@”" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temas que contienen “%@”"
+          }
+        }
+      }
+    },
+    "Type a name above to watch its value. Values are updated after each evaluation." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe un nombre arriba para vigilar su valor. Los valores se actualizan después de cada evaluación."
+          }
+        }
+      }
+    },
+    "Unbalanced parentheses: \"%@\" at %@ closes nothing." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unbalanced parentheses: \"%1$@\" at %2$@ closes nothing."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paréntesis desequilibrados: \"%1$@\" en %2$@ no cierra nada."
+          }
+        }
+      }
+    },
+    "Unbalanced parentheses: \"%@\" at %@ is never closed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unbalanced parentheses: \"%1$@\" at %2$@ is never closed."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paréntesis desequilibrados: \"%1$@\" en %2$@ no se cierra nunca."
+          }
+        }
+      }
+    },
+    "Unbalanced parentheses: found \"%@\" at %@ where \"%@\" was expected." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unbalanced parentheses: found \"%1$@\" at %2$@ where \"%3$@\" was expected."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paréntesis desequilibrados: se ha encontrado \"%1$@\" en %2$@ donde se esperaba \"%3$@\"."
+          }
+        }
+      }
+    },
+    "Underline" : {
+      "comment" : "Format menu item",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subrayado"
+          }
+        }
+      }
+    },
+    "Unfold All" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplegar todo"
+          }
+        }
+      }
+    },
+    "Unfold this section" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplegar esta sección"
+          }
+        }
+      }
+    },
+    "Unsupported Cell" : {
+      "comment" : "Cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celda no admitida"
+          }
+        }
+      }
+    },
+    "Untitled" : {
+      "comment" : "Title of an exported worksheet that has no file name",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin título"
+          }
+        }
+      }
+    },
+    "Untitled %@" : {
+      "comment" : "A heading with no text in the contents panel; the argument is the cell kind",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin título (%@)"
+          }
+        }
+      }
+    },
+    "Use Selection for Find" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar selección para buscar"
+          }
+        }
+      }
+    },
+    "Used by Maxima sessions started or restarted after the change." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo usan las sesiones de Maxima que se inicien o reinicien después del cambio."
+          }
+        }
+      }
+    },
+    "Values are updated when Maxima is idle." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los valores se actualizan cuando Maxima está libre."
+          }
+        }
+      }
+    },
+    "Variables" : {
+      "comment" : "Sidebar panel",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variables"
+          }
+        }
+      }
+    },
+    "Waiting for an answer" : {
+      "comment" : "Maxima's state in the toolbar",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperando una respuesta"
+          }
+        }
+      }
+    },
+    "Watch a variable" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vigilar una variable"
+          }
+        }
+      }
+    },
+    "Watch every variable that has a value (Maxima's values list)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vigilar todas las variables que tienen valor (la lista values de Maxima)"
+          }
+        }
+      }
+    },
+    "What this message most likely means" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que probablemente significa este mensaje"
+          }
+        }
+      }
+    },
+    "When a statement fails, the rest of its cell and the cells waiting after it are not run, as in wxMaxima." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando una instrucción falla, no se ejecuta el resto de su celda ni las celdas que esperan después, como en wxMaxima."
+          }
+        }
+      }
+    },
+    "Worksheet" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoja de trabajo"
+          }
+        }
+      }
+    },
+    "XML error at line %lld, column %lld: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "XML error at line %1$lld, column %2$lld: %3$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error de XML en la línea %1$lld, columna %2$lld: %3$@"
+          }
+        }
+      }
+    },
+    "Zoom" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom"
+          }
+        }
+      }
+    },
+    "Zoom In" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ampliar"
+          }
+        }
+      }
+    },
+    "Zoom Out" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir"
+          }
+        }
+      }
+    },
+    "a cell of type \"%@\" this app cannot show" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "una celda de tipo \"%@\" que esta app no puede mostrar"
+          }
+        }
+      }
+    },
+    "an image cell whose image is missing" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "una celda de imagen a la que le falta la imagen"
+          }
+        }
+      }
+    },
+    "an unknown <%@> element" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un elemento <%@> desconocido"
+          }
+        }
+      }
+    },
+    "an unknown <%@> element in a cell" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un elemento <%@> desconocido en una celda"
+          }
+        }
+      }
+    },
+    "an unknown <%@> element in an output" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un elemento <%@> desconocido en una salida"
+          }
+        }
+      }
+    },
+    "content.xml is not a wxMaxima document (root element %@)." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "content.xml no es un documento de wxMaxima (elemento raíz %@)."
+          }
+        }
+      }
+    },
+    "content.xml is not valid XML: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "content.xml no es XML válido: %@"
+          }
+        }
+      }
+    },
+    "folded cells (not shown, written back)" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "celdas plegadas (no se muestran; se vuelven a guardar)"
+          }
+        }
+      }
+    },
+    "line %lld, column %lld" : {
+      "comment" : "Where a syntax problem is",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "line %1$lld, column %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "línea %1$lld, columna %2$lld"
+          }
+        }
+      }
+    },
+    "no value" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sin valor"
+          }
+        }
+      }
+    },
+    "part() or the [] operator was used in order to extract the nth element of something that was less than n elements long." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ha usado part() o el operador [] para extraer el elemento n-ésimo de algo que tenía menos de n elementos."
+          }
+        }
+      }
+    },
+    "rest() tried to drop more entries from a list than the list was long." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rest() ha intentado quitar de una lista más elementos de los que tenía."
+          }
+        }
+      }
+    },
+    "selected" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "seleccionada"
+          }
+        }
+      }
+    },
+    "text formatting (kept while the cell's text is unchanged)" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el formato del texto (se conserva mientras no cambie el texto de la celda)"
+          }
+        }
+      }
+    },
+    "the [] operator tried to extract an element of a list, a matrix, an equation or an array. But instead of an integer number something was used whose numerical value is unknown or not an integer.\nFloating-point numbers are bound to contain small rounding errors and therefore in most cases don't work as an array index thatneeds to be an exact integer number." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El operador [] ha intentado extraer un elemento de una lista, una matriz, una ecuación o un array, pero en lugar de un número entero se ha usado algo cuyo valor numérico es desconocido o no es entero.\nLos números de coma flotante casi siempre tienen pequeños errores de redondeo, así que en la mayoría de los casos no sirven como índice de un array, que tiene que ser un número entero exacto."
+          }
+        }
+      }
+    },
+    "the cell attribute \"%@\" (written back, not used)" : {
+      "comment" : "Completes “Kept …”",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "el atributo de celda \"%@\" (se vuelve a guardar, no se usa)"
+          }
+        }
+      }
+    },
+    "wxMathML.lisp is missing from the MaximaKit bundle." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta wxMathML.lisp en el paquete de MaximaKit."
+          }
+        }
+      }
+    },
+    "“%@”: waiting until Maxima is idle…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”: esperando a que Maxima esté libre…"
+          }
+        }
+      }
+    },
+    "•" : {
+      "shouldTranslate" : false
+    },
+    "…" : {
+      "shouldTranslate" : false
+    }
+  },
+  "version" : "1.0"
+}

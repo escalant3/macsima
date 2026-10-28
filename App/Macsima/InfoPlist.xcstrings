@@ -1,0 +1,28 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "wxMaxima Batch Worksheet" : {
+      "comment" : "Document type (CFBundleTypeName and UTTypeDescription)",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoja de trabajo por lotes de wxMaxima"
+          }
+        }
+      }
+    },
+    "wxMaxima Worksheet" : {
+      "comment" : "Document type (CFBundleTypeName and UTTypeDescription)",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoja de trabajo de wxMaxima"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -56,6 +56,10 @@ targets:
       path: App/Macsima/Info.plist
       properties:
         CFBundleDisplayName: Macsima
+        CFBundleDevelopmentRegion: en
+        # The languages the app is translated into (docs/LOCALIZATION.md). AppKit
+        # localizes its own menus and panels only for the languages listed here.
+        CFBundleLocalizations: [en, es]
         CFBundleShortVersionString: "0.2"
         CFBundleVersion: "1"
         LSApplicationCategoryType: public.app-category.education
