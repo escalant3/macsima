@@ -3,6 +3,8 @@
 # Runs a key script against the Debug app and checks its dumps.
 # Usage (repository root, after xcodebuild): Tests/Fixtures/keyscripts/run.sh editor-basics [file.wxmx]
 # With a file, a copy of it (.build/keyscripts/<script>.wxmx) is opened instead of a new worksheet.
+# The app runs in English, whatever the system language: scripts find menu items
+# by their English titles. l10n-<code> scripts run in that language (l10n-es: Spanish).
 # The app is activated with an Apple Event; key events are synthesized inside
 # the app (KeyScriptDriver), so no Accessibility permission is needed. The
 # display is kept awake: a sleeping display makes the window inactive.
@@ -21,8 +23,13 @@ if [ $# -gt 1 ]; then
   cp "$2" ".build/keyscripts/$name.wxmx"
   open_file="$PWD/.build/keyscripts/$name.wxmx"
 fi
+language=en
+locale=""
+case $name in
+  l10n-*) language=${name#l10n-}; locale="-AppleLocale ${language}_$(echo "$language" | tr a-z A-Z)" ;;
+esac
 caffeinate -u -t 1
-"$app" $open_file -ApplePersistenceIgnoreState YES -MacsimaKeyScript "Tests/Fixtures/keyscripts/$name.keys" 2>".build/keyscripts/$name.log" &
+"$app" $open_file -ApplePersistenceIgnoreState YES -AppleLanguages "($language)" $locale -MacsimaKeyScript "Tests/Fixtures/keyscripts/$name.keys" 2>".build/keyscripts/$name.log" &
 pid=$!
 caffeinate -d -i -w $pid &
 sleep 1

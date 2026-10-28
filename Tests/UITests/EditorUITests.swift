@@ -12,7 +12,9 @@ final class EditorUITests: XCTestCase {
     override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["-ApplePersistenceIgnoreState", "YES", "-MacsimaUITest", "YES"]
+        // English whatever the system language: the tests find menu items by title.
+        app.launchArguments = ["-ApplePersistenceIgnoreState", "YES", "-MacsimaUITest", "YES",
+                               "-AppleLanguages", "(en)"]
         app.launch()
     }
 

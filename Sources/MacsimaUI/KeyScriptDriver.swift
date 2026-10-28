@@ -16,7 +16,7 @@ import WorksheetKit
 /// Lines: `type <text>`, `key <name> [cmd] [shift] [option] [control]` (names: return,
 /// delete, escape, tab, up, down, left, right, or one character), `menu <item title>`,
 /// `wait <seconds>`, `appearance dark|light|system`, `sheet <button>`, `procs <path>`, `find-replacement <text>`, `find-replace-all`, `resize <width> <height>`, `click-bar <cell> [shift]`, `scroll-to <cell>`, `toggle-fold <cell>`, `help <topic>`, `help-back`, `sidebar <tab>`, `watch <names>`, `watch-all`, `setting <key> <value>`, `export <kind> <path>`, `save-copy <type> <path>`, `open-copy <fixture> <path>`, `debug <command>`, `debug-on-error on|off`, `to-maxima`, `interrupt`, `unwatch <name>`, `contents-click <n>`, `insert-image <path>`, `copy-output <cell> <output> <kind>`, `pasteboard <path>`, `dump <path>` (cells as JSON), `shot <path>` (the key
-/// window), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
+/// window), `shot-key <path>` (whatever window is key, such as Settings), `undo-state <tag>` (logs what Cmd+Z would do), `quit`
 /// (discarding changes). `#` starts a comment. It refuses to run when a
 /// document outside `.build/keyscripts` is open (a restored window, say).
 @MainActor
@@ -268,6 +268,15 @@ enum KeyScriptDriver {
                 try? p.run()
                 p.waitUntilExit()
             }
+        case "shot-key":
+            // `shot-key <path>`: the key window, such as Settings.
+            if let window = NSApp.keyWindow {
+                let p = Process()
+                p.executableURL = URL(filePath: "/usr/sbin/screencapture")
+                p.arguments = ["-x", "-o", "-l", String(window.windowNumber), rest]
+                try? p.run()
+                p.waitUntilExit()
+            }
         case "undo-state":
             // Debugging aid: what Cmd+Z would do right now.
             let undo = NSApp.keyWindow?.undoManager
@@ -439,6 +448,9 @@ enum KeyScriptDriver {
                              "last": controller.lastDuration.map { Double($0.components.seconds) + Double($0.components.attoseconds) / 1e18 } ?? -1] as [String: Any]
         refreshMenus(NSApp.mainMenu)
         info["menus"] = ["Open Recent", "Export", "HTML…", "LaTeX…", "Maxima Batch File…"].filter { findMenuItem($0, in: NSApp.mainMenu) != nil }
+        // In the app's language (l10n key script).
+        info["menuBar"] = NSApp.mainMenu?.items.map(\.title) ?? []
+        info["stateLabel"] = WorksheetToolbar.label(controller.sessionState)
         info["sidebar"] = controller.showsSidebar ? controller.sidebarTab.rawValue : "hidden"
         info["watch"] = controller.variables.names.map { name -> [String: Any] in
             let v = controller.variables.values[name]

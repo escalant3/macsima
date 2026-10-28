@@ -396,6 +396,18 @@ elif script == "bottom-scroll":
     check(d1["caret"]["visible"], f"after Return at the bottom, the new line is in view: {d1['caret']}")
     check(d2["caret"]["visible"], f"a line that wraps at the bottom stays in view: {d2['caret']}")
     check(d3["caret"]["visible"], f"after Cmd+Z, the caret is in view: {d3['caret']}")
+elif script == "l10n-es":
+    d1, d2 = dump("l10n", 1), dump("l10n", 2)
+    bar = d1["menuBar"]
+    check(all(m in bar for m in ["Archivo", "Edición", "Celda", "Formato", "Maxima", "Ventana", "Ayuda"]),
+          f"the menu bar is in Spanish, macOS's menus too: {bar}")
+    check(d1["stateLabel"] == "Listo", f"the toolbar says Listo: {d1['stateLabel']!r}")
+    first = d1["cells"][0]["outputs"]
+    check(bool(first) and "Paréntesis desequilibrados" in first[0] and "línea 1, columna" in first[0],
+          f"Macsima's own syntax error is in Spanish: {first}")
+    check(d1["cells"][1]["outputs"][0].startswith("error maxima expt:"), "Maxima's messages stay as Maxima prints them")
+    check(d2["find"]["visible"] and d2["find"]["status"] == "No hay coincidencias",
+          f"the find bar is open and says No hay coincidencias: {d2['find']}")
 elif script == "checkpoint-a":
     import os
     check(all(os.path.exists(f"docs/phase3-screenshots/{n}") for n in ["03-bracket-match.png", "04-find.png"]),

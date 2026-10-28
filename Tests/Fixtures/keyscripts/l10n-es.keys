@@ -1,0 +1,44 @@
+# Spanish: run.sh launches l10n-<code> scripts in that language. Screenshots
+# of the main surfaces go to .build/keyscripts/ for a translator to review;
+# check.py reads the dumps. For another language, copy this file to
+# l10n-<code>.keys and change the menu titles below (docs/LOCALIZATION.md).
+wait 3
+# A syntax error Macsima finds itself, then one from Maxima.
+type f(x;
+key return shift
+wait 2
+type 1/0;
+key return shift
+wait 3
+key 3 cmd
+type Derivadas
+key 0 cmd
+type diff(sin(x), x);
+key return shift
+wait 3
+dump .build/keyscripts/l10n-1.json
+shot .build/keyscripts/l10n-es-1-worksheet.png
+sidebar contents
+wait 1
+shot .build/keyscripts/l10n-es-2-contents.png
+sidebar variables
+watch x y
+wait 2
+shot .build/keyscripts/l10n-es-3-variables.png
+sidebar manual
+help integrate
+wait 4
+shot .build/keyscripts/l10n-es-4-manual.png
+sidebar hide
+# The find bar, by its Spanish menu title.
+menu Buscar y reemplazar…
+type zzz
+wait 1
+dump .build/keyscripts/l10n-2.json
+shot .build/keyscripts/l10n-es-5-find.png
+key escape
+key , cmd
+wait 2
+shot-key .build/keyscripts/l10n-es-6-settings.png
+key w cmd
+quit
