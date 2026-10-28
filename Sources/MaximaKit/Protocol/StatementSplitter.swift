@@ -25,7 +25,7 @@ public struct Statement: Equatable, Sendable {
 public struct SourcePosition: Equatable, Sendable, CustomStringConvertible {
     public var line: Int
     public var column: Int
-    public var description: String { "line \(line), column \(column)" }
+    public var description: String { String(localized: "line \(line), column \(column)", comment: "Where a syntax problem is") }
 
     /// The same place as a UTF-16 offset into `text`, or nil past its end.
     public func utf16Offset(in text: String) -> Int? {
@@ -57,15 +57,15 @@ public enum SplitError: Error, Equatable, Sendable, CustomStringConvertible {
     public var description: String {
         switch self {
         case let .unexpectedClose(c, at, expected?):
-            "Unbalanced parentheses: found \"\(c)\" at \(at) where \"\(expected)\" was expected."
+            String(localized: "Unbalanced parentheses: found \"\(String(c))\" at \(at.description) where \"\(String(expected))\" was expected.")
         case let .unexpectedClose(c, at, nil):
-            "Unbalanced parentheses: \"\(c)\" at \(at) closes nothing."
+            String(localized: "Unbalanced parentheses: \"\(String(c))\" at \(at.description) closes nothing.")
         case let .unclosed(c, at):
-            "Unbalanced parentheses: \"\(c)\" at \(at) is never closed."
+            String(localized: "Unbalanced parentheses: \"\(String(c))\" at \(at.description) is never closed.")
         case let .unclosedString(at):
-            "The string starting at \(at) is never closed."
+            String(localized: "The string starting at \(at.description) is never closed.")
         case let .unclosedComment(at):
-            "The comment starting at \(at) is never closed."
+            String(localized: "The comment starting at \(at.description) is never closed.")
         }
     }
 }

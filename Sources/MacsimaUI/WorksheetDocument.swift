@@ -38,7 +38,7 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
         }
         if configuration.contentType.conforms(to: .wxm) {
             guard data.count <= Self.maxWXMBytes else {
-                throw CocoaError(.fileReadTooLarge, userInfo: [NSLocalizedFailureReasonErrorKey: "The .wxm file is over 64 MB."])
+                throw CocoaError(.fileReadTooLarge, userInfo: [NSLocalizedFailureReasonErrorKey: String(localized: "The .wxm file is over 64 MB.")])
             }
             // wxMaxima writes UTF-8; older files may be Latin-1.
             guard let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
@@ -81,7 +81,7 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
     public func insertCell(_ kind: CellKind, after id: UUID?, undo: UndoManager?) -> UUID {
         let cell = Cell(kind: kind)
         let index = worksheet.insert(cell, after: id)
-        registerInsertUndo(cell.id, undo: undo, name: "Insert Cell")
+        registerInsertUndo(cell.id, undo: undo, name: String(localized: "Insert Cell", comment: "Undo action name"))
         _ = index
         return cell.id
     }
@@ -92,16 +92,16 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
         undo?.registerUndo(withTarget: self) { doc in
             MainActor.assumeIsolated {
                 doc.worksheet.insert(cell, at: index)
-                doc.registerInsertUndo(cell.id, undo: undo, name: "Delete Cell")
+                doc.registerInsertUndo(cell.id, undo: undo, name: String(localized: "Delete Cell", comment: "Undo action name"))
             }
         }
-        undo?.setActionName("Delete Cell")
+        undo?.setActionName(String(localized: "Delete Cell", comment: "Undo action name"))
         if worksheet.cells.isEmpty { worksheet.insert(Cell(kind: .code), at: 0) }
     }
 
     /// Inserts `cells` at `index`, as one undoable action (paste).
     @MainActor
-    public func insertCells(_ cells: [Cell], at index: Int, undo: UndoManager?, name: String = "Paste") {
+    public func insertCells(_ cells: [Cell], at index: Int, undo: UndoManager?, name: String = String(localized: "Paste", comment: "Undo action name")) {
         let start = min(max(0, index), worksheet.cells.count)
         for (k, cell) in cells.enumerated() { worksheet.insert(cell, at: start + k) }
         undo?.registerUndo(withTarget: self) { doc in
@@ -112,7 +112,7 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
 
     /// Deletes the cells `ids`, as one undoable action (cut, delete).
     @MainActor
-    public func deleteCells(_ ids: [UUID], undo: UndoManager?, name: String = "Delete Cells") {
+    public func deleteCells(_ ids: [UUID], undo: UndoManager?, name: String = String(localized: "Delete Cells", comment: "Undo action name")) {
         // Removed in document order, put back in the same order.
         let removed = ids.compactMap { id in worksheet.index(of: id).map { (id, $0) } }
             .sorted { $0.1 < $1.1 }
@@ -146,7 +146,7 @@ public final class WorksheetDocument: ReferenceFileDocument, @unchecked Sendable
         undo?.registerUndo(withTarget: self) { doc in
             MainActor.assumeIsolated { doc.setKind(id, old, undo: undo) }
         }
-        undo?.setActionName("Change Cell Type")
+        undo?.setActionName(String(localized: "Change Cell Type", comment: "Undo action name"))
     }
 
     @MainActor

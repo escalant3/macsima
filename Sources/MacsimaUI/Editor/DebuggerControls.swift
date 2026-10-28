@@ -34,12 +34,12 @@ struct DebuggerControls: View {
     @FocusState private var focused: Bool
 
     static let commands: [(title: String, symbol: String, command: String, help: String)] = [
-        ("Step Over", "arrow.turn.down.right", ":next", "Run to the next line, over calls (F6)"),
-        ("Step Into", "arrow.down.to.line", ":step", "Run to the next line, into calls (F7)"),
-        ("Continue", "play.fill", ":resume", "Continue the computation (⌃⌘Y)"),
-        ("Backtrace", "list.bullet.indent", ":bt", "Show the stack frames"),
-        ("Leave Level", "arrow.uturn.backward", ":quit", "Leave this debugger level"),
-        ("Stop", "stop.fill", ":top", "Leave the debugger and stop the computation"),
+        (String(localized: "Step Over", comment: "Debugger button"), "arrow.turn.down.right", ":next", String(localized: "Run to the next line, over calls (F6)")),
+        (String(localized: "Step Into", comment: "Debugger button"), "arrow.down.to.line", ":step", String(localized: "Run to the next line, into calls (F7)")),
+        (String(localized: "Continue", comment: "Debugger button"), "play.fill", ":resume", String(localized: "Continue the computation (⌃⌘Y)")),
+        (String(localized: "Backtrace", comment: "Debugger button"), "list.bullet.indent", ":bt", String(localized: "Show the stack frames")),
+        (String(localized: "Leave Level", comment: "Debugger button"), "arrow.uturn.backward", ":quit", String(localized: "Leave this debugger level")),
+        (String(localized: "Stop", comment: "Debugger button"), "stop.fill", ":top", String(localized: "Leave the debugger and stop the computation")),
     ]
 
     var body: some View {

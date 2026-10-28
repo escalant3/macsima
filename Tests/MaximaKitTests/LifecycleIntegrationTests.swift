@@ -52,7 +52,7 @@ struct LifecycleIntegrationTests {
         let took = try await clock.measure { try await session.restart() }
         print("restart while busy took \(took)")
         let events = await drain(busy)
-        #expect(events.last == .finished(.sessionDied("restarted")))
+        #expect(events.last == .finished(.sessionDied(MaximaSession.restartReason)))
         #expect(!Integration.groupAlive(firstGroup), "the busy Maxima is gone")
         #expect(!FileManager.default.fileExists(atPath: firstDir))
         #expect(!OrphanGuard.registered.contains(firstGroup))
@@ -75,7 +75,7 @@ struct LifecycleIntegrationTests {
         let busy = try await session.evaluate(cellID: "a", text: longComputation)
         try await Task.sleep(for: .seconds(1))
         await session.kill()
-        #expect(await drain(busy).last == .finished(.sessionDied("killed")))
+        #expect(await drain(busy).last == .finished(.sessionDied("Maxima was stopped")))
         #expect(await session.state == .dead)
         #expect(!Integration.groupAlive(group))
         await #expect(throws: MaximaError.notRunning) { try await session.evaluate(cellID: "b", text: "1;") }

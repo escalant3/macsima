@@ -22,7 +22,7 @@ struct OutputView: View {
         case .text(let text):
             MessageText(text: text, isError: false)
         case .error(_, let message):
-            MessageText(text: message.isEmpty ? "Error (see the output above)" : message, isError: true)
+            MessageText(text: message.isEmpty ? String(localized: "Error (see the output above)") : message, isError: true)
         case .image(let data, let format, let label, let attributes):
             if let image = ImageDecoding.image(data, format: format) {
                 ImageOutputView(image: image, label: label, ppi: attributes["ppi"])
@@ -147,10 +147,10 @@ enum OutputCopy {
 
         var title: String {
             switch self {
-            case .input: "Copy as Maxima Input"
-            case .latex: "Copy as LaTeX"
-            case .mathml: "Copy MathML"
-            case .image: "Copy as Image"
+            case .input: String(localized: "Copy as Maxima Input")
+            case .latex: String(localized: "Copy as LaTeX")
+            case .mathml: String(localized: "Copy MathML")
+            case .image: String(localized: "Copy as Image")
             }
         }
     }

@@ -105,7 +105,7 @@ public enum XMLTreeError: Error, Equatable, Sendable, CustomStringConvertible {
 
     public var description: String {
         switch self {
-        case let .malformed(line, column, message): "XML error at line \(line), column \(column): \(message)"
+        case let .malformed(line, column, message): String(localized: "XML error at line \(line), column \(column): \(message)")
         }
     }
 }

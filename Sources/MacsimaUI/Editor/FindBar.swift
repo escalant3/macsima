@@ -65,7 +65,7 @@ struct FindField: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSTextField {
         let field = NSTextField()
-        field.placeholderString = "Find"
+        field.placeholderString = String(localized: "Find", comment: "Find bar placeholder")
         field.bezelStyle = .roundedBezel
         field.controlSize = .small
         field.font = .systemFont(ofSize: NSFont.smallSystemFontSize)

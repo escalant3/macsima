@@ -174,29 +174,29 @@ struct FormatCommand {
     var modifiers: EventModifiers = .command
 
     static let all = [
-        FormatCommand(title: "Bold", flag: .bold, key: "b"),
-        FormatCommand(title: "Italic", flag: .italic, key: "i"),
-        FormatCommand(title: "Underline", flag: .underline, key: "u"),
-        FormatCommand(title: "Strikethrough", flag: .strikethrough, key: nil),
-        FormatCommand(title: "Superscript", flag: .raised, key: "=", modifiers: [.command, .control]),
-        FormatCommand(title: "Subscript", flag: .lowered, key: "-", modifiers: [.command, .control]),
+        FormatCommand(title: String(localized: "Bold", comment: "Format menu item"), flag: .bold, key: "b"),
+        FormatCommand(title: String(localized: "Italic", comment: "Format menu item"), flag: .italic, key: "i"),
+        FormatCommand(title: String(localized: "Underline", comment: "Format menu item"), flag: .underline, key: "u"),
+        FormatCommand(title: String(localized: "Strikethrough", comment: "Format menu item"), flag: .strikethrough, key: nil),
+        FormatCommand(title: String(localized: "Superscript", comment: "Format menu item"), flag: .raised, key: "=", modifiers: [.command, .control]),
+        FormatCommand(title: String(localized: "Subscript", comment: "Format menu item"), flag: .lowered, key: "-", modifiers: [.command, .control]),
     ]
 }
 
 extension CellKind {
     var displayName: String {
         switch self {
-        case .title: "Title"
-        case .section: "Section"
-        case .subsection: "Subsection"
-        case .subsubsection: "Subsubsection"
-        case .heading5: "Heading 5"
-        case .heading6: "Heading 6"
-        case .text: "Text"
-        case .code: "Code"
-        case .image: "Image"
-        case .pageBreak: "Page Break"
-        case .raw: "Unsupported Cell"
+        case .title: String(localized: "Title", comment: "Cell kind")
+        case .section: String(localized: "Section", comment: "Cell kind")
+        case .subsection: String(localized: "Subsection", comment: "Cell kind")
+        case .subsubsection: String(localized: "Subsubsection", comment: "Cell kind")
+        case .heading5: String(localized: "Heading 5", comment: "Cell kind")
+        case .heading6: String(localized: "Heading 6", comment: "Cell kind")
+        case .text: String(localized: "Text", comment: "Cell kind")
+        case .code: String(localized: "Code", comment: "Cell kind")
+        case .image: String(localized: "Image", comment: "Cell kind")
+        case .pageBreak: String(localized: "Page Break", comment: "Cell kind")
+        case .raw: String(localized: "Unsupported Cell", comment: "Cell kind")
         }
     }
 }

@@ -133,7 +133,7 @@ struct CellView: View {
                     .frame(width: 3)
             }
             if foldedCount > 0 {
-                Text(foldedCount == 1 ? "1 cell folded" : "\(foldedCount) cells folded")
+                Text("\(foldedCount) cells folded")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding(.leading, metrics.outputIndent)
@@ -148,8 +148,8 @@ struct CellView: View {
             }
             if !cell.preserved.isEmpty {
                 PlaceholderRow(text: cell.preserved.contains { $0.hasPrefix("<fold") }
-                               ? "Folded cells: kept and saved back, not shown yet."
-                               : "Parts of this cell are kept and saved back, not shown.",
+                               ? String(localized: "Folded cells: kept and saved back, not shown yet.")
+                               : String(localized: "Parts of this cell are kept and saved back, not shown."),
                                systemImage: "chevron.right.circle")
             }
         }

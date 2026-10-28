@@ -314,9 +314,9 @@ public enum ExportKind: String, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .html: "HTML…"
-        case .latex: "LaTeX…"
-        case .mac: "Maxima Batch File…"
+        case .html: String(localized: "HTML…", comment: "File › Export menu item")
+        case .latex: String(localized: "LaTeX…", comment: "File › Export menu item")
+        case .mac: String(localized: "Maxima Batch File…", comment: "File › Export menu item")
         }
     }
 
@@ -345,7 +345,7 @@ extension WorksheetController {
 
     /// The document's name without extension, for export file names and titles.
     var documentName: String {
-        let name = (window?.windowController?.document as? NSDocument)?.displayName ?? "Untitled"
+        let name = (window?.windowController?.document as? NSDocument)?.displayName ?? String(localized: "Untitled", comment: "Title of an exported worksheet that has no file name")
         return (name as NSString).deletingPathExtension
     }
 
@@ -368,9 +368,9 @@ extension WorksheetController {
                 }
                 try Data(file.tex.utf8).write(to: url, options: .atomic)
             }
-            statusMessage = "Exported to \(url.lastPathComponent)."
+            statusMessage = String(localized: "Exported to \(url.lastPathComponent).")
         } catch {
-            statusMessage = "Could not export: \(error.localizedDescription)"
+            statusMessage = String(localized: "Could not export: \(error.localizedDescription)")
         }
     }
 
@@ -384,13 +384,13 @@ extension WorksheetController {
             return MaximaHelp.unescape(String(content[a.upperBound..<b.lowerBound]))
         }
         guard let type = field("type"), let path = field("file"), path.hasPrefix("/") else {
-            statusMessage = "Maxima asked for an export Macsima did not understand."
+            statusMessage = String(localized: "Maxima asked for an export Macsima did not understand.")
             return
         }
         switch type {
         case "html": write(.html, to: URL(filePath: path))
         case "tex": write(.latex, to: URL(filePath: path))
-        default: statusMessage = "Macsima can't export \(type) yet."
+        default: statusMessage = String(localized: "Macsima can't export \(type) yet.")
         }
     }
 }

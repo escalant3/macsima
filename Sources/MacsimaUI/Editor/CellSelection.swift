@@ -123,10 +123,10 @@ extension WorksheetController {
 
     func cutSelectedCells() {
         copySelectedCells()
-        deleteSelectedCells(name: "Cut")
+        deleteSelectedCells(name: String(localized: "Cut", comment: "Undo action name"))
     }
 
-    func deleteSelectedCells(name: String = "Delete Cells") {
+    func deleteSelectedCells(name: String = String(localized: "Delete Cells", comment: "Undo action name")) {
         let ids = selectedCellsInOrder.map(\.id)
         guard !ids.isEmpty, let first = document.worksheet.index(of: ids[0]) else { return }
         clearCellSelection()

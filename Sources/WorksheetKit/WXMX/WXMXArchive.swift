@@ -30,15 +30,15 @@ public enum WXMXError: Error, Equatable, Sendable, CustomStringConvertible {
 
     public var description: String {
         switch self {
-        case .notAZipArchive: "The file is not a .wxmx (zip) archive."
-        case .missingContent: "The archive has no content.xml."
-        case .tooManyEntries(let n): "The archive has \(n) files, more than this app accepts."
-        case .entryTooLarge(let name): "\(name) is larger than this app accepts."
-        case .archiveTooLarge: "The archive's contents are larger than this app accepts."
-        case .unsafePath(let path): "The archive contains an unsafe path: \(path)"
-        case .corrupt(let why): "The archive is damaged: \(why)"
-        case .badXML(let why): "content.xml is not valid XML: \(why)"
-        case .notAWorksheet(let root): "content.xml is not a wxMaxima document (root element \(root))."
+        case .notAZipArchive: String(localized: "The file is not a .wxmx (zip) archive.")
+        case .missingContent: String(localized: "The archive has no content.xml.")
+        case .tooManyEntries(let n): String(localized: "The archive has \(n) files, more than this app accepts.")
+        case .entryTooLarge(let name): String(localized: "\(name) is larger than this app accepts.")
+        case .archiveTooLarge: String(localized: "The archive's contents are larger than this app accepts.")
+        case .unsafePath(let path): String(localized: "The archive contains an unsafe path: \(path)")
+        case .corrupt(let why): String(localized: "The archive is damaged: \(why)")
+        case .badXML(let why): String(localized: "content.xml is not valid XML: \(why)")
+        case .notAWorksheet(let root): String(localized: "content.xml is not a wxMaxima document (root element \(root)).")
         }
     }
 }

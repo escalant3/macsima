@@ -28,8 +28,9 @@ public final class FindController {
     /// "3 of 12", "No matches", or nothing for an empty query.
     public var status: String {
         if query.isEmpty { return "" }
-        if matches.isEmpty { return "No matches" }
-        return current.map { "\($0 + 1) of \(matches.count)" } ?? "\(matches.count) found"
+        if matches.isEmpty { return String(localized: "No matches") }
+        return current.map { String(localized: "\($0 + 1) of \(matches.count)", comment: "Find bar: match 3 of 12") }
+            ?? String(localized: "\(matches.count) found", comment: "Find bar: number of matches")
     }
 
     // MARK: - Actions
@@ -83,7 +84,7 @@ public final class FindController {
         let editor = controller.editor(for: match.cell)
         editor.breakUndoCoalescing()
         editor.replace(match.range, with: replacement)
-        editor.undoManager?.setActionName("Replace")
+        editor.undoManager?.setActionName(String(localized: "Replace", comment: "Undo action name"))
         let cells = controller.document.worksheet
         search(from: (cells.index(of: match.cell) ?? 0, match.range.location + (replacement as NSString).length))
     }
@@ -99,7 +100,7 @@ public final class FindController {
             editor.breakUndoCoalescing()
             editor.replace(match.range, with: replacement)
         }
-        undo?.setActionName("Replace All")
+        undo?.setActionName(String(localized: "Replace All", comment: "Undo action name"))
         undo?.endUndoGrouping()
         search(fromCaret: false)
     }

@@ -25,9 +25,9 @@ public enum WXMXReader {
         guard let content = files.data["content.xml"] else { throw .missingContent }
         var warnings: [String] = []
         if let mime = files.data["mimetype"], String(decoding: mime, as: UTF8.self) != "text/x-wxmathml" {
-            warnings.append("The mimetype entry is \"\(String(decoding: mime, as: UTF8.self))\", not text/x-wxmathml.")
+            warnings.append(String(localized: "The mimetype entry is \"\(String(decoding: mime, as: UTF8.self))\", not text/x-wxmathml."))
         } else if files.data["mimetype"] == nil {
-            warnings.append("The archive has no mimetype entry.")
+            warnings.append(String(localized: "The archive has no mimetype entry."))
         }
         let root: XMLTreeNode
         do { root = try XMLTree.parse(content) } catch { throw .badXML(error.description) }
@@ -39,7 +39,7 @@ public enum WXMXReader {
         if let version = docAttributes.removeValue(forKey: "version") {
             let parts = version.split(separator: ".").compactMap { Int($0) }
             if parts.count == 2, (parts[0], parts[1]) > newestKnownVersion {
-                warnings.append("The file uses format version \(version); this app knows up to 1.5. Unknown parts are kept.")
+                warnings.append(String(localized: "The file uses format version \(version); this app knows up to 1.5. Unknown parts are kept."))
             }
         }
         if let zoom = docAttributes.removeValue(forKey: "zoom") { worksheet.zoom = Int(zoom) ?? 100 }
@@ -55,7 +55,7 @@ public enum WXMXReader {
                 }
             default:
                 worksheet.preserved.append(child.xml)
-                reader.warn("an unknown <\(child.name!)> element")
+                reader.warn(String(localized: "an unknown <\(child.name!)> element", comment: "Completes “Kept …”"))
             }
         }
         // Files no output uses (images of kept cells, gnuplot data) are kept as they are.
@@ -64,7 +64,8 @@ public enum WXMXReader {
             worksheet.attachments[name] = files.data[name]
         }
         warnings += reader.warnings.sorted { $0.key < $1.key }.map { key, count in
-            count == 1 ? "Kept \(key)." : "Kept \(key) (\(count) times)."
+            count == 1 ? String(localized: "Kept \(key).", comment: "Open warning; the argument is a phrase such as “an unknown <x> element”")
+                : String(localized: "Kept \(key) (\(count) times).", comment: "Open warning; the argument is a phrase such as “an unknown <x> element”")
         }
         return WXMXReadResult(worksheet: worksheet, warnings: warnings)
     }
@@ -119,14 +120,14 @@ private struct Reader {
         case "image": kind = .image
         default: kind = nil
         }
-        guard let kind else { return raw(node, id: id, why: "a cell of type \"\(type)\" this app cannot show") }
+        guard let kind else { return raw(node, id: id, why: String(localized: "a cell of type \"\(type)\" this app cannot show", comment: "Completes “Kept …”")) }
         // An image cell: a caption, then <img>imageN.ext</img> from the archive.
         if kind == .image {
             let imgs = node.elementChildren.filter { $0.name == "img" }
             guard imgs.count == 1, let img = imgs.first,
                   let data = files.data[img.textContent.trimmingCharacters(in: .whitespacesAndNewlines)],
                   node.elementChildren.allSatisfy({ $0.name == "img" || $0.name == "editor" })
-            else { return raw(node, id: id, why: "an image cell whose image is missing (kept)") }
+            else { return raw(node, id: id, why: String(localized: "an image cell whose image is missing", comment: "Completes “Kept …”")) }
         }
 
         // sectioning_level is implied by the kind; other attributes are kept.
@@ -135,7 +136,7 @@ private struct Reader {
         var cell = Cell(id: id, kind: kind)
         for key in attributes.keys where key != "uuid" && key != "hide" {
             if key.hasPrefix("question") || key.hasPrefix("answer") { continue }
-            warn("the cell attribute \"\(key)\" (written back, not used)")
+            warn(String(localized: "the cell attribute \"\(key)\" (written back, not used)", comment: "Completes “Kept …”"))
         }
 
         for child in node.children {
@@ -159,10 +160,10 @@ private struct Reader {
                 for inner in child.elementChildren { folded += cells(inner) }
             case "fold":
                 cell.preserved.append(child.xml)
-                warn("folded cells (not shown, written back)")
+                warn(String(localized: "folded cells (not shown, written back)", comment: "Completes “Kept …”"))
             default:
                 cell.preserved.append(child.xml)
-                warn("an unknown <\(child.name!)> element in a cell")
+                warn(String(localized: "an unknown <\(child.name!)> element in a cell", comment: "Completes “Kept …”"))
             }
         }
         cell.extraAttributes = attributes
@@ -200,7 +201,7 @@ private struct Reader {
             || editor.elementChildren.contains { $0.name != "line" }
         if formatted {
             cell.preservedEditor = PreservedEditor(text: text, xml: editor.xml)
-            warn("text formatting (kept while the cell's text is unchanged)")
+            warn(String(localized: "text formatting (kept while the cell's text is unchanged)", comment: "Completes “Kept …”"))
         }
     }
 
@@ -212,7 +213,7 @@ private struct Reader {
         for mth in output.elementChildren {
             guard mth.name == "mth" || mth.name == "math" else {
                 result.append(.math(xml: mth.xml))
-                warn("an unknown <\(mth.name ?? "?")> element in an output")
+                warn(String(localized: "an unknown <\(mth.name ?? "?")> element in an output", comment: "Completes “Kept …”"))
                 continue
             }
             var chunk: [XMLTreeNode] = []

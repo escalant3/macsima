@@ -281,14 +281,14 @@ public final class WorksheetController {
     /// caption the file's name (as wxMaxima's).
     public func insertImage(from url: URL) {
         guard let data = try? Data(contentsOf: url), ImageDecoding.image(data, format: url.pathExtension) != nil else {
-            statusMessage = "\(url.lastPathComponent) is not an image Macsima can show."
+            statusMessage = String(localized: "\(url.lastPathComponent) is not an image Macsima can show.")
             return
         }
         let format = url.pathExtension.lowercased()
         let cell = Cell(kind: .image, input: url.lastPathComponent,
                         outputs: [.image(data: data, format: format.isEmpty ? "png" : format, label: nil)])
         let after = focusedCell.flatMap { document.worksheet.index(of: $0) }.map { $0 + 1 } ?? document.worksheet.cells.count
-        document.insertCells([cell], at: after, undo: undoManager, name: "Insert Image")
+        document.insertCells([cell], at: after, undo: undoManager, name: String(localized: "Insert Image", comment: "Undo action name"))
         focusedCell = cell.id
     }
 
@@ -566,7 +566,7 @@ public final class WorksheetController {
             if debugOnError { await session.setOption("debugmode", true) }
             await settingsStarted(with: configuration, in: session)
         } catch {
-            statusMessage = "Maxima did not start: \(error)"
+            statusMessage = String(localized: "Maxima did not start: \(String(describing: error))")
         }
     }
 
@@ -638,9 +638,9 @@ public final class WorksheetController {
             }
         case .died(let reason):
             // A restart the user asked for is not news.
-            if reason != "restarted" { statusMessage = "Maxima stopped: \(reason)" }
+            if reason != MaximaSession.restartReason { statusMessage = String(localized: "Maxima stopped: \(reason)") }
         case .slowStart:
-            statusMessage = "Maxima is slow to start…"
+            statusMessage = String(localized: "Maxima is slow to start…")
         case .async(let cellID, let content):
             if let id = UUID(uuidString: cellID) { enqueue(id, .append(.math(xml: Self.storedMath(content)))) }
         case .tag("statusbar", let content):
@@ -741,7 +741,7 @@ public final class WorksheetController {
                 if debugOnError { await session.setOption("debugmode", true) }
                 await settingsStarted(with: configuration, in: session)
             } catch {
-                statusMessage = "Maxima did not restart: \(error)"
+                statusMessage = String(localized: "Maxima did not restart: \(String(describing: error))")
             }
         }
     }
@@ -814,7 +814,7 @@ public final class WorksheetController {
                     enqueue(id, .append(.image(data: data, format: format.isEmpty ? "png" : format, label: out.label,
                                                attributes: attributes)))
                 } else {
-                    enqueue(id, .append(.error(kind: nil, message: "The plot file \(path) was gone before it could be read.")))
+                    enqueue(id, .append(.error(kind: nil, message: String(localized: "The plot file \(path) was gone before it could be read."))))
                 }
             }
             if let animation = out.animation {
@@ -825,7 +825,7 @@ public final class WorksheetController {
                     attributes["del"] = nil
                     enqueue(id, .append(.animation(frames: frames, format: format, label: out.label, attributes: attributes)))
                 } else {
-                    enqueue(id, .append(.error(kind: nil, message: "The animation's frames were gone before they could be read.")))
+                    enqueue(id, .append(.error(kind: nil, message: String(localized: "The animation's frames were gone before they could be read."))))
                 }
                 return
             }
@@ -853,7 +853,7 @@ public final class WorksheetController {
             enqueue(id, .error(kind: kind.rawValue, message: message))
             markError(in: id, syntax: kind == .syntax, message: message)
         case .interrupted:
-            enqueue(id, .error(kind: "interrupted", message: "Interrupted"))
+            enqueue(id, .error(kind: "interrupted", message: String(localized: "Interrupted", comment: "Shown in a cell whose evaluation was interrupted")))
         case .skipped:
             break
         case .prompt(let label):
@@ -873,7 +873,7 @@ public final class WorksheetController {
             break
         case .finished(let outcome):
             if case .sessionDied(let reason) = outcome {
-                enqueue(id, .append(.error(kind: nil, message: "Not finished: Maxima \(reason).")))
+                enqueue(id, .append(.error(kind: nil, message: String(localized: "Not finished: \(reason).", comment: "A cell left unfinished; the argument says what happened to Maxima"))))
             }
             if asking == id { asking = nil }
             enqueue(id, .cleanUp)

@@ -84,8 +84,8 @@ struct EvaluationMappingTests {
 
     @Test func sessionDeathIsShown() {
         let (c, id) = setUp()
-        let out = run([.started(index: 0, statement), .finished(.sessionDied("killed"))], c, id)
-        #expect(out == [.error(kind: nil, message: "Not finished: Maxima killed.")])
+        let out = run([.started(index: 0, statement), .finished(.sessionDied("Maxima was stopped"))], c, id)
+        #expect(out == [.error(kind: nil, message: "Not finished: Maxima was stopped.")])
         #expect(c.running.isEmpty)
     }
 }

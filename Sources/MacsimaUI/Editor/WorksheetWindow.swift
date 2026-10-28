@@ -141,13 +141,13 @@ struct WorksheetToolbar: ToolbarContent {
 
     static func label(_ state: SessionState) -> String {
         switch state {
-        case .starting, .authenticating, .configuring: "Starting Maxima…"
-        case .idle: "Ready"
-        case .busy: "Evaluating…"
-        case .question: "Waiting for an answer"
-        case .debugger: "In the debugger"
-        case .lisp: "Lisp mode"
-        case .dead: "Maxima not running"
+        case .starting, .authenticating, .configuring: String(localized: "Starting Maxima…", comment: "Maxima's state in the toolbar")
+        case .idle: String(localized: "Ready", comment: "Maxima's state in the toolbar")
+        case .busy: String(localized: "Evaluating…", comment: "Maxima's state in the toolbar")
+        case .question: String(localized: "Waiting for an answer", comment: "Maxima's state in the toolbar")
+        case .debugger: String(localized: "In the debugger", comment: "Maxima's state in the toolbar")
+        case .lisp: String(localized: "Lisp mode", comment: "Maxima's state in the toolbar")
+        case .dead: String(localized: "Maxima not running", comment: "Maxima's state in the toolbar")
         }
     }
 }
@@ -206,7 +206,7 @@ struct StatusBar: View {
                         .help("Maxima's CPU use over the last second (100% is one core)")
                 }
             } else if let last = controller.lastDuration {
-                Text("Last evaluation: " + Self.seconds(Double(last.components.seconds) + Double(last.components.attoseconds) / 1e18))
+                Text("Last evaluation: \(Self.seconds(Double(last.components.seconds) + Double(last.components.attoseconds) / 1e18))")
                     .monospacedDigit()
                     .accessibilityIdentifier("status-time")
             }
@@ -222,7 +222,7 @@ struct StatusBar: View {
 
     /// `0.4 s`, `12.3 s`, `2 min 05 s`.
     static func seconds(_ t: Double) -> String {
-        if t < 60 { return String(format: "%.1f s", t) }
+        if t < 60 { return String(format: "%.1f s", locale: .current, t) }
         let whole = Int(t)
         return String(format: "%d min %02d s", whole / 60, whole % 60)
     }

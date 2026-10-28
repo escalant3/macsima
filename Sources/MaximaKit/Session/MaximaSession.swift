@@ -93,7 +93,7 @@ public actor MaximaSession {
 
     /// Starts Maxima, loads the glue and returns when the session is idle.
     public func start() async throws(MaximaError) {
-        guard state == .dead else { throw .busy("Maxima is already running.") }
+        guard state == .dead else { throw .busy(String(localized: "Maxima is already running.")) }
         let glue: String
         if let source = configuration.glueSource { glue = source } else { glue = try GlueLisp.bundledSource() }
         let transport = try makeTransport(configuration)
@@ -149,23 +149,26 @@ public actor MaximaSession {
         }
     }
 
+    /// The `.died` and `.sessionDied` reason after `restart`.
+    public static let restartReason = String(localized: "Maxima was restarted", comment: "Why a session ended")
+
     /// Kills Maxima and starts a new one, with `configuration` when given.
     /// Open cells end with `.sessionDied`.
     public func restart(configuration: MaximaConfiguration? = nil) async throws(MaximaError) {
-        await kill(reason: "restarted")
+        await kill(reason: Self.restartReason)
         if let configuration { self.configuration = configuration }
         try await start()
     }
 
     /// Kills Maxima. Open cells end with `.sessionDied`.
-    public func kill(reason: String = "killed") async {
+    public func kill(reason: String = String(localized: "Maxima was stopped", comment: "Why a session ended")) async {
         guard let transport else { return }
         await abandon(transport, reason: reason)
     }
 
     /// Kills Maxima and ends `events`. The session cannot be used afterwards.
     public func shutdown() async {
-        await kill(reason: "shut down")
+        await kill(reason: String(localized: "Maxima was shut down", comment: "Why a session ended"))
         eventSink.finish()
     }
 
@@ -187,7 +190,7 @@ public actor MaximaSession {
 
     private func transportEnded(generation gen: Int) async {
         guard gen == generation, let transport else { return }
-        await abandon(transport, reason: "Maxima exited")
+        await abandon(transport, reason: String(localized: "Maxima exited"))
     }
 
     // MARK: - Evaluation
@@ -364,7 +367,7 @@ public actor MaximaSession {
         case .closed, .exited:
             for e in scanner.flush() { handle(e) }
             if let transport {
-                await abandon(transport, reason: event == .closed ? "Maxima closed the connection" : "Maxima exited")
+                await abandon(transport, reason: event == .closed ? String(localized: "Maxima closed the connection") : String(localized: "Maxima exited"))
             }
         }
     }

@@ -33,7 +33,7 @@ public final class HelpModel {
         pending = topic
         if ask?(topic) != true {
             pending = nil
-            page = HelpPage(topic: topic, error: "Maxima is not running.")
+            page = HelpPage(topic: topic, error: String(localized: "Maxima is not running."))
         }
     }
 

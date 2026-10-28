@@ -458,7 +458,7 @@ final class CellTextView: NSTextView {
         let edit = MaximaEditing.toggleComment(in: string, selection: selectedRange())
         breakUndoCoalescing()
         replace(edit.range, with: edit.text)
-        undoManager?.setActionName("Comment")
+        undoManager?.setActionName(String(localized: "Comment", comment: "Undo action name"))
         setSelectedRange(edit.selection)
     }
 
@@ -500,7 +500,7 @@ final class CellTextView: NSTextView {
         let selection = selectedRange()
         let topic = selection.length > 0 && NSLocationInRange(at, selection) ? helpTopic : MaximaHelp.topic(in: string, caret: at)
         guard let topic else { return menu }
-        let item = NSMenuItem(title: "Look Up “\(topic)” in Maxima Manual", action: #selector(lookUpFromMenu(_:)), keyEquivalent: "")
+        let item = NSMenuItem(title: String(localized: "Look Up “\(topic)” in Maxima Manual"), action: #selector(lookUpFromMenu(_:)), keyEquivalent: "")
         item.target = self
         item.representedObject = topic
         menu.insertItem(item, at: 0)
@@ -573,7 +573,7 @@ final class CellTextView: NSTextView {
         guard let word = MaximaCompletion.word(in: string, caret: selectedRange().location) else { return }
         breakUndoCoalescing()
         replace(word.range, with: item.insertion)
-        undoManager?.setActionName("Completion")
+        undoManager?.setActionName(String(localized: "Completion", comment: "Undo action name"))
         breakUndoCoalescing()
         let inserted = NSRange(location: word.range.location, length: (item.insertion as NSString).length)
         if let first = MaximaCompletion.placeholders(in: string).first(where: { NSLocationInRange($0.location, inserted) }) {

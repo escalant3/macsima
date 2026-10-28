@@ -50,17 +50,17 @@ public enum MaximaError: Error, Equatable, Sendable, CustomStringConvertible {
 
     public var description: String {
         switch self {
-        case .glueMissing: "wxMathML.lisp is missing from the MaximaKit bundle."
-        case .maximaNotFound(let path): "No Maxima executable at \(path)."
-        case .spawnFailed(let why): "Could not start Maxima: \(why)."
-        case .listenFailed(let why): "Could not open the local socket for Maxima: \(why)."
+        case .glueMissing: String(localized: "wxMathML.lisp is missing from the MaximaKit bundle.")
+        case .maximaNotFound(let path): String(localized: "No Maxima executable at \(path).")
+        case .spawnFailed(let why): String(localized: "Could not start Maxima: \(why).")
+        case .listenFailed(let why): String(localized: "Could not open the local socket for Maxima: \(why).")
         case let .failedToStart(attempts, tail):
-            "Maxima exited before connecting, \(attempts) times. Its last output:\n\(tail)"
-        case .connectTimeout(let d): "Maxima did not connect within \(d)."
-        case .authenticationFailed(let why): "Maxima did not authenticate: \(why)."
-        case .notRunning: "Maxima is not running."
+            String(localized: "Maxima exited before connecting, \(attempts) times. Its last output:\n\(tail)")
+        case .connectTimeout(let d): String(localized: "Maxima did not connect within \(String(describing: d)).")
+        case .authenticationFailed(let why): String(localized: "Maxima did not authenticate: \(why).")
+        case .notRunning: String(localized: "Maxima is not running.")
         case .busy(let why): why
-        case .noQuestion: "Maxima is not asking a question."
+        case .noQuestion: String(localized: "Maxima is not asking a question.")
         case .split(let error): error.description
         }
     }

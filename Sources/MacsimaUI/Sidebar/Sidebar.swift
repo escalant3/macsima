@@ -10,9 +10,9 @@ public enum SidebarTab: String, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .contents: "Contents"
-        case .variables: "Variables"
-        case .manual: "Manual"
+        case .contents: String(localized: "Contents", comment: "Sidebar panel")
+        case .variables: String(localized: "Variables", comment: "Sidebar panel")
+        case .manual: String(localized: "Manual", comment: "Sidebar panel: the Maxima manual")
         }
     }
 }
@@ -155,7 +155,7 @@ struct ContentsPanel: View {
 
     static func title(of cell: Cell) -> String {
         let line = cell.input.split(separator: "\n").first.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? ""
-        return line.isEmpty ? "Untitled \(cell.kind.displayName.lowercased())" : line
+        return line.isEmpty ? String(localized: "Untitled \(cell.kind.displayName.lowercased())", comment: "A heading with no text in the contents panel; the argument is the cell kind") : line
     }
 
     static func level(_ kind: CellKind) -> Int {
