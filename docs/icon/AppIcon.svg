@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1f2e"/><stop offset="1" stop-color="#0a0b14"/></linearGradient>
-    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="0.55" stop-color="#ff5e7e"/><stop offset="1" stop-color="#9b5cff"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eceef4"/></linearGradient>
     <clipPath id="clip"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath>
-    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="30"/></filter>
-    
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="18"/></filter>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
   </defs>
   <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="100.5" y="100.5" width="823" height="823" rx="184.5" fill="none" stroke="#1d1f2e" stroke-opacity="0.08" stroke-width="1"/>
   <g clip-path="url(#clip)">
-    <g fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="2">
+    <g fill="none" stroke="#1d1f2e" stroke-opacity="0.05" stroke-width="2">
       <path d="M100 250H924 M100 400H924 M100 550H924 M100 700H924 M100 850H924"/>
       <path d="M250 100V924 M400 100V924 M550 100V924 M700 100V924 M850 100V924"/>
     </g>
   </g>
   <g transform="translate(-29 -10)" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M722 330 H352 L578 522 L352 714 H730" stroke="#9b5cff" stroke-opacity="0.35" stroke-width="64" transform="translate(-20 24)"/>
-    <path d="M722 330 H352 L578 522 L352 714 H730" stroke="url(#ink)" stroke-width="64"/>
+    <path d="M722 330 H352 L578 522 L352 714 H730" stroke="#5b3ce0" stroke-opacity="0.18" stroke-width="64" filter="url(#glow)"/>
+    <path d="M722 330 H352 L578 522 L352 714 H730" stroke="#2a1670" stroke-opacity="0.12" stroke-width="64" transform="translate(0 12)" filter="url(#shadow)"/>
+    <path d="M722 330 H352 L578 522 L352 714 H730" stroke="#5b3ce0" stroke-width="64"/>
   </g>
-
 </svg>

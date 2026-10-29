@@ -1,8 +1,8 @@
 # App icon
 
-`AppIcon.svg` is the source: a dark rounded square with a faint grid and an orange-to-purple Σ. The app uses the PNGs exported from it, in `App/Macsima/Assets.xcassets/AppIcon.appiconset` (16, 32, 128, 256 and 512 points, each at 1× and 2×). `project.yml` names the set with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`.
+`AppIcon.svg` is the source: a white rounded square (light grey towards the bottom) with a faint grid, and a solid violet Σ (`#5b3ce0`, about 6.6:1 against white) with a soft glow and shadow. The app uses the PNGs exported from it, in `App/Macsima/Assets.xcassets/AppIcon.appiconset` (16, 32, 128, 256 and 512 points, each at 1× and 2×). `project.yml` names the set with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`.
 
-The icon is flat: one image, with the rounded square drawn into it.
+The icon is flat: one image, with the rounded square drawn into it. The glow and shadow are part of the image, not separate layers.
 
 ## Later: a layered icon
 
