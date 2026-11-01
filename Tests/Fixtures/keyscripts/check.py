@@ -62,11 +62,12 @@ elif script == "wrap-basics":
     d1 = dump("wrap", 1)
     check(d1["windowWidth"] == 760, "the window is 760 points wide")
     narrow = {l: renders(1, l)[-1] for l in ["%o1", "%o2", "%o3", "%o4"] if renders(1, l)}
-    check(len(narrow) == 4 and all(0 < r["wrap"] < 760 and r["width"] <= r["wrap"] for r in narrow.values()),
-          "the four long outputs are broken at the output column's width and fit in it")
-    check(all(r["height"] > 45 for r in narrow.values()), "each takes more than one line (one line is about 28 points)")
+    check(len(narrow) == 4 and all(0 < r["wrap"] < r["natural"] and r["width"] <= r["wrap"] for r in narrow.values()),
+          "the four long outputs are wider than the output column, broken at its width, and fit in it: " + str(narrow))
+    check(all(r["height"] > 40 for r in narrow.values()), "each takes more than one line (one line is at most about 30 points)")
     matrix = renders(1, "%o5")
-    check(len(matrix) > 0 and matrix[-1]["width"] > matrix[-1]["wrap"] > 0, "the wide matrix stays on one line (it scrolls)")
+    check(len(matrix) > 0 and matrix[-1]["width"] > matrix[-1]["wrap"] > 0 and matrix[-1]["height"] < 40,
+          "the wide matrix stays on one line (it scrolls): " + str(matrix[-1:]))
     wide = renders(2, "%o1")
     check(dump("wrap", 2)["windowWidth"] == 1100 and len(wide) > 0 and wide[-1]["wrap"] > narrow["%o1"]["wrap"]
           and wide[-1]["height"] < narrow["%o1"]["height"], "after widening the window, %o1 is broken again into fewer lines")

@@ -30,8 +30,9 @@ public final class MathSnapshotRenderer {
     private var waiting: [CheckedContinuation<Void, Never>] = []
     /// Renders done since launch (measurements).
     public private(set) var renderCount = 0
-    /// The latest renders, for checks: label, width broken at (nil: none), size.
-    public private(set) var recent: [(label: String?, wrap: CGFloat?, size: CGSize)] = []
+    /// The latest renders, for checks: label, width broken at (nil: none),
+    /// size, and the width the math takes on one line.
+    public private(set) var recent: [(label: String?, wrap: CGFloat?, size: CGSize, natural: CGFloat)] = []
     /// Renders given up after `timeout` without an answer from the page.
     public private(set) var timeouts = 0
     static let timeout = Duration.seconds(10)
@@ -112,7 +113,7 @@ public final class MathSnapshotRenderer {
         // Math that fitted is the same picture at any width.
         if labelColumn, let wrap, natural <= wrap { cache[Self.key(mathML, label, dark, scale, nil)] = rendered }
         renderCount += 1
-        recent.append((label, wrap, size))
+        recent.append((label, wrap, size, natural))
         if recent.count > 100 { recent.removeFirst() }
         return rendered
     }

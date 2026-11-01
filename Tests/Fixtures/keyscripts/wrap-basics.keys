@@ -1,8 +1,10 @@
 # Long outputs break into lines at the window's width (Phase 3, step 6),
 # and again when the window is resized. A matrix can't break: it scrolls.
+# Sized for the default math size (16 px): %o1 takes three lines at 760
+# points and two at 1100, and the matrix is wider than 760.
 wait 3
 resize 760 900
-type expand((a+b+c)^5);
+type expand((a+b+c)^6);
 key return shift
 wait 2
 type makelist(i^2,i,1,40);
@@ -14,7 +16,7 @@ wait 2
 type expand((x+1)^14)/expand((x-1)^9);
 key return shift
 wait 2
-type matrix(makelist(i,i,1,30));
+type matrix(makelist(i,i,1,40));
 key return shift
 wait 3
 shot .build/keyscripts/wrap-760.png
