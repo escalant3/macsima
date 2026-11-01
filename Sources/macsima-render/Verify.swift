@@ -40,6 +40,59 @@ enum Verify {
         print(failures == 0 ? "PASS" : "FAIL: \(failures) of \(outs.count) images do not match their math")
         let wrapFailures = await lineBreaks(window: window)
         print(wrapFailures == 0 ? "PASS line breaks" : "FAIL: \(wrapFailures) line-break checks")
+        let partFailures = await parts()
+        print(partFailures == 0 ? "PASS parts" : "FAIL: \(partFailures) outputs with misplaced parts")
+    }
+
+    /// Where the renderer says each part was drawn (selecting inside math):
+    /// every name, number and operator has a rectangle inside the image, a
+    /// click on it selects it, and parts lie inside the part holding them.
+    /// The long outputs are broken at 480 points, so parts split over lines.
+    static func parts() async -> Int {
+        let outs = ["01-integrate", "03-expand", "09-solve", "10-matrix", "13-limit", "31-display-forms", "33-long-outputs"]
+            .flatMap(chunks).map(MathMLTranslator.translate).filter { !$0.mathML.isEmpty }
+        var failures = 0
+        for (i, out) in outs.enumerated() {
+            guard let tree = out.tree,
+                  let rendered = await MathSnapshotRenderer.shared.render(mathML: out.taggedMathML, label: out.label,
+                                                                          dark: false, width: 480)
+            else { failures += 1; print("BAD part #\(i): not rendered"); continue }
+            let layout = MathLayout(tree: tree, measured: rendered.parts)
+            if ProcessInfo.processInfo.environment["MACSIMA_PARTS_DEBUG"] == String(i) {
+                print(out.taggedMathML)
+                for id in tree.nodes.indices {
+                    print(id, tree.parent[id], tree.nodes[id].name ?? "", tree.nodes[id].textContent.prefix(20),
+                          rendered.parts[id].map { "own \($0)" } ?? "", layout.rects[id])
+                }
+            }
+            let image = CGRect(origin: .zero, size: rendered.size).insetBy(dx: -1, dy: -1)
+            var problems: [String] = []
+            let leaves = tree.nodes.indices.filter {
+                ["mi", "mn", "mo", "v", "n"].contains(tree.nodes[$0].name ?? "")
+                    && !tree.nodes[$0].textContent.trimmingCharacters(in: .whitespaces).isEmpty
+                    && out.taggedMathML.contains("data-p=\"\($0)\"")
+            }
+            for id in leaves {
+                guard let first = layout.rects[id].first else { problems.append("no box for #\(id)"); continue }
+                if !layout.rects[id].allSatisfy({ image.contains($0) }) { problems.append("#\(id) outside the image") }
+                let center = CGRect(x: first.midX, y: first.midY, width: 1, height: 1)
+                if layout.select(center) != .node(id) { problems.append("a click on #\(id) selects \(String(describing: layout.select(center)))") }
+            }
+            // As drawn, without the padding that makes thin parts easier to click.
+            let drawn = MathLayout(tree: tree, measured: rendered.parts, minimumSize: 0)
+            for id in tree.nodes.indices where !rendered.parts[id, default: []].isEmpty {
+                let p = tree.parent[id]
+                guard p >= 0, !rendered.parts[p, default: []].isEmpty else { continue }
+                let holder = drawn.rects[p].map { $0.insetBy(dx: -2, dy: -2) }
+                if !drawn.rects[id].allSatisfy({ r in holder.contains { $0.contains(r) } }) {
+                    problems.append("#\(id) outside its parent #\(p)")
+                }
+            }
+            if !problems.isEmpty { failures += 1 }
+            print("\(problems.isEmpty ? "ok  " : "BAD ") part #\(i): \(leaves.count) parts, \(Int(rendered.size.width))x\(Int(rendered.size.height))"
+                  + (problems.isEmpty ? "" : " — " + problems.prefix(4).joined(separator: "; ")))
+        }
+        return failures
     }
 
     /// The long outputs (fixture 33 and the expansion in 31), laid out at

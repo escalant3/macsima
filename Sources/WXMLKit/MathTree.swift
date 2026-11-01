@@ -102,11 +102,15 @@ public struct MathLayout: Sendable {
     public private(set) var rects: [[CGRect]]
 
     /// `measured` holds the rectangles the page reported, by number.
-    public init(tree: MathTree, measured: [Int: [CGRect]]) {
+    /// Thinner ones (a minus sign is a point high) grow to `minimumSize`
+    /// around their centre, so a click can hit them.
+    public init(tree: MathTree, measured: [Int: [CGRect]], minimumSize: CGFloat = 8) {
         self.tree = tree
         var rects = Array(repeating: [CGRect](), count: tree.nodes.count)
         for (id, list) in measured where rects.indices.contains(id) {
-            rects[id] = list.filter { $0.width > 0 && $0.height > 0 }
+            rects[id] = list.filter { $0.width > 0 && $0.height > 0 }.map {
+                $0.insetBy(dx: min(0, ($0.width - minimumSize) / 2), dy: min(0, ($0.height - minimumSize) / 2))
+            }
         }
         // Children have higher numbers than their parents (pre-order), so
         // going down from the last number fills each node before its parent.

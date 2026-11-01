@@ -14,6 +14,9 @@ public final class MathSnapshotRenderer {
         public let image: NSImage
         /// Size in points.
         public let size: CGSize
+        /// Where each numbered element of tagged MathML was drawn, in the
+        /// image's points (MathLayout). Empty for a picture without labels.
+        public var parts: [Int: [CGRect]] = [:]
     }
 
     private let window: NSWindow
@@ -82,7 +85,7 @@ public final class MathSnapshotRenderer {
                 if !resumed { resumed = true; c.resume() }
             }
             web.show(mathML: mathML, label: label, scale: scale, wrap: wrap.map { .width($0) } ?? .none,
-                     labelColumn: labelColumn)
+                     labelColumn: labelColumn, boxes: labelColumn)
             // A page that never reports its size would keep the renderer
             // busy, and every later output in the app would wait behind it.
             Task { @MainActor in
@@ -96,13 +99,14 @@ public final class MathSnapshotRenderer {
             return nil
         }
         let natural = web.naturalWidth
+        let parts = web.parts
         if labelColumn { naturalWidths[Self.key(mathML, label, dark, scale, nil)] = natural }
         let size = CGSize(width: max(1, latest.width), height: max(1, latest.height))
         web.frame.size = size
         let config = WKSnapshotConfiguration()
         config.rect = CGRect(origin: .zero, size: size)
         guard let image = try? await web.takeSnapshot(configuration: config) else { return nil }
-        let rendered = Rendered(image: image, size: size)
+        let rendered = Rendered(image: image, size: size, parts: parts)
         cache[key] = rendered
         // Math that fitted is the same picture at any width.
         if labelColumn, let wrap, natural <= wrap { cache[Self.key(mathML, label, dark, scale, nil)] = rendered }

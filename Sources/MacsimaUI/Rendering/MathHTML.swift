@@ -41,8 +41,11 @@ public enum MathHTML {
     /// padding, which is part of the gap. `wrap` says where long math
     /// breaks into lines (MathLineBreaking).
     /// `labelColumn` false leaves out the label column (a copied picture).
+    /// `boxes` adds where each element with a `data-p` was drawn to the
+    /// report, as a fifth value: number, x, y, width, height, flattened
+    /// (MathLayout).
     public static func page(mathML: String, label: String?, token: Int = 0, scale: CGFloat = 1,
-                            wrap: MathWrap = .none, labelColumn: Bool = true) -> String {
+                            wrap: MathWrap = .none, labelColumn: Bool = true, boxes: Bool = false) -> String {
         func px(_ v: CGFloat) -> String { String(format: "%.2fpx", v * scale) }
         let gap = String(format: "%.2fpx", CGFloat(gutterSpacing) * scale + CGFloat(Self.gap - gutterSpacing))
         // The label column is always there, so unlabelled math (questions) lines up too.
@@ -71,7 +74,9 @@ public enum MathHTML {
           const width = wrap < 0 ? document.documentElement.clientWidth : wrap;
           if (width !== laidOutFor) { natural = layoutMath(width); laidOutFor = width; }
           const [w, h] = measureMath();
-          window.webkit.messageHandlers.size.postMessage([w, h, \(token), natural]);
+          const values = [w, h, \(token), natural];
+          if (\(boxes ? "true" : "false")) values.push(measureParts());
+          window.webkit.messageHandlers.size.postMessage(values);
         }
         // Lay out and report once painted (two frames after fonts are ready),
         // then on every resize.

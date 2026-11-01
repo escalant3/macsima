@@ -289,5 +289,18 @@ enum MathLineBreaking {
       for (const w of box.children) right = Math.max(right, w.getBoundingClientRect().right);
       return [Math.ceil(right - rect.left + parseFloat(getComputedStyle(row).paddingRight)), Math.ceil(rect.height)];
     }
+
+    // Where each numbered element was drawn, for selecting parts of the math:
+    // [number, x, y, width, height, ...]. An element split over lines appears
+    // once per piece.
+    function measureParts() {
+      const out = [];
+      for (const e of document.querySelectorAll('[data-p]')) {
+        const r = e.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) continue;
+        out.push(+e.getAttribute('data-p'), r.left, r.top, r.width, r.height);
+      }
+      return out;
+    }
     """#
 }

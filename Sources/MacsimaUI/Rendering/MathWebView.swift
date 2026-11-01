@@ -24,6 +24,9 @@ public final class MathWKWebView: WKWebView {
     /// The width the math of the last report takes on one line, before any
     /// line breaking.
     public private(set) var naturalWidth: CGFloat = 0
+    /// Where each numbered element was drawn in the last report, when the
+    /// page was shown with `boxes` (MathLayout).
+    public private(set) var parts: [Int: [CGRect]] = [:]
     /// Token of the page loaded last; size reports with another token are stale.
     private var pageToken = 0
     private var handler: SizeHandler?
@@ -59,16 +62,31 @@ public final class MathWKWebView: WKWebView {
     }
 
     public func show(mathML: String, label: String?, scale: CGFloat = 1, wrap: MathWrap = .none,
-                     labelColumn: Bool = true) {
+                     labelColumn: Bool = true, boxes: Bool = false) {
         pageToken += 1
+        parts = [:]
         loadHTMLString(MathHTML.page(mathML: mathML, label: label, token: pageToken, scale: scale, wrap: wrap,
-                                     labelColumn: labelColumn), baseURL: nil)
+                                     labelColumn: labelColumn, boxes: boxes), baseURL: nil)
+    }
+
+    /// The fifth value of a size report: number, x, y, width, height, ...
+    static func parts(_ flat: [NSNumber]) -> [Int: [CGRect]] {
+        var out: [Int: [CGRect]] = [:]
+        var i = 0
+        while i + 4 < flat.count {
+            let v = flat[i...(i + 4)].map(\.doubleValue)
+            out[Int(v[0]), default: []].append(CGRect(x: v[1], y: v[2], width: v[3], height: v[4]))
+            i += 5
+        }
+        return out
     }
 
     private final class SizeHandler: NSObject, WKScriptMessageHandler {
         weak var view: MathWKWebView?
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            guard let values = message.body as? [NSNumber], values.count == 4 else { return }
+            guard let body = message.body as? [Any], body.count >= 4,
+                  let values = Array(body.prefix(4)) as? [NSNumber] else { return }
+            let parts = (body.count > 4 ? body[4] as? [NSNumber] : nil).map(MathWKWebView.parts)
             let size = CGSize(width: values[0].doubleValue, height: values[1].doubleValue)
             MainActor.assumeIsolated {
                 // A page that was replaced can still report (for example when the
@@ -76,6 +94,7 @@ public final class MathWKWebView: WKWebView {
                 guard let view, values[2].intValue == view.pageToken else { return }
                 if !view.hasSized { view.hasSized = true; MathWKWebView.sizedCount += 1 }
                 view.naturalWidth = values[3].doubleValue
+                if let parts { view.parts = parts }
                 view.onSize?(size)
                 view.sizeObserver?(size)
             }
