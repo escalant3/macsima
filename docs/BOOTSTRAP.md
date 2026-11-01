@@ -8,7 +8,7 @@ A native macOS front end for Maxima is feasible: wxMaxima's whole link to the en
 
 These answers from the project owner override the first draft wherever they differ.
 
-- **Purpose.** A personal tool first. Sharing is optional and only if it proves worth it; there is no commercial goal. DMG packaging, bundling and notarization are deferred (see Shipping later).
+- **Purpose.** A personal tool first. There is no commercial goal. Phase 4 (started 2026-11-01) ships a notarized DMG on GitHub Releases with Sparkle updates and no bundled Maxima ([RELEASING.md](RELEASING.md)); bundling Maxima stays deferred (see Shipping later).
 - **Engine.** SBCL only, with Maxima 5.50.0 from Homebrew as the baseline. Homebrew's formula (5.50.0, revision 2) depends on sbcl and gnuplot. The app finds `maxima` and `gnuplot` under `/opt/homebrew/bin` (configurable) and does not bundle either.
 - **Platform.** arm64 only, macOS 26 (Tahoe) as the minimum, current Swift and SwiftUI APIs. Ease of coding wins over compatibility with older systems.
 - **License.** GPL-2.0-or-later, so wxMathML.lisp and wxMaxima's logic can be reused directly (see Licensing).
@@ -196,7 +196,7 @@ Split the engine from the UI so the whole Maxima link can be tested without a wi
 
 ## Shipping later (deferred)
 
-Deferred by decision: this is a personal tool first, so none of this blocks the early phases. If you later share it, a DMG is realistic: wxMaxima's own build can produce one (`cmake --build . -- package` creates a `.dmg` on macOS), and its macOS target needs only wxWidgets. Your harder job is the engine you embed.
+Phase 4 took step 1 below and ships the app alone: a Developer ID DMG, notarized, updated by Sparkle, with Maxima and gnuplot from Homebrew ([RELEASING.md](RELEASING.md)). Steps 2 to 6 (a bundled Maxima) stay deferred. Deferred by decision: this is a personal tool first, so none of this blocks the early phases. If you later share it, a DMG is realistic: wxMaxima's own build can produce one (`cmake --build . -- package` creates a `.dmg` on macOS), and its macOS target needs only wxWidgets. Your harder job is the engine you embed.
 
 1. **Default for now: use your own Homebrew Maxima.** Maxima's install page recommends MacPorts (`sudo port install maxima +sbcl`) or Homebrew (`brew install maxima`). wxMaxima searches the PATH and `/opt/local/bin` for gnuplot because GUI apps do not inherit a shell PATH; do the same for `maxima`. This removes bundling risk for a personal build.
 2. **Build a relocatable Maxima.** Build from source with SBCL (instructions are in Maxima's `INSTALL`), install into `Contents/Resources/maxima/`, and launch it through the `maxima` script with `MAXIMA_PREFIX` pointing inside the bundle. Past Mac bundles show the pitfalls: the 2011 Maxima.app swapped trees into a template and used a modified launcher script, and a 2012 mailing-list report says the 5.28.0 DMG failed, which the thread attributes to a script that built the path with a doubled slash and broke when the volume name had a space. Test with spaces and non-ASCII characters in the install path.
@@ -253,7 +253,7 @@ Durations are my estimates for one experienced Mac developer, not sourced figure
 2. **Phase 1, engine kit (done 2026-10-18).** Tag scanner, session state machine, evaluation queue, restart, kill, interrupt, token handshake, all tested against recorded transcripts. *Exit:* a scripted session of 50 commands that includes an error, a question, an interrupt and a kill.
 3. **Phase 2, minimal worksheet (done 2026-10-18).** Cell editing, evaluate, MathML rendering, inline plots, open and save `.wxmx`. *Exit:* save a worksheet, reopen it and re-evaluate it; then try real `.wxmx` files from wxMaxima, and record every element the app cannot handle in the ledger.
 4. **Phase 3, daily driver (8 to 12 weeks).** Autocomplete, variables panel, help, export, undo, search, debugger and Lisp modes, dark mode. *Exit:* one week of real work with no fallback to wxMaxima.
-5. **Phase 4, sharing (optional).** Only if the app proves worth sharing: a README with install steps and the compatibility ledger first; a notarized DMG with a bundled Maxima only if people ask (see Shipping later).
+5. **Phase 4, sharing (started 2026-11-01).** A notarized DMG on GitHub Releases that updates itself with Sparkle, and a README with install steps; Maxima and gnuplot stay on Homebrew ([RELEASING.md](RELEASING.md)). A bundled Maxima only if people ask (see Shipping later). No App Store.
 
 ### Phase 0 results (2026-10-18)
 
@@ -376,7 +376,7 @@ Macsima/
     Fixtures/transcripts/   captured Maxima sessions, README, record.sh
     Fixtures/wxmx/          wxMaxima samples, Macsima-written sessions, wxMaxima re-saves
     Fixtures/keyscripts/    key scripts that drive the app (debug builds)
-  Scripts/               packaging scripts, added only if you share the app
+  scripts/               update-strings.sh, make-dmg.sh (docs/RELEASING.md)
 ```
 
 ### Phase 0 spike (first sketch, superseded)

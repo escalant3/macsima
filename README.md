@@ -17,7 +17,6 @@ Macsima is in early development. It works in day-to-day work, and it aims at ful
   and saved back unchanged, so a worksheet can go back and forth between Macsima and wxMaxima without losing data.
   [`docs/WXMX_COMPAT.md`](docs/WXMX_COMPAT.md) lists every element and its status.
 - **Few dependencies.** You need Maxima and gnuplot, and nothing else: no wxWidgets and no extra toolkits.
-  A downloadable DMG is planned; until then, Macsima is built from source (see below).
 
 ## Requirements
 
@@ -26,6 +25,12 @@ Macsima is in early development. It works in day-to-day work, and it aims at ful
 - gnuplot, for plots: `brew install gnuplot`
 
 If Maxima or gnuplot live somewhere else, you can set their paths in Settings.
+
+## Install
+
+Download `Macsima-<version>.dmg` from [Releases](https://github.com/escalant3/macsima/releases), open it and
+drag Macsima to Applications. Macsima updates itself: Macsima › Check for Updates…, or automatically once you
+allow it. Releasing is described in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ## Build and run
 

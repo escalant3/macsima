@@ -5,7 +5,7 @@ A native macOS front end for Maxima, written in Swift, as a personal tool. It do
 Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadmap are the plan. If the code and the doc disagree, tell me and update the doc.
 
 ## Decisions (already made, do not reopen)
-- Personal tool first. Sharing is optional later. No packaging, DMG, notarization, bundling or sandboxing work unless I ask.
+- Personal tool first, shared as a DMG from Phase 4: Developer ID signed (I run the signing and notarization commands myself), notarized, on GitHub Releases, updated with Sparkle (`docs/RELEASING.md`). No App Store, no sandboxing, no bundling Maxima unless I ask.
 - Engine: SBCL only. Baseline is Homebrew Maxima 5.50.0 at `/opt/homebrew/bin/maxima`, gnuplot from Homebrew. Never bundle or modify Maxima.
 - Platform: arm64 only, macOS 26 (Tahoe) minimum, current Swift and SwiftUI APIs. Ease of coding beats backward compatibility. AppKit is fine where SwiftUI falls short. No UIKit.
 - License: GPL-2.0-or-later. Every source file starts with `// SPDX-License-Identifier: GPL-2.0-or-later`. When porting from wxMaxima (including wxMathML.lisp), keep its copyright notices and say so in a comment.
@@ -29,10 +29,10 @@ Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadma
 - Does my SBCL have threads: `sbcl --noinform --eval '(progn (format t "threads: ~a~%" (if (member :sb-thread *features*) "yes" "no")) (quit))'`
 
 ## Current phase
-Phase 3 is done (see `docs/PHASE3_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` to `docs/PHASE2_REPORT.md`); my week of real use is in progress. Selecting text inside math, arrow keys stopping on outputs and Esc-sequences for Greek letters (Esc completes now) are deferred past Phase 3. Do not start Phase 4 until I say so.
+Phase 4 (sharing) started 2026-11-01: the DMG and Sparkle updates (`docs/RELEASING.md`). Phase 3 is done (see `docs/PHASE3_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` to `docs/PHASE2_REPORT.md`). Selecting text inside math, arrow keys stopping on outputs and Esc-sequences for Greek letters (Esc completes now) are deferred past Phase 3.
 
 Facts to keep in mind (details in the reports, BOOTSTRAP.md, WXMX_COMPAT.md and PARITY.md):
-- **Build the app.** `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build`. All code lives in the package (`MacsimaUI`); `App/Macsima` only holds `@main`.
+- **Build the app.** `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build`. All code lives in the package (`MacsimaUI`); `App/Macsima` only holds `@main` and Sparkle's updater (`Updater.swift`), so the package never links Sparkle.
 - **Engine.** `MaximaSession` (actor) does all Maxima work; each window's `WorksheetController` owns one and batches its events every 100 ms.
 - **Math rendering.** One shared hidden web view (`MathSnapshotRenderer`) renders outputs to cached images; `macsima-render verify` checks the images match their math. Translate math on the main thread (`TranslationCache`): the translator is recursive and capped at 400 levels.
 - **`.wxmx`.** `WXMXReader` and `WXMXWriter` in WorksheetKit keep everything they don't understand. Store Maxima's math as one canonical `<math>` element (`WorksheetController.storedMath`) so files round-trip exactly.
