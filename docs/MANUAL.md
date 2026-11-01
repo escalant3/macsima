@@ -97,8 +97,8 @@ After opening a file, code cells show `-->` instead of a label until they are ev
 
 Results show as typeset math. Long results break into lines at the window's width: before `+` and `−`, after `=` and `,`. A fraction or root too wide for a line is written in its linear form, `(a)/(b)`. A matrix too wide for the window scrolls sideways (swipe, or ⇧ and the scroll wheel). Results break again when you resize the window.
 
-- **Selecting inside math.** Click a result to make it selectable, then select its text.
-- **Copying a result.** Right-click a result:
+- **Selecting inside math.** Click a symbol in a result to select it; click it again to select the part around it, and again for the next larger part. Drag across a result to select the terms you cover, or a block of a matrix's entries. ⌘C copies the selection as Maxima input; Esc goes back to the cell's input.
+- **Copying a result.** Right-click a result (with part of it selected, the menu copies that part):
   - Copy as Maxima Input: text you can paste into a cell, for example `'sum(1/k^2,k,1,inf)`;
   - Copy as LaTeX: for example `\sum_{k = 1}^{\infty} \frac{1}{{k}^{2}}`;
   - Copy MathML;

@@ -6,9 +6,10 @@ wxMaxima stay in `docs/PARITY.md`.
 
 ## 0.4 (in progress)
 
-- **Selecting inside math.** Click or drag on an output to select a subexpression, then copy it as Maxima
-  input, LaTeX, MathML or an image. The output stays an image: the renderer also measures where each
-  subexpression sits.
+- **Selecting inside math** (done 2026-11-01). Click a symbol in an output to select it, click again for
+  the part around it, or drag across terms or matrix entries; ⌘C copies the part as Maxima input, and the
+  context menu copies it as LaTeX, MathML or an image. Outputs stay images: the renderer also measures
+  where each part sits. Replaces the click-to-select live view. Details and gaps in `docs/PARITY.md`.
 
 ## 0.3 (2026-11-01)
 
