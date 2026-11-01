@@ -28,8 +28,8 @@ Read `docs/BOOTSTRAP.md` before any work. Its wire protocol reference and roadma
 - Maxima: `/opt/homebrew/bin/maxima --version`
 - Does my SBCL have threads: `sbcl --noinform --eval '(progn (format t "threads: ~a~%" (if (member :sb-thread *features*) "yes" "no")) (quit))'`
 
-## Current phase
-Phase 4 (sharing) is done (see `docs/PHASE4_REPORT.md`): 0.3 is released as a notarized DMG with Sparkle updates (`docs/RELEASING.md`), and the download page is https://escalant3.github.io/macsima/ (`site/`). Earlier phases are in `docs/PHASE0_REPORT.md` to `docs/PHASE3_REPORT.md`. There is no Phase 5 yet; ask before starting new phase work. Selecting text inside math, arrow keys stopping on outputs and Esc-sequences for Greek letters (Esc completes now) are deferred past Phase 3.
+## Current release
+Phases ended with Phase 4 (sharing, see `docs/PHASE4_REPORT.md`; earlier phases in `docs/PHASE0_REPORT.md` to `docs/PHASE3_REPORT.md`). 0.3 is released as a notarized DMG with Sparkle updates (`docs/RELEASING.md`), and the download page is https://escalant3.github.io/macsima/ (`site/`). Work is now planned as features that ship in releases, listed in `docs/RELEASES.md`; ask before starting a feature that is not listed there. 0.4 is in progress. Arrow keys stopping on outputs and Esc-sequences for Greek letters (Esc completes now) are still deferred.
 
 Facts to keep in mind (details in the reports, BOOTSTRAP.md, WXMX_COMPAT.md and PARITY.md):
 - **Build the app.** `xcodegen generate && xcodebuild -project Macsima.xcodeproj -scheme Macsima -derivedDataPath .build/xcode build`. All code lives in the package (`MacsimaUI`); `App/Macsima` only holds `@main` and Sparkle's updater (`Updater.swift`), so the package never links Sparkle.
