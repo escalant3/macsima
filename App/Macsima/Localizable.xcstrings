@@ -1876,16 +1876,6 @@
         }
       }
     },
-    "Select Math" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seleccionar fórmula"
-          }
-        }
-      }
-    },
     "Select cell" : {
       "localizations" : {
         "es" : {
@@ -1922,16 +1912,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar plantilla"
-          }
-        }
-      }
-    },
-    "Show as Image" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar como imagen"
           }
         }
       }

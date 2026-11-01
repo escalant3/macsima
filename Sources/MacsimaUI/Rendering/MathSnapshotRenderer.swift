@@ -2,6 +2,7 @@
 
 import SwiftUI
 import WebKit
+import WXMLKit
 
 /// Renders math to images with one shared, hidden web view, so a worksheet
 /// needs one WebKit content process instead of one per output. Results are
@@ -139,22 +140,38 @@ public final class MathSnapshotRenderer {
 /// One math output shown as an image from `MathSnapshotRenderer`, broken
 /// into lines to fit the width it gets. Math that can't break (a wide
 /// matrix) scrolls sideways.
+///
+/// With a `tree` (the output's, numbering the tagged MathML) and `onSelect`,
+/// a click selects the smallest part under the pointer, another click on it
+/// the part holding it, and a drag the parts it covers (MathLayout).
 public struct MathImageOutputView: View {
     let mathML: String
     let label: String?
     /// False keeps the math on one line (a question's prompt, sized to fit).
     let wraps: Bool
+    let tree: MathTree?
+    /// The selected part, drawn behind the math.
+    let selection: MathSelection?
+    let onSelect: (@MainActor (MathSelection?) -> Void)?
     @Environment(\.colorScheme) private var scheme
     @Environment(\.worksheetScale) private var scale
     /// Settings › Math size: a change renders the math again.
     @AppStorage(AppSettings.mathSizeKey, store: AppSettings.store) private var mathSize = AppSettings.defaultMathSize
     @State private var rendered: MathSnapshotRenderer.Rendered?
     @State private var width: CGFloat = 0
+    /// Where the parts of `rendered` are; nil without a tree.
+    @State private var layout: MathLayout?
+    /// What the last click selected first, so a second click there grows it.
+    @State private var lastClick: MathSelection?
 
-    public init(mathML: String, label: String?, wraps: Bool = true) {
+    public init(mathML: String, label: String?, wraps: Bool = true, tree: MathTree? = nil,
+                selection: MathSelection? = nil, onSelect: (@MainActor (MathSelection?) -> Void)? = nil) {
         self.mathML = mathML
         self.label = label
         self.wraps = wraps
+        self.tree = tree
+        self.selection = selection
+        self.onSelect = onSelect
     }
 
     public var body: some View {
@@ -177,7 +194,7 @@ public struct MathImageOutputView: View {
             let renderer = MathSnapshotRenderer.shared
             // Keep showing the old image until the new one is ready.
             if let hit = renderer.cached(mathML: mathML, label: label, dark: dark, scale: scale, width: width) {
-                rendered = hit
+                show(hit)
                 return
             }
             // While the window is being resized, wait for the width to settle.
@@ -186,13 +203,59 @@ public struct MathImageOutputView: View {
                 if Task.isCancelled { return }
             }
             if let new = await renderer.render(mathML: mathML, label: label, dark: dark, scale: scale, width: width) {
-                rendered = new
+                show(new)
             }
         }
+    }
+
+    private func show(_ new: MathSnapshotRenderer.Rendered) {
+        rendered = new
+        layout = tree.map { MathLayout(tree: $0, measured: new.parts, minimumSize: 8 * scale) }
     }
 
     private func image(_ rendered: MathSnapshotRenderer.Rendered) -> some View {
         Image(nsImage: rendered.image)
             .frame(width: rendered.size.width, height: rendered.size.height)
+            .background(alignment: .topLeading) { highlight }
+            .contentShape(Rectangle())
+            .gesture(DragGesture(minimumDistance: 0).onChanged(dragged).onEnded(ended),
+                     isEnabled: onSelect != nil && layout != nil)
+    }
+
+    @ViewBuilder private var highlight: some View {
+        if let selection, let layout {
+            Path { path in
+                for r in layout.rects(of: selection) {
+                    path.addRoundedRect(in: r.insetBy(dx: -1, dy: -1), cornerSize: CGSize(width: 2, height: 2))
+                }
+            }
+            .fill(Color(nsColor: .selectedTextBackgroundColor))
+            .allowsHitTesting(false)
+        }
+    }
+
+    /// Below this many points a drag is a click.
+    private static let clickDistance: CGFloat = 3
+
+    private func dragged(_ g: DragGesture.Value) {
+        guard let layout, let onSelect,
+              hypot(g.translation.width, g.translation.height) >= Self.clickDistance else { return }
+        // Worked out afresh on every move, as in wxMaxima.
+        let rect = CGRect(x: min(g.startLocation.x, g.location.x), y: min(g.startLocation.y, g.location.y),
+                          width: max(abs(g.translation.width), 1), height: max(abs(g.translation.height), 1))
+        lastClick = nil
+        onSelect(layout.select(rect))
+    }
+
+    private func ended(_ g: DragGesture.Value) {
+        guard let layout, let onSelect,
+              hypot(g.translation.width, g.translation.height) < Self.clickDistance else { return }
+        let hit = layout.select(CGRect(x: g.location.x, y: g.location.y, width: 1, height: 1))
+        if let hit, hit == lastClick, let selection {
+            onSelect(layout.enclosing(selection) ?? selection)
+        } else {
+            onSelect(hit)
+            lastClick = hit
+        }
     }
 }

@@ -129,6 +129,55 @@ final class EditorUITests: XCTestCase {
         XCTAssertFalse(app.textViews["cell-input-2"].waitForExistence(timeout: 2))
     }
 
+    /// Real clicks and a drag on a math output select parts of it: a click
+    /// the symbol under the pointer, a second click the row holding it, a
+    /// drag what it covers. Cmd+C copies the part as Maxima input, which is
+    /// pasted into the next cell to check it.
+    @MainActor
+    func testSelectInsideMath() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("a+b+c+d+e;")
+        app.typeKey(.return, modifierFlags: .shift)
+        let output = app.descendants(matching: .any)["cell-output-0-0"]
+        XCTAssertTrue(output.waitForExistence(timeout: 20))
+        XCTAssertEqual(output.label, "e+d+c+b+a")
+        Thread.sleep(forTimeInterval: 1)   // the picture and where its parts are
+        let next = app.textViews["cell-input-1"]
+        func copied() -> String? {
+            app.typeKey("c", modifierFlags: .command)
+            next.click()
+            app.typeKey("a", modifierFlags: .command)
+            app.typeKey("v", modifierFlags: .command)
+            return next.value as? String
+        }
+        // The label column is 52 points and the gap 19 at 100%: the first symbol follows.
+        let first = output.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: 75, dy: 0))
+        first.click()
+        XCTAssertEqual(copied(), "e")
+        first.click()
+        first.click()
+        XCTAssertEqual(copied(), "e+d+c+b+a")
+        // From the first symbol to the third: e+d.
+        first.press(forDuration: 0.1, thenDragTo: first.withOffset(CGVector(dx: 30, dy: 0)))
+        XCTAssertEqual(copied(), "e+d")
+        // The context menu copies the selected part too.
+        first.press(forDuration: 0.1, thenDragTo: first.withOffset(CGVector(dx: 30, dy: 0)))
+        output.rightClick()
+        app.menuItems["Copy as LaTeX"].click()
+        next.click()
+        app.typeKey("a", modifierFlags: .command)
+        app.typeKey("v", modifierFlags: .command)
+        XCTAssertEqual(next.value as? String, "e + d")
+        // Escape goes back to the cell's input.
+        first.click()
+        app.typeKey(.escape, modifierFlags: [])
+        app.typeText("#")
+        XCTAssertEqual(input.value as? String, "a+b+c+d+e;#")
+    }
+
     /// A real click on a section's triangle folds it; clicking the "folded"
     /// line unfolds it.
     @MainActor

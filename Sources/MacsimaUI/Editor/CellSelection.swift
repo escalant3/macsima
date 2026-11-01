@@ -6,8 +6,9 @@ import WorksheetKit
 /// Takes the keyboard while whole cells are selected: Copy, Cut, Paste,
 /// Delete and Select All from the Edit menu (they go to the first
 /// responder), Shift+Up/Down to grow or shrink the selection, Up, Down and
-/// Escape to go back to editing. An empty view in the window, first
-/// responder only while cells are selected.
+/// Escape to go back to editing. Also while part of a math output is
+/// selected: Copy, and Escape. An empty view in the window, first
+/// responder only while cells or math are selected.
 final class CellSelectionResponder: NSView, NSMenuItemValidation {
     weak var controller: WorksheetController?
 
@@ -15,6 +16,10 @@ final class CellSelectionResponder: NSView, NSMenuItemValidation {
 
     override func keyDown(with event: NSEvent) {
         guard let controller else { return super.keyDown(with: event) }
+        if controller.mathSelection != nil {
+            if event.keyCode == 53 { controller.endMathSelection() } else { super.keyDown(with: event) }
+            return
+        }
         let shift = event.modifierFlags.contains(.shift)
         switch event.keyCode {
         case 126: shift ? controller.extendCellSelection(up: true) : controller.endCellSelection(at: .first)
@@ -25,7 +30,9 @@ final class CellSelectionResponder: NSView, NSMenuItemValidation {
         }
     }
 
-    @objc func copy(_ sender: Any?) { controller?.copySelectedCells() }
+    @objc func copy(_ sender: Any?) {
+        if controller?.mathSelection != nil { controller?.copyMathSelection(as: .input) } else { controller?.copySelectedCells() }
+    }
     @objc func cut(_ sender: Any?) { controller?.cutSelectedCells() }
     @objc func paste(_ sender: Any?) { controller?.pasteCells() }
     @objc func delete(_ sender: Any?) { controller?.deleteSelectedCells() }
@@ -34,7 +41,8 @@ final class CellSelectionResponder: NSView, NSMenuItemValidation {
     func validateMenuItem(_ item: NSMenuItem) -> Bool {
         switch item.action {
         case #selector(paste(_:)): CellClipboard.hasCells
-        case #selector(copy(_:)), #selector(cut(_:)), #selector(delete(_:)): !(controller?.selectedCells.isEmpty ?? true)
+        case #selector(copy(_:)): !(controller?.selectedCells.isEmpty ?? true) || controller?.mathSelection != nil
+        case #selector(cut(_:)), #selector(delete(_:)): !(controller?.selectedCells.isEmpty ?? true)
         default: true
         }
     }
@@ -63,6 +71,7 @@ extension WorksheetController {
         let cells = document.worksheet.cells
         guard let a = cells.firstIndex(where: { $0.id == anchor }),
               let h = cells.firstIndex(where: { $0.id == head }) else { return }
+        clearMathSelection()
         selectionAnchor = anchor
         selectionHead = head
         selectedCells = cells[min(a, h)...max(a, h)].map(\.id)

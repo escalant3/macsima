@@ -80,4 +80,57 @@ struct MaximaInputTextTests {
         #expect(checked > 60)
         await session.shutdown()
     }
+
+    /// Every part of these outputs a click can select, copied as input, is
+    /// something Maxima reads (selecting inside math). Not checked, as they
+    /// are not expressions: operators (drawn as `mo`, though the glue prints
+    /// some as names), keywords (if, then, else), a limit's "x→0", and runs such as "2+". A matrix row
+    /// is selected as a one-row matrix (MathLayout), checked in MathSelectionTests.
+    @Test(.enabled(if: FileManager.default.isExecutableFile(atPath: "/opt/homebrew/bin/maxima")))
+    func selectedPartsRead() async throws {
+        let scenarios = ["03-expand", "09-solve", "10-matrix", "11-diff", "12-sum", "13-limit", "18-greek-sqrt",
+                         "31-display-forms.glue"]
+        let dir = MathFixtures.testsDir.deletingLastPathComponent().appending(path: "Fixtures/transcripts/scenarios")
+        let session = MaximaSession()
+        try await session.start()
+        var checked = 0
+        var unreadable: [String] = []
+        for name in scenarios {
+            let lines = try String(contentsOf: dir.appending(path: "\(name).scn"), encoding: .utf8)
+                .split(separator: "\n").map(String.init).filter { !$0.hasPrefix("#") && !$0.hasPrefix("!") && !$0.isEmpty }
+            for line in lines {
+                var parts: [String] = []
+                for await event in try await session.evaluate(cellID: name, text: line) {
+                    guard case .math(let xml) = event else { continue }
+                    let out = MathMLTranslator.translate(xml)
+                    guard out.label?.hasPrefix("%o") == true, let tree = out.tree else { continue }
+                    for id in tree.nodes.indices where id != tree.rootID && out.taggedMathML.contains("data-p=\"\(id)\"") {
+                        guard !out.taggedMathML.contains("<mo data-p=\"\(id)\""), tree.nodes[id].name != "mtr",
+                              tree.parent[id] < 0 || !["lm", "limit"].contains(tree.nodes[tree.parent[id]].name ?? "")
+                        else { continue }
+                        let text = MaximaInputText.of(tree.node(of: .node(id))).trimmingCharacters(in: .whitespaces)
+                        if !text.isEmpty, !Self.keywords.contains(text) { parts.append(text) }
+                    }
+                }
+                guard !parts.isEmpty else { continue }
+                let quoted = parts.map { "\"" + $0.replacingOccurrences(of: "\\", with: "\\\\")
+                    .replacingOccurrences(of: "\"", with: "\\\"") + "\"" }
+                let check = "sublist([\(quoted.joined(separator: ","))], lambda([s], errcatch(parse_string(s)) = []));"
+                // Maxima's parser warnings (lambda) are text, not errors.
+                var answer = ""
+                for await event in try await session.evaluate(cellID: "check", text: check) {
+                    if case .math(let xml) = event { answer += MathMLTranslator.translate(xml).plainText }
+                    if case .error(_, let message) = event { answer += "error: \(message)" }
+                }
+                if !answer.hasSuffix("[]") || answer.contains("error:") { unreadable.append("\(line): \(answer)") }
+                checked += parts.count
+            }
+        }
+        #expect(unreadable.isEmpty, "\(unreadable.joined(separator: "\n"))")
+        #expect(checked > 200)
+        await session.shutdown()
+    }
+
+    static let keywords: Set<String> = ["if", "then", "else", "elseif", "for", "do", "while", "unless", "thru",
+                                        "step", "from", "in"]
 }

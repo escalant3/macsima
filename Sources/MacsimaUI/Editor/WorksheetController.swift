@@ -30,6 +30,9 @@ public final class WorksheetController {
     /// Whole cells selected (CellSelection.swift), in document order; empty
     /// while editing.
     public internal(set) var selectedCells: [UUID] = []
+    /// A selected part of one math output (MathOutputSelection.swift); nil
+    /// when none. Never at the same time as `selectedCells`.
+    public internal(set) var mathSelection: MathOutputSelection?
     @ObservationIgnored var selectionAnchor: UUID?
     @ObservationIgnored var selectionHead: UUID?
     /// First responder while cells are selected; the window installs it.
@@ -231,7 +234,8 @@ public final class WorksheetController {
             guard let self, self.document.worksheet[id]?.textFormats != formats else { return }
             self.document.worksheet.update(id) { $0.textFormats = formats }
         }
-        editor.isFocusedCell = { [weak self] in self?.focusedCell == id && self?.selectedCells.isEmpty == true }
+        editor.isFocusedCell = { [weak self] in self?.focusedCell == id && self?.selectedCells.isEmpty == true
+            && self?.mathSelection == nil }
         editor.onRemovedWhileFocused = { [weak self] in
             // Output above pushed the cell out of view: follow it, as
             // wxMaxima does, unless the user scrolled away.
@@ -265,6 +269,7 @@ public final class WorksheetController {
     /// a focus request, so the worksheet doesn't scroll.
     func noteFocus(_ id: UUID) {
         clearCellSelection()
+        clearMathSelection()
         notingFocus = true
         focusedCell = id
         notingFocus = false

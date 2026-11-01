@@ -142,7 +142,7 @@ struct CellView: View {
                     .accessibilityIdentifier("cell-folded-\(index)")
             }
             ForEach(Array((cell.isHidden ? [] : cell.outputs).enumerated()), id: \.offset) { n, output in
-                OutputView(output: output, cellID: cell.id)
+                OutputView(output: output, cellID: cell.id, index: n)
                     .opacity(isStale ? 0.45 : 1)
                     .accessibilityIdentifier("cell-output-\(index)-\(n)")
             }

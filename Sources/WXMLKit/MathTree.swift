@@ -244,19 +244,28 @@ public struct MathLayout: Sendable {
         }
     }
 
+    /// The selected part as a node of its own (MathTree.node(of:)).
+    public func node(of selection: MathSelection) -> MathNode { tree.node(of: selection) }
+
+    static func bounds(_ list: [CGRect]) -> CGRect {
+        list.reduce(CGRect.null) { $0.union($1) }
+    }
+}
+
+extension MathTree {
     /// The selected part as a node of its own, for copying it in any form:
     /// a run becomes a row, a block a smaller matrix, an entry a row.
     public func node(of selection: MathSelection) -> MathNode {
         switch selection {
         case .node(let id):
-            let node = tree.nodes[id]
+            let node = nodes[id]
             if node.name == "mtd" { return .element(name: "mrow", attributes: [:], children: node.children) }
             return node
         case .run(let p, let first, let last):
-            let all = tree.nodes[p].children
-            return .element(name: "mrow", attributes: [:], children: Array(all[tree.place[first]...tree.place[last]]))
+            let all = nodes[p].children
+            return .element(name: "mrow", attributes: [:], children: Array(all[place[first]...place[last]]))
         case .block(let t, let rowRange, let columnRange):
-            let table = tree.nodes[t]
+            let table = nodes[t]
             let rows = table.elementChildren.filter { $0.name == "mtr" }
             let kept: [MathNode] = rowRange.compactMap { r in
                 guard rows.indices.contains(r) else { return nil }
@@ -266,9 +275,5 @@ public struct MathLayout: Sendable {
             }
             return .element(name: "tb", attributes: table.attributes, children: kept)
         }
-    }
-
-    static func bounds(_ list: [CGRect]) -> CGRect {
-        list.reduce(CGRect.null) { $0.union($1) }
     }
 }

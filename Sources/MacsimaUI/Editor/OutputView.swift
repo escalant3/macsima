@@ -10,13 +10,15 @@ import WXMLKit
 struct OutputView: View {
     let output: Output
     var cellID: UUID?
+    /// The output's place among the cell's outputs (selecting inside math).
+    var index = 0
     @Environment(\.worksheetScale) private var scale
     @Environment(WorksheetController.self) private var controller
 
     var body: some View {
         switch output {
         case .math(let xml):
-            MathOutputItem(xml: xml)
+            MathOutputItem(xml: xml, cellID: cellID, index: index)
         case .text(let text) where text.isEmpty:
             EmptyView()   // a statement's text run with nothing in it yet
         case .text(let text):
@@ -34,7 +36,7 @@ struct OutputView: View {
         case .question(let prompt, let answer):
             // The answer follows the question on its line, as in wxMaxima.
             HStack(alignment: .center, spacing: 8) {
-                MathOutputItem(xml: prompt, wraps: false)
+                MathOutputItem(xml: prompt, wraps: false, cellID: cellID, index: index)
                     .fixedSize(horizontal: true, vertical: false)
                 if let answer {
                     Text(answer)
@@ -97,14 +99,17 @@ struct MessageText: View {
     }
 }
 
-/// A math output: a cached image from the shared renderer; clicking it swaps
-/// in a live web view so the math can be selected.
+/// A math output: a cached image from the shared renderer. A click or a
+/// drag selects part of it (MathLayout), which Copy and the context menu
+/// copy; with nothing selected they copy all of it.
 struct MathOutputItem: View {
     let xml: String
     /// False keeps the math on one line.
     var wraps = true
-    @State private var live = false
+    var cellID: UUID?
+    var index = 0
     @Environment(\.worksheetScale) private var scale
+    @Environment(WorksheetController.self) private var controller
 
     var body: some View {
         let out = TranslationCache.shared.translate(xml)
@@ -117,22 +122,23 @@ struct MathOutputItem: View {
                     .frame(width: WorksheetMetrics(scale: scale).gutterWidth, alignment: .trailing)
             } else if out.mathML.isEmpty {
                 EmptyView()
-            } else if live {
-                MathOutputView(mathML: out.mathML, label: out.label, wraps: wraps)
+            } else if let cellID, let tree = out.tree {
+                let part = controller.mathSelection(cell: cellID, output: index, xml: xml)
+                MathImageOutputView(mathML: out.taggedMathML, label: out.label, wraps: wraps, tree: tree,
+                                    selection: part) { [controller, index, xml] new in
+                    controller.selectMath(new, cell: cellID, output: index, xml: xml)
+                }
             } else {
-                MathImageOutputView(mathML: out.mathML, label: out.label, wraps: wraps)
+                MathImageOutputView(mathML: out.taggedMathML, label: out.label, wraps: wraps)
             }
         }
-        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(out.plainText)
-        .onTapGesture { live.toggle() }
         .contextMenu {
+            let part = cellID.flatMap { controller.mathSelection(cell: $0, output: index, xml: xml) }
             ForEach(OutputCopy.Kind.allCases, id: \.self) { kind in
-                Button(kind.title) { OutputCopy.copy(xml, as: kind, scale: scale) }
+                Button(kind.title) { OutputCopy.copy(xml, part: part, as: kind, scale: scale) }
             }
-            Divider()
-            Button(live ? "Show as Image" : "Select Math") { live.toggle() }
         }
     }
 }
@@ -155,8 +161,20 @@ enum OutputCopy {
         }
     }
 
-    static func copy(_ xml: String, as kind: Kind, scale: CGFloat) {
+    /// `part`, when given, is the part of the output to copy.
+    static func copy(_ xml: String, part: MathSelection? = nil, as kind: Kind, scale: CGFloat) {
         let out = TranslationCache.shared.translate(xml)
+        if let part, let tree = out.tree {
+            let node = tree.node(of: part)
+            switch kind {
+            case .input:
+                copy(MaximaInputText.of(node, quoteStrings: out.label != nil).trimmingCharacters(in: .whitespaces))
+            case .latex: copy(LaTeXTranslator.translate(node: node))
+            case .mathml: copy(MathMLTranslator.mathML(of: node))
+            case .image: copyImage(mathML: MathMLTranslator.mathML(of: node), scale: scale)
+            }
+            return
+        }
         switch kind {
         case .input: copy(out.plainText)
         case .latex: copy(LaTeXTranslator.translate(xml) ?? out.plainText)

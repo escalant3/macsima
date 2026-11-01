@@ -408,6 +408,14 @@ final class CellTextView: NSTextView {
 
     override func paste(_ sender: Any?) {
         if CellClipboard.hasCells, onPasteCells?() == true { return }
+        // Under test, copies go to a private pasteboard: paste from it too.
+        if CellClipboard.pasteboard != .general {
+            if shouldChangeText(in: selectedRange(), replacementString: nil),
+               readSelection(from: CellClipboard.pasteboard, type: .string) {
+                didChangeText()
+            }
+            return
+        }
         super.paste(sender)
     }
 
