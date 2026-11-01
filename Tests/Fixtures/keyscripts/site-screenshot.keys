@@ -1,0 +1,28 @@
+# The website's screenshot (site/screenshot-light.png and -dark.png): a title
+# and math that shows off the typesetting, in light and dark. Checked by eye;
+# the dump only confirms the cells and outputs arrived. Crop with
+# scripts/site-screenshot.sh.
+wait 3
+appearance light
+key 2 cmd
+type Integrals and series
+key up
+key backspace cmd shift
+dump .build/keyscripts/site-1.json
+key 0 cmd
+type integrate(1/(x^3+1), x);
+key return shift
+type 'integrate(exp(-x^2), x, minf, inf) = integrate(exp(-x^2), x, minf, inf);
+key return shift
+type 'sum(1/n^2, n, 1, inf) = ev(sum(1/n^2, n, 1, inf), simpsum);
+key return shift
+type taylor(sin(x)/x, x, 0, 6);
+key return shift
+wait 4
+dump .build/keyscripts/site-2.json
+shot .build/keyscripts/site-light.png
+appearance dark
+wait 3
+shot .build/keyscripts/site-dark.png
+appearance system
+quit

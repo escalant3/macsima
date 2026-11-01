@@ -260,6 +260,13 @@ elif script == "close-saved":
 elif script == "appearance":
     c = dump("appearance", 1)["cells"]
     check(len(c[0]["outputs"]) == 1 and c[1]["outputs"][1].startswith("error"), "the outputs arrived")
+elif script == "site-screenshot":
+    first = [(c["kind"], c["input"]) for c in dump("site", 1)["cells"]]
+    check(first == [("title", "Integrals and series")], f"the title is the only cell: {first}")
+    c = dump("site", 2)["cells"]
+    outs = [x["outputs"] for x in c if x["kind"] == "code" and x["input"]]
+    check(len(outs) == 4 and all(len(o) == 1 and o[0].startswith("math") for o in outs),
+          f"four results, no errors: {outs}")
 elif script == "zoom-basics":
     import zipfile, re
     z = lambda n: dump("zoom", n)["zoom"]
