@@ -1,6 +1,9 @@
 # Settings (Phase 3, step 14), changed the way the Settings window changes
 # them, in the scripts' own settings store. Dumps go to .build/keyscripts/.
 wait 3
+# Settings › Worksheet › Arrow keys skip output: Up and Down go from input
+# to input, as before 0.4 (testArrowKeysStopOnOutputs covers stopping).
+setting ArrowKeysSkipOutput true
 type expand((a+b)^2);
 key return shift
 wait 3

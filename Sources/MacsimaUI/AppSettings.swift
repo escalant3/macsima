@@ -14,6 +14,7 @@ enum AppSettings {
     static let gnuplotPathKey = "GnuplotPath"
     static let defaultGnuplotPath = "/opt/homebrew/bin/gnuplot"
     static let abortOnErrorKey = "AbortOnError"
+    static let arrowKeysSkipOutputKey = "ArrowKeysSkipOutput"
     static let plotFormatKey = "PlotFormat"
     static let codeFontKey = "CodeFont"
     static let codeSizeKey = "CodeSize"
@@ -53,6 +54,9 @@ enum AppSettings {
     static var gnuplotPath: String { string(gnuplotPathKey, defaultGnuplotPath) }
     /// wxMaxima's "abort on error" (on by default there too).
     static var abortOnError: Bool { defaults.object(forKey: abortOnErrorKey) == nil || defaults.bool(forKey: abortOnErrorKey) }
+    /// Up and Down go from input to input, never stopping on outputs
+    /// (wxMaxima's "arrow keys skip output"; off by default).
+    static var arrowKeysSkipOutput: Bool { defaults.bool(forKey: arrowKeysSkipOutputKey) }
     /// New plots as SVG (`wxplot_usesvg`) instead of PNG.
     static var plotsAsSVG: Bool { defaults.string(forKey: plotFormatKey) == "svg" }
     /// A font family for code cells; empty for the system's monospaced font.
@@ -193,6 +197,7 @@ private struct WorksheetSettings: View {
     @AppStorage(AppSettings.textSizeKey, store: AppSettings.store) private var textSize = AppSettings.defaultTextSize
     @AppStorage(AppSettings.mathSizeKey, store: AppSettings.store) private var mathSize = AppSettings.defaultMathSize
     @AppStorage(AppSettings.defaultZoomKey, store: AppSettings.store) private var defaultZoom = 100.0
+    @AppStorage(AppSettings.arrowKeysSkipOutputKey, store: AppSettings.store) private var arrowKeysSkipOutput = false
     @State private var families: [String] = []
 
     var body: some View {
@@ -207,6 +212,11 @@ private struct WorksheetSettings: View {
                 Stepper("Text size: \(Int(textSize)) pt", value: $textSize, in: 9...36)
                 Stepper("Math size: \(Int(mathSize)) px", value: $mathSize, in: 10...40)
                 Text("Headings scale with the text size. The worksheet's zoom comes on top.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("Keyboard") {
+                Toggle("Arrow keys skip output", isOn: $arrowKeysSkipOutput)
+                Text("Up and Down go from input to input. Off, they stop on each result, message and error, as in wxMaxima; Return goes into a result and Escape back out.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("New worksheets") {

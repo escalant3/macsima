@@ -44,6 +44,10 @@ struct WorksheetWindow: View {
                 .padding(.vertical, 16)
                 .padding(.horizontal, 12)
             }
+            .onChange(of: controller.outputScrollRequest) {
+                // An output the keyboard selected comes into view.
+                if let s = controller.mathSelection { proxy.scrollTo(OutputScrollID(cell: s.cell, output: s.output)) }
+            }
             .onChange(of: controller.focusRequest) {
                 if let id = controller.focusedCell { withAnimation { proxy.scrollTo(id) } }
             }

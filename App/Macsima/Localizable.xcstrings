@@ -174,6 +174,16 @@
         }
       }
     },
+    "Arrow keys skip output" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las flechas saltan los resultados"
+          }
+        }
+      }
+    },
     "Back" : {
       "localizations" : {
         "es" : {
@@ -1070,6 +1080,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Se conserva %@."
+          }
+        }
+      }
+    },
+    "Keyboard" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclado"
           }
         }
       }
@@ -2455,6 +2475,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sin título (%@)"
+          }
+        }
+      }
+    },
+    "Up and Down go from input to input. Off, they stop on each result, message and error, as in wxMaxima; Return goes into a result and Escape back out." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arriba y Abajo van de entrada en entrada. Desactivado, se detienen en cada resultado, mensaje y error, como en wxMaxima; Retorno entra en un resultado y Escape vuelve a salir."
           }
         }
       }

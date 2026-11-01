@@ -7,7 +7,8 @@ import WorksheetKit
 /// Delete and Select All from the Edit menu (they go to the first
 /// responder), Shift+Up/Down to grow or shrink the selection, Up, Down and
 /// Escape to go back to editing. Also while part of a math output is
-/// selected: Copy, and Escape. An empty view in the window, first
+/// selected: Copy, Escape, Return and the arrow keys
+/// (MathOutputSelection.swift). An empty view in the window, first
 /// responder only while cells or math are selected.
 final class CellSelectionResponder: NSView, NSMenuItemValidation {
     weak var controller: WorksheetController?
@@ -17,7 +18,9 @@ final class CellSelectionResponder: NSView, NSMenuItemValidation {
     override func keyDown(with event: NSEvent) {
         guard let controller else { return super.keyDown(with: event) }
         if controller.mathSelection != nil {
-            if event.keyCode == 53 { controller.endMathSelection() } else { super.keyDown(with: event) }
+            let shift = event.modifierFlags.contains(.shift)
+            let other = !event.modifierFlags.intersection([.command, .option, .control]).isEmpty
+            if other || !controller.handleOutputKey(keyCode: event.keyCode, shift: shift) { super.keyDown(with: event) }
             return
         }
         let shift = event.modifierFlags.contains(.shift)

@@ -1,6 +1,8 @@
 # Error marks (Phase 3, step 4): the failing statement in the input, the
 # spot of a syntax error, an unbalanced bracket, and the explanation marker.
 wait 3
+# Up goes from input to input here (testArrowKeysStopOnOutputs covers stopping on outputs).
+setting ArrowKeysSkipOutput true
 type a:1$ b:1/0; c:3;
 key return shift
 type f(a,,b);

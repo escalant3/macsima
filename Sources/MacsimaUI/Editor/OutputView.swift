@@ -22,9 +22,10 @@ struct OutputView: View {
         case .text(let text) where text.isEmpty:
             EmptyView()   // a statement's text run with nothing in it yet
         case .text(let text):
-            MessageText(text: text, isError: false)
+            MessageText(text: text, isError: false, isSelected: isSelected(text))
         case .error(_, let message):
-            MessageText(text: message.isEmpty ? String(localized: "Error (see the output above)") : message, isError: true)
+            MessageText(text: message.isEmpty ? String(localized: "Error (see the output above)") : message, isError: true,
+                        isSelected: isSelected(message))
         case .image(let data, let format, let label, let attributes):
             if let image = ImageDecoding.image(data, format: format) {
                 ImageOutputView(image: image, label: label, ppi: attributes["ppi"])
@@ -55,12 +56,27 @@ struct OutputView: View {
     }
 }
 
+extension OutputView {
+    /// Whether this message is the output the keyboard selected.
+    func isSelected(_ text: String) -> Bool {
+        cellID.map { controller.isSelectedMessage(cell: $0, output: index, text: text) } ?? false
+    }
+}
+
+/// Where the worksheet scrolls to show an output the keyboard selected.
+struct OutputScrollID: Hashable {
+    let cell: UUID
+    let output: Int
+}
+
 /// Plain output text or an error message. A message wxMaxima can explain
 /// gets its yellow marker, the explanation as a tooltip, and a button that
 /// shows it.
 struct MessageText: View {
     let text: String
     let isError: Bool
+    /// Selected as a whole with the arrow keys: Copy copies it.
+    var isSelected = false
     @State private var showsExplanation = false
     @Environment(\.colorScheme) private var scheme
     @Environment(\.worksheetScale) private var scale
@@ -74,7 +90,9 @@ struct MessageText: View {
                 .textSelection(.enabled)
                 .padding(.horizontal, explanation == nil ? 0 : 3)
                 .background {
-                    if explanation != nil {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 3).fill(Color(nsColor: .selectedTextBackgroundColor))
+                    } else if explanation != nil {
                         // Lighter on dark backgrounds, where a strong yellow turns the red text muddy.
                         RoundedRectangle(cornerRadius: 3).fill(Color.yellow.opacity(scheme == .dark ? 0.14 : 0.28))
                     }

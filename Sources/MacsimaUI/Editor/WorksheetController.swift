@@ -33,6 +33,11 @@ public final class WorksheetController {
     /// A selected part of one math output (MathOutputSelection.swift); nil
     /// when none. Never at the same time as `selectedCells`.
     public internal(set) var mathSelection: MathOutputSelection?
+    /// Where Shift+arrows started growing the output selection.
+    @ObservationIgnored var outputAnchor: OutputAnchor?
+    /// Bumped when the keyboard selects an output, so the worksheet
+    /// scrolls it into view.
+    var outputScrollRequest = 0
     @ObservationIgnored var selectionAnchor: UUID?
     @ObservationIgnored var selectionHead: UUID?
     /// First responder while cells are selected; the window installs it.
@@ -252,6 +257,8 @@ public final class WorksheetController {
     public func leave(_ id: UUID, up: Bool, x: CGFloat) -> Bool {
         let cells = document.worksheet.cells
         guard let index = cells.firstIndex(where: { $0.id == id }) else { return false }
+        // The arrow keys stop on outputs on the way (MathOutputSelection.swift).
+        if enterOutputs(from: id, up: up) { return true }
         let range = up ? Array(cells[..<index].reversed()) : Array(cells[(index + 1)...])
         guard let target = range.first(where: { $0.hasEditor && isVisible($0.id) }) else { return false }
         focus(target.id, caret: up ? .lastLine(x: x) : .firstLine(x: x))

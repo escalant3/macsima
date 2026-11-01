@@ -406,6 +406,15 @@ final class CellTextView: NSTextView {
         }
     }
 
+    /// Under test, Paste reads the private pasteboard, so it is enabled by
+    /// what that holds, not by the general one.
+    override func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool {
+        if item.action == #selector(paste(_:)), CellClipboard.pasteboard != .general {
+            return isEditable && CellClipboard.pasteboard.string(forType: .string) != nil
+        }
+        return super.validateUserInterfaceItem(item)
+    }
+
     override func paste(_ sender: Any?) {
         if CellClipboard.hasCells, onPasteCells?() == true { return }
         // Under test, copies go to a private pasteboard: paste from it too.

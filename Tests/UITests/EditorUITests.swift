@@ -171,8 +171,9 @@ final class EditorUITests: XCTestCase {
         app.typeKey("a", modifierFlags: .command)
         app.typeKey("v", modifierFlags: .command)
         XCTAssertEqual(next.value as? String, "e + d")
-        // Escape goes back to the cell's input.
+        // Escape goes out to the whole result, then back to the cell's input.
         first.click()
+        app.typeKey(.escape, modifierFlags: [])
         app.typeKey(.escape, modifierFlags: [])
         app.typeText("#")
         XCTAssertEqual(input.value as? String, "a+b+c+d+e;#")
@@ -233,6 +234,90 @@ final class EditorUITests: XCTestCase {
         app.typeText("2")
         // The caret was at column 4 ("abc1"), so it lands at the end of "xyz;".
         XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "xyz;2")
+    }
+
+    /// Up and Down stop on outputs (printed text, math, errors); Return goes
+    /// into a result, Left and Right move between its parts, Shift grows a
+    /// run or a matrix block, Escape goes back out. Cmd+C copies what is
+    /// selected, pasted into the last cell to check it.
+    @MainActor
+    func testArrowKeysStopOnOutputs() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("print(\"hi\")$ a+b+c;")
+        app.typeKey(.return, modifierFlags: .shift)
+        app.typeText("1/0;")
+        app.typeKey(.return, modifierFlags: .shift)
+        app.typeText("matrix([1/2,x],[3,4]);")
+        app.typeKey(.return, modifierFlags: .shift)
+        let last = app.textViews["cell-input-3"]
+        XCTAssertTrue(last.waitForExistence(timeout: 20))
+        XCTAssertTrue(app.descendants(matching: .any)["cell-output-2-0"].waitForExistence(timeout: 20))
+        let sum = try XCTUnwrap(app.descendants(matching: .any)["cell-output-0-1"].label)
+        Thread.sleep(forTimeInterval: 1)
+        func key(_ k: XCUIKeyboardKey, _ flags: XCUIElement.KeyModifierFlags = [], times: Int = 1) {
+            for _ in 0..<times { app.typeKey(k, modifierFlags: flags) }
+        }
+        func copied() -> String? {
+            app.typeKey("c", modifierFlags: .command)
+            last.click()
+            app.typeKey("a", modifierFlags: .command)
+            app.typeKey("v", modifierFlags: .command)
+            return last.value as? String
+        }
+        func fromFirstInput() {
+            input.click()
+            key(.rightArrow, .command)
+        }
+        // The last input, emptied of what was pasted to check a copy.
+        func fromLastInput() {
+            last.click()
+            app.typeKey("a", modifierFlags: .command)
+            key(.delete)
+        }
+        // Down from the input: the printed text, then the result.
+        fromFirstInput()
+        key(.downArrow)
+        XCTAssertEqual(copied(), "hi")
+        fromFirstInput()
+        key(.downArrow, times: 2)
+        XCTAssertEqual(copied(), sum)
+        // Into the result: its first term, two to the right, then Shift grows the run.
+        fromFirstInput()
+        key(.downArrow, times: 2)
+        key(.return)
+        key(.rightArrow, times: 2)
+        key(.rightArrow, .shift, times: 2)
+        let terms = sum.split(separator: "+").map(String.init)
+        XCTAssertEqual(copied(), terms[1] + "+" + terms[2])
+        // On past the result: the next cell's input, then its error.
+        fromFirstInput()
+        key(.downArrow, times: 4)
+        let error = try XCTUnwrap(copied())
+        XCTAssertTrue(error.contains("0"), error)
+        // Up from the last input: the matrix; Return gives its first entry,
+        // the arrows move between entries, Shift grows a block.
+        fromLastInput()
+        key(.upArrow)
+        key(.return)
+        XCTAssertEqual(copied(), "1/2")
+        fromLastInput()
+        key(.upArrow)
+        key(.return)
+        key(.rightArrow)
+        key(.downArrow)
+        key(.leftArrow, .shift)
+        XCTAssertEqual(copied(), "matrix([3,4])")
+        // Escape goes back out, and from the whole result into its input.
+        fromLastInput()
+        key(.upArrow)
+        key(.return)
+        key(.escape)
+        key(.escape)
+        app.typeText("#")
+        XCTAssertEqual(app.textViews["cell-input-2"].value as? String, "matrix([1/2,x],[3,4]);#")
     }
 
     @MainActor

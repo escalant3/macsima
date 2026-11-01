@@ -144,6 +144,7 @@ struct CellView: View {
             ForEach(Array((cell.isHidden ? [] : cell.outputs).enumerated()), id: \.offset) { n, output in
                 OutputView(output: output, cellID: cell.id, index: n)
                     .opacity(isStale ? 0.45 : 1)
+                    .id(OutputScrollID(cell: cell.id, output: n))
                     .accessibilityIdentifier("cell-output-\(index)-\(n)")
             }
             if !cell.preserved.isEmpty {
