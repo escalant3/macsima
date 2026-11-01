@@ -41,9 +41,16 @@ public enum MathXMLParser {
     /// Deeper nesting is refused (the tree code is recursive; see MathMLTranslator.maxDepth).
     public static let maxDepth = 512
 
-    public static func parse(_ xml: String) -> MathNode? {
+    /// The attribute `numbered` parsing puts on every element: its number
+    /// in document order (pre-order), from 0. MathTree reads it.
+    public static let numberAttribute = "data-p"
+
+    /// `numbered` gives every element a `data-p` attribute with its number,
+    /// so its translation can say where it came from (MathTree).
+    public static func parse(_ xml: String, numbered: Bool = false) -> MathNode? {
         // A fragment may have several top-level nodes; wrap it so XMLParser sees one root.
         let delegate = TreeBuilder()
+        delegate.numbered = numbered
         let parser = XMLParser(data: Data("<wxml-root>\(xml)</wxml-root>".utf8))
         parser.delegate = delegate
         parser.shouldProcessNamespaces = false
@@ -58,6 +65,8 @@ private final class TreeBuilder: NSObject, XMLParserDelegate {
     private var stack: [(name: String, attributes: [String: String], children: [MathNode])] = []
     var root: MathNode?
     var tooDeep = false
+    var numbered = false
+    private var next = 0
 
     func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?,
                 qualifiedName: String?, attributes: [String: String] = [:]) {
@@ -65,6 +74,12 @@ private final class TreeBuilder: NSObject, XMLParserDelegate {
             tooDeep = true
             parser.abortParsing()
             return
+        }
+        var attributes = attributes
+        // The wrapper parse() adds has no number.
+        if numbered, !stack.isEmpty {
+            attributes[MathXMLParser.numberAttribute] = String(next)
+            next += 1
         }
         stack.append((name, attributes, []))
     }

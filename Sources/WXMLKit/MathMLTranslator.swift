@@ -13,6 +13,11 @@ public struct MathOutput: Sendable {
     public var label: String?
     /// Standard MathML (`<math>…</math>`), or empty when the chunk held only an image.
     public var mathML: String
+    /// `mathML` with a `data-p` attribute on the element each node of
+    /// `tree` became, for the renderer to measure (MathTree).
+    public var taggedMathML: String = ""
+    /// The parsed XML, numbered; nil when it did not parse.
+    public var tree: MathTree?
     /// Files named by `img` tags (plots).
     public var imagePaths: [String]
     /// The `ppi` of images that say it (Macsima's 2× plots, wxMaxima's files), by path.
@@ -44,18 +49,31 @@ public enum MathMLTranslator {
     ]
 
     public static func translate(_ xml: String) -> MathOutput {
-        guard let root = MathXMLParser.parse(xml) else {
+        guard let root = MathXMLParser.parse(xml, numbered: true) else {
             let text = stripTags(xml)
-            return MathOutput(label: nil, mathML: "<math><mtext>\(escape(text))</mtext></math>", imagePaths: [],
+            let math = "<math><mtext>\(escape(text))</mtext></math>"
+            return MathOutput(label: nil, mathML: math, taggedMathML: math, imagePaths: [],
                               animation: nil, unknownTags: [], plainText: text, wellFormed: false)
         }
         var context = Context()
         let body = context.emit(root)
-        let math = body.isEmpty ? "" : "<math display=\"block\">\(body)</math>"
+        let tagged = body.isEmpty ? "" : "<math display=\"block\">\(body)</math>"
         let plain = MaximaInputText.of(root, quoteStrings: context.label != nil).trimmingCharacters(in: .whitespaces)
-        return MathOutput(label: context.label, mathML: math,
+        return MathOutput(label: context.label, mathML: untagged(tagged), taggedMathML: tagged, tree: MathTree(root),
                           imagePaths: context.imagePaths, imagePPI: context.imagePPI, animation: context.animation, unknownTags: context.unknown.sorted(),
                           plainText: plain, wellFormed: true)
+    }
+
+    /// Part of an output (a selection's node, MathTree) as MathML, untagged.
+    public static func mathML(of node: MathNode) -> String {
+        var context = Context()
+        let body = context.emit(node)
+        return body.isEmpty ? "" : "<math display=\"block\">\(untagged(body))</math>"
+    }
+
+    /// MathML without the `data-p` attributes `taggedMathML` has.
+    static func untagged(_ mathML: String) -> String {
+        mathML.replacing(#/ data-p="\d+"/#, with: "")
     }
 
     static func escape(_ s: String) -> String {
@@ -93,14 +111,30 @@ private struct Context {
         // and a debug build reserves every case's temporaries in one frame
         // (an 18 KB frame overflowed 8 MB at 400 levels). So the cases live
         // in three functions of their own, and a level pays for one group.
+        let out: String
         switch name {
         case "mrow", "r", "math", "mth", "d", "mtd", "hl", "cj", "a":
-            return emitRow(node, name, attrs, children)
+            out = emitRow(node, name, attrs, children)
         case "fn", "p", "q", "mfrac", "f", "msup", "e", "msub", "munder", "i", "ie", "mmultiscripts", "tb", "mtr", "sm", "in", "lm", "limit", "at":
-            return emitLayout(node, name, attrs, children)
+            out = emitLayout(node, name, attrs, children)
         default:
-            return emitLeaf(node, name, attrs, children)
+            out = emitLeaf(node, name, attrs, children)
         }
+        guard let number = attrs[MathXMLParser.numberAttribute], name != "h", name != "mspace" else { return out }
+        return Self.tag(out, number)
+    }
+
+    /// Puts `data-p="number"` on the first element of `mathML`, unless a
+    /// node inside already put its own there (a row of one child, a
+    /// binomial's parens): the inner node then stands for both.
+    @inline(never)
+    static func tag(_ mathML: String, _ number: String) -> String {
+        guard mathML.hasPrefix("<"),
+              let end = mathML.firstIndex(where: { $0 == " " || $0 == ">" || $0 == "/" }) else { return mathML }
+        if let close = mathML.firstIndex(of: ">"), mathML[..<close].contains("data-p=") { return mathML }
+        var out = mathML
+        out.insert(contentsOf: " data-p=\"\(number)\"", at: end)
+        return out
     }
 
     @inline(never)
@@ -302,6 +336,7 @@ private struct Context {
             .filter { ["png", "jpg", "jpeg", "gif", "svg"].contains(URL(filePath: $0).pathExtension.lowercased()) }
         var a = node.attributes
         a["lisp"] = nil
+        a[MathXMLParser.numberAttribute] = nil
         return (frames, a)
     }
 

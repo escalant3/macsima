@@ -16,8 +16,13 @@ import Foundation
 public enum LaTeXTranslator {
     public static func translate(_ xml: String) -> String? {
         guard let root = MathXMLParser.parse(xml) else { return nil }
+        return translate(node: root)
+    }
+
+    /// Part of an output (a selection's node, MathTree).
+    public static func translate(node: MathNode) -> String {
         var depth = 0
-        return tidy(tex(root, &depth))
+        return tidy(tex(node, &depth))
     }
 
     /// Names with their own LaTeX command (as wxMaxima's FunCell::ToTeX).
