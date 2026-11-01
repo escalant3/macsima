@@ -13,7 +13,8 @@ wxMaxima stay in `docs/PARITY.md`.
 - **Arrow keys stop on outputs** (done 2026-11-01), as in wxMaxima 26.09. ↑ and ↓ stop on each result, printed
   message and error; Return goes into a result, Esc back out, ← → between parts, ⇧← ⇧→ grow a run, arrows
   step through a matrix and ⇧ grows a block. ⌘C copies what is selected, an error's message included.
-  Settings › Worksheet › Arrow keys skip output restores the old behaviour.
+  Settings › Worksheet › Arrow keys skip output restores the old behaviour. Cell › Go to Next Input (⌥⌘↓)
+  and Go to Previous Input (⌥⌘↑) jump between inputs without stopping on outputs (not in wxMaxima).
 
 ## 0.3 (2026-11-01)
 

@@ -65,6 +65,13 @@ struct WorksheetCommands: Commands {
             Button("Unfold All") { controller?.setAllFolded(false) }
                 .keyboardShortcut("]", modifiers: [.command, .option])
             Divider()
+            // Not in wxMaxima: the arrow keys without stopping on outputs.
+            Button("Go to Next Input") { controller?.goToInput(forward: true) }
+                .keyboardShortcut(.downArrow, modifiers: [.command, .option])
+                .disabled(!(controller?.canGoToInput ?? false))
+            Button("Go to Previous Input") { controller?.goToInput(forward: false) }
+                .keyboardShortcut(.upArrow, modifiers: [.command, .option])
+                .disabled(!(controller?.canGoToInput ?? false))
             // Xcode's keys for the next and previous issue.
             Button("Go to Next Error") { controller?.goToError(forward: true) }
                 .keyboardShortcut("'", modifiers: .command)

@@ -320,6 +320,34 @@ final class EditorUITests: XCTestCase {
         XCTAssertEqual(app.textViews["cell-input-2"].value as? String, "matrix([1/2,x],[3,4]);#")
     }
 
+    /// Cell › Go to Next Input (⌥⌘↓) and Previous Input (⌥⌘↑) skip outputs,
+    /// from an input or from a selected output.
+    @MainActor
+    func testGoToInputSkipsOutputs() throws {
+        waitForReady()
+        let first = app.textViews["cell-input-0"]
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        first.click()
+        app.typeText("1+1;")
+        app.typeKey(.return, modifierFlags: .shift)
+        app.typeText("2+2;")
+        app.typeKey(.return, modifierFlags: .shift)
+        XCTAssertTrue(app.descendants(matching: .any)["cell-output-1-0"].waitForExistence(timeout: 20))
+        first.click()
+        app.typeKey(.downArrow, modifierFlags: [.command, .option])
+        app.typeText("#")
+        XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "#2+2;")
+        // Down stops on the output; Previous Input goes back to its cell's input.
+        app.typeKey(.rightArrow, modifierFlags: .command)
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeKey(.upArrow, modifierFlags: [.command, .option])
+        app.typeText("!")
+        XCTAssertEqual(app.textViews["cell-input-1"].value as? String, "#2+2;!")
+        app.typeKey(.upArrow, modifierFlags: [.command, .option])
+        app.typeText("?")
+        XCTAssertEqual(first.value as? String, "1+1;?")
+    }
+
     @MainActor
     func testFindAcrossCells() throws {
         waitForReady()

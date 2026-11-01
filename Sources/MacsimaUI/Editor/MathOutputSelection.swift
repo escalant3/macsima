@@ -172,6 +172,27 @@ extension WorksheetController {
         }
     }
 
+    /// Cell › Next Input (⌥⌘↓) and Previous Input (⌥⌘↑): straight to the
+    /// next or previous cell with an input, skipping outputs whatever the
+    /// setting, from an input (any line) or a selected output. Not in
+    /// wxMaxima. False when there is none.
+    @discardableResult
+    func goToInput(forward: Bool) -> Bool {
+        guard let from = mathSelection?.cell ?? focusedCell else { return false }
+        let cells = document.worksheet.cells
+        guard let i = cells.firstIndex(where: { $0.id == from }) else { return false }
+        let range = forward ? Array(cells[(i + 1)...]) : Array(cells[..<i].reversed())
+        // From an output, its own cell's input is the previous one.
+        let candidates = !forward && mathSelection != nil ? [cells[i]] + range : range
+        guard let target = candidates.first(where: { $0.hasEditor && isVisible($0.id) }) else { return false }
+        clearMathSelection()
+        clearCellSelection()
+        focus(target.id, caret: forward ? .start : .end)
+        return true
+    }
+
+    var canGoToInput: Bool { mathSelection != nil || focusedCell != nil }
+
     /// A key while an output is selected; false leaves it to the responder.
     func handleOutputKey(keyCode: UInt16, shift: Bool) -> Bool {
         guard let s = mathSelection else { return false }
