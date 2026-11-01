@@ -23,7 +23,7 @@ enum AppSettings {
 
     static let defaultCodeSize = 14.0
     static let defaultTextSize = 14.0
-    static let defaultMathSize = 19.0
+    static let defaultMathSize = 16.0
 
     /// Where the settings live. Key scripts and UI tests get a store of
     /// their own, emptied at launch: they never change the user's settings,

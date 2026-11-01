@@ -275,7 +275,7 @@ Macsima › Settings (⌘,):
 **Worksheet**
 - **Code font and size.** The system's monospaced font by default.
 - **Text size.** Headings keep their proportion to it.
-- **Math size.**
+- **Math size.** 16 by default.
 - **Zoom for new worksheets.**
 
 Font changes show at once; the worksheet's zoom comes on top.
