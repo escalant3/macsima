@@ -1,0 +1,167 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- Macsima's download page, published with GitHub Pages (.github/workflows/pages.yml). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Macsima</title>
+<meta name="description" content="A native macOS front end for Maxima, the computer algebra system. Opens and saves wxMaxima worksheets.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f4f4f8;
+    --text: #1d1f2e;
+    --muted: #5d6072;
+    --line: #e2e3ea;
+    --accent: #5b3ce0;
+    --accent-text: #ffffff;
+    --code-bg: #eeeef4;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17181f;
+      --bg-soft: #1f2029;
+      --text: #ececf1;
+      --muted: #a2a4b3;
+      --line: #2e303b;
+      --accent: #8b74ff;
+      --accent-text: #120a33;
+      --code-bg: #262733;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+
+  header { text-align: center; padding: 64px 0 40px; background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+  header img.icon { width: 128px; height: 128px; }
+  h1 { font-size: 44px; line-height: 1.1; margin: 8px 0 8px; letter-spacing: -0.02em; }
+  .tagline { font-size: 20px; color: var(--muted); margin: 0 auto 28px; max-width: 34em; }
+  .download {
+    display: inline-block; background: var(--accent); color: var(--accent-text);
+    font-weight: 600; font-size: 18px; padding: 13px 28px; border-radius: 12px;
+  }
+  .download:hover { text-decoration: none; filter: brightness(1.08); }
+  .meta { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+  .meta a { white-space: nowrap; }
+
+  .shot { display: block; width: 100%; height: auto; max-width: 820px; margin: 40px auto 0; border-radius: 12px;
+          border: 1px solid var(--line); box-shadow: 0 12px 40px rgba(20, 16, 60, 0.12); }
+
+  section { padding: 44px 0 8px; }
+  h2 { font-size: 24px; margin: 0 0 16px; letter-spacing: -0.01em; }
+  ol.steps { padding-left: 1.3em; margin: 0; }
+  ol.steps li { margin: 0 0 12px; }
+  code { font: 15px ui-monospace, "SF Mono", Menlo, monospace; background: var(--code-bg); padding: 2px 6px; border-radius: 5px; }
+  .note { color: var(--muted); font-size: 15px; }
+
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+  .features h3 { font-size: 17px; margin: 0 0 4px; }
+  .features p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  ul.links { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+  ul.links li { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  ul.links a { min-width: 12em; font-weight: 600; }
+  ul.links span { color: var(--muted); flex: 1; min-width: 14em; }
+
+  footer { margin-top: 48px; padding: 28px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+  footer p { margin: 0 0 6px; }
+
+  @media (max-width: 520px) {
+    header { padding: 44px 0 32px; }
+    header img.icon { width: 96px; height: 96px; }
+    h1 { font-size: 36px; }
+    .tagline { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <img class="icon" src="icon.svg" alt="">
+    <h1>Macsima</h1>
+    <p class="tagline">A native Mac app for <a href="https://maxima.sourceforge.io">Maxima</a>, the computer algebra system. It opens and saves wxMaxima worksheets.</p>
+    <a class="download" id="download" href="https://github.com/escalant3/macsima/releases/latest">Download Macsima</a>
+    <p class="meta">
+      <span id="version"></span>macOS 26 or later on Apple silicon ·
+      <a id="notes" href="https://github.com/escalant3/macsima/releases/latest">Release notes</a> ·
+      <a href="https://github.com/escalant3/macsima/releases">All releases</a>
+    </p>
+    <picture>
+      <source srcset="screenshot-dark.png" media="(prefers-color-scheme: dark)">
+      <img class="shot" src="screenshot-light.png" width="1200" height="693"
+           alt="A Macsima worksheet with an integral, a matrix, an error message and a question from Maxima">
+    </picture>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <h2>Install</h2>
+    <ol class="steps">
+      <li>Install Maxima and gnuplot with <a href="https://brew.sh">Homebrew</a>: <code>brew install maxima gnuplot</code></li>
+      <li>Open the DMG and drag Macsima to Applications.</li>
+      <li>Open Macsima. It updates itself: Macsima › Check for Updates…</li>
+    </ol>
+    <p class="note">If Maxima or gnuplot live somewhere else, set their paths in Macsima › Settings.</p>
+  </section>
+
+  <section>
+    <h2>Why Macsima</h2>
+    <div class="features">
+      <div><h3>A native Mac app</h3><p>Built with SwiftUI and AppKit: native windows, menus, keyboard shortcuts, Find and Replace, undo, dark mode.</p></div>
+      <div><h3>Typeset math</h3><p>Results are shown as proper 2D math, sharp on Retina displays. Long results break across lines.</p></div>
+      <div><h3>wxMaxima compatible</h3><p>Reads and writes <code>.wxmx</code> and <code>.wxm</code>. Anything it can't show yet is kept and saved back unchanged.</p></div>
+      <div><h3>Few dependencies</h3><p>Just Maxima and gnuplot. No wxWidgets, no extra toolkits.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>More</h2>
+    <ul class="links">
+      <li><a href="https://github.com/escalant3/macsima">Source code</a><span>The project on GitHub.</span></li>
+      <li><a href="https://github.com/escalant3/macsima/blob/main/docs/MANUAL.md">Manual</a><span>Worksheets, cells, keys and settings.</span></li>
+      <li><a href="https://github.com/escalant3/macsima/blob/main/docs/PARITY.md">Feature parity</a><span>What Macsima does and doesn't do yet, next to wxMaxima.</span></li>
+      <li><a href="https://github.com/escalant3/macsima/blob/main/docs/WXMX_COMPAT.md">File compatibility</a><span>Every <code>.wxmx</code> element and how it's handled.</span></li>
+      <li><a href="https://github.com/escalant3/macsima/issues">Issues</a><span>Report a bug or ask for a feature.</span></li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Macsima is free software under the GPL-2.0-or-later.</p>
+    <p>It exists because of <a href="https://github.com/wxMaxima-developers/wxmaxima">wxMaxima</a> and builds on its work; thanks also to the <a href="https://maxima.sourceforge.io">Maxima</a> and <a href="http://www.gnuplot.info">gnuplot</a> developers. Macsima is not affiliated with either project.</p>
+  </div>
+</footer>
+
+<script>
+  // Point the button at the latest DMG. Without JavaScript, or if GitHub's API
+  // is unreachable or rate-limited, the links stay on the latest release page.
+  fetch("https://api.github.com/repos/escalant3/macsima/releases/latest")
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(release => {
+      const dmg = (release.assets || []).find(a => a.name.endsWith(".dmg"));
+      if (!dmg) return;
+      const version = release.tag_name.replace(/^v/, "");
+      const button = document.getElementById("download");
+      button.href = dmg.browser_download_url;
+      button.textContent = "Download Macsima " + version;
+      document.getElementById("version").textContent = "Version " + version + " · ";
+      document.getElementById("notes").href = release.html_url;
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>

@@ -89,6 +89,9 @@ Set the version once, the same value as `MARKETING_VERSION`:
 
 6. Check: an installed older copy finds the update under Macsima › Check for Updates…
 
+The website (`site/`, published by `.github/workflows/pages.yml` to https://escalant3.github.io/macsima/) asks
+GitHub's API for the latest release when it loads, so it needs no change for a release.
+
 ## Licenses
 
 The DMG distributes GPL-2.0-or-later binaries. The tagged source on GitHub is the corresponding source; the

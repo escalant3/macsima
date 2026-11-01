@@ -28,7 +28,8 @@ If Maxima or gnuplot live somewhere else, you can set their paths in Settings.
 
 ## Install
 
-Download `Macsima-<version>.dmg` from [Releases](https://github.com/escalant3/macsima/releases), open it and
+Download `Macsima-<version>.dmg` from [the website](https://escalant3.github.io/macsima/) or
+[Releases](https://github.com/escalant3/macsima/releases), open it and
 drag Macsima to Applications. Macsima updates itself: Macsima › Check for Updates…, or automatically once you
 allow it. Releasing is described in [`docs/RELEASING.md`](docs/RELEASING.md).
 
