@@ -21,8 +21,9 @@ CLAUDE.md decides; Macsima never bundles them.
 
 Tested on 2026-11-01 with a throwaway key, a separate bundle id and a feed on `127.0.0.1`: a 0.3 build signed
 with the Apple Development certificate and the hardened runtime found 0.4, downloaded it, installed it on quit
-and launched as 0.4 with Maxima running. Not tested: a Developer ID signature, notarization, Gatekeeper on a
-downloaded DMG, and the GitHub-hosted feed.
+and launched as 0.4 with Maxima running. Release 0.3 (2026-11-01) checked the rest: the Developer ID
+signature, notarization and stapling, the feed served from GitHub, and the downloaded DMG matching the
+appcast's length and EdDSA signature. Still untested: a real update from GitHub, which needs a second release.
 
 ## One-time setup
 
@@ -71,10 +72,13 @@ Set the version once, the same value as `MARKETING_VERSION`:
 4. Update the appcast. `generate_appcast` signs the DMG with the key in your keychain and keeps the entries
    already in the folder's `appcast.xml`. If `.build/release/updates` is gone, first download the current
    `appcast.xml` from the latest release into it. Release notes go next to the DMG as `Macsima-$version.md`.
+   `--embed-release-notes` puts them inside the appcast: without it the appcast links to a `.md` under
+   `releases/latest/download/`, which is not a release asset and would point at the wrong release anyway
+   (0.3's entry had that broken link; it was removed from the local appcast afterwards).
 
        mkdir -p .build/release/updates
        cp .build/release/Macsima-$version.dmg .build/release/updates/
-       $sparkle/generate_appcast --download-url-prefix \
+       $sparkle/generate_appcast --embed-release-notes --download-url-prefix \
            https://github.com/escalant3/macsima/releases/download/v$version/ .build/release/updates
 
 5. Tag and publish. Attach both files, and don't mark the release as a pre-release (the feed follows "latest"):
