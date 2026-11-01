@@ -264,6 +264,13 @@ extension MathTree {
         case .run(let p, let first, let last):
             let all = nodes[p].children
             return .element(name: "mrow", attributes: [:], children: Array(all[place[first]...place[last]]))
+        case .block(let t, let rowRange, let columnRange) where rowRange.count == 1 && columnRange.count == 1:
+            // One entry is its content.
+            let rows = nodes[t].elementChildren.filter { $0.name == "mtr" }
+            let entries = rows.indices.contains(rowRange.lowerBound)
+                ? rows[rowRange.lowerBound].elementChildren.filter { $0.name == "mtd" } : []
+            guard entries.indices.contains(columnRange.lowerBound) else { return .element(name: "mrow", attributes: [:], children: []) }
+            return .element(name: "mrow", attributes: [:], children: entries[columnRange.lowerBound].children)
         case .block(let t, let rowRange, let columnRange):
             let table = nodes[t]
             let rows = table.elementChildren.filter { $0.name == "mtr" }
