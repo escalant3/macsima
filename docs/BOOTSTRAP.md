@@ -8,7 +8,7 @@ A native macOS front end for Maxima is feasible: wxMaxima's whole link to the en
 
 These answers from the project owner override the first draft wherever they differ.
 
-- **Purpose.** A personal tool first. There is no commercial goal. Phase 4 (started 2026-11-01) ships a notarized DMG on GitHub Releases with Sparkle updates and no bundled Maxima ([RELEASING.md](RELEASING.md)); bundling Maxima stays deferred (see Shipping later).
+- **Purpose.** A personal tool first. There is no commercial goal. Phase 4 (done 2026-11-01) ships a notarized DMG on GitHub Releases with Sparkle updates and no bundled Maxima ([RELEASING.md](RELEASING.md)); bundling Maxima stays deferred (see Shipping later).
 - **Engine.** SBCL only, with Maxima 5.50.0 from Homebrew as the baseline. Homebrew's formula (5.50.0, revision 2) depends on sbcl and gnuplot. The app finds `maxima` and `gnuplot` under `/opt/homebrew/bin` (configurable) and does not bundle either.
 - **Platform.** arm64 only, macOS 26 (Tahoe) as the minimum, current Swift and SwiftUI APIs. Ease of coding wins over compatibility with older systems.
 - **License.** GPL-2.0-or-later, so wxMathML.lisp and wxMaxima's logic can be reused directly (see Licensing).
@@ -253,7 +253,7 @@ Durations are my estimates for one experienced Mac developer, not sourced figure
 2. **Phase 1, engine kit (done 2026-10-18).** Tag scanner, session state machine, evaluation queue, restart, kill, interrupt, token handshake, all tested against recorded transcripts. *Exit:* a scripted session of 50 commands that includes an error, a question, an interrupt and a kill.
 3. **Phase 2, minimal worksheet (done 2026-10-18).** Cell editing, evaluate, MathML rendering, inline plots, open and save `.wxmx`. *Exit:* save a worksheet, reopen it and re-evaluate it; then try real `.wxmx` files from wxMaxima, and record every element the app cannot handle in the ledger.
 4. **Phase 3, daily driver (8 to 12 weeks).** Autocomplete, variables panel, help, export, undo, search, debugger and Lisp modes, dark mode. *Exit:* one week of real work with no fallback to wxMaxima.
-5. **Phase 4, sharing (started 2026-11-01).** A notarized DMG on GitHub Releases that updates itself with Sparkle, and a README with install steps; Maxima and gnuplot stay on Homebrew ([RELEASING.md](RELEASING.md)). A bundled Maxima only if people ask (see Shipping later). No App Store.
+5. **Phase 4, sharing (done 2026-11-01, [PHASE4_REPORT.md](PHASE4_REPORT.md)).** A notarized DMG on GitHub Releases that updates itself with Sparkle, a download page on GitHub Pages, and a README with install steps; Maxima and gnuplot stay on Homebrew ([RELEASING.md](RELEASING.md)). A bundled Maxima only if people ask (see Shipping later). No App Store.
 
 ### Phase 0 results (2026-10-18)
 
