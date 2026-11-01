@@ -247,6 +247,16 @@
         }
       }
     },
+    "Check for Updates…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones…"
+          }
+        }
+      }
+    },
     "Choose…" : {
       "localizations" : {
         "es" : {

@@ -10,6 +10,11 @@ options:
 packages:
   Macsima:
     path: .
+  # Updates (Phase 4). Linked into the app target only, so `swift test` and the
+  # command-line tools never load it. MIT-licensed.
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.0
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -17,12 +22,20 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: YES
     MACOSX_DEPLOYMENT_TARGET: "26.0"
-    # Personal tool: ad-hoc signing, no sandbox, no hardened runtime (CLAUDE.md).
+    # Ad-hoc signing, no sandbox. scripts/make-dmg.sh signs releases with a
+    # Developer ID and the hardened runtime (docs/RELEASING.md).
     CODE_SIGN_IDENTITY: "-"
     CODE_SIGN_STYLE: Manual
     DEVELOPMENT_TEAM: ""
     ENABLE_HARDENED_RUNTIME: NO
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    # Bump both for every release; Sparkle compares CURRENT_PROJECT_VERSION.
+    MARKETING_VERSION: "0.3"
+    CURRENT_PROJECT_VERSION: "2"
+    # Sparkle's update feed and the EdDSA public key it checks updates with
+    # (docs/RELEASING.md). Without a key the updater refuses to check.
+    SPARKLE_FEED_URL: https://github.com/escalant3/macsima/releases/latest/download/appcast.xml
+    SPARKLE_PUBLIC_KEY: ""
 schemes:
   Macsima:
     build:
@@ -46,6 +59,7 @@ targets:
     dependencies:
       - package: Macsima
         product: MacsimaUI
+      - package: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: local.macsima.Macsima
@@ -60,8 +74,10 @@ targets:
         # The languages the app is translated into (docs/LOCALIZATION.md). AppKit
         # localizes its own menus and panels only for the languages listed here.
         CFBundleLocalizations: [en, es]
-        CFBundleShortVersionString: "0.2"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        SUFeedURL: $(SPARKLE_FEED_URL)
+        SUPublicEDKey: $(SPARKLE_PUBLIC_KEY)
         LSApplicationCategoryType: public.app-category.education
         NSHumanReadableCopyright: GPL-2.0-or-later
         CFBundleDocumentTypes:
