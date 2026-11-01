@@ -10,6 +10,10 @@ wxMaxima stay in `docs/PARITY.md`.
   the part around it, or drag across terms or matrix entries; ⌘C copies the part as Maxima input, and the
   context menu copies it as LaTeX, MathML or an image. Outputs stay images: the renderer also measures
   where each part sits. Replaces the click-to-select live view. Details and gaps in `docs/PARITY.md`.
+- **Arrow keys stop on outputs** (done 2026-11-01), as in wxMaxima 26.09. ↑ and ↓ stop on each result, printed
+  message and error; Return goes into a result, Esc back out, ← → between parts, ⇧← ⇧→ grow a run, arrows
+  step through a matrix and ⇧ grows a block. ⌘C copies what is selected, an error's message included.
+  Settings › Worksheet › Arrow keys skip output restores the old behaviour.
 
 ## 0.3 (2026-11-01)
 
