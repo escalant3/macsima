@@ -414,7 +414,7 @@ enum KeyScriptDriver {
         info["firstResponder"] = NSApp.keyWindow?.firstResponder.map { String(describing: type(of: $0)) } ?? ""
         info["renders"] = MathSnapshotRenderer.shared.recent.map { r -> [String: Any] in
             ["label": r.label ?? "", "wrap": r.wrap.map { Int($0) } ?? -1,
-             "width": Int(r.size.width), "height": Int(r.size.height)]
+             "width": Int(r.size.width), "height": Int(r.size.height), "natural": Int(r.natural)]
         }
         info["renderTimeouts"] = MathSnapshotRenderer.shared.timeouts
         info["windowWidth"] = Int(documentWindow?.contentLayoutRect.width ?? 0)
