@@ -4,15 +4,16 @@ import MaximaKit
 import SwiftUI
 import WorksheetKit
 
-/// The window's sidebar on the right: one of three panels.
+/// The window's sidebar on the right: one of four panels.
 public enum SidebarTab: String, CaseIterable, Sendable {
-    case contents, variables, manual
+    case contents, variables, manual, symbols
 
     var title: String {
         switch self {
         case .contents: String(localized: "Contents", comment: "Sidebar panel")
         case .variables: String(localized: "Variables", comment: "Sidebar panel")
         case .manual: String(localized: "Manual", comment: "Sidebar panel: the Maxima manual")
+        case .symbols: String(localized: "Symbols", comment: "Sidebar panel: Greek letters and math symbols to type")
         }
     }
 }
@@ -106,6 +107,7 @@ struct SidebarView: View {
             case .contents: ContentsPanel(controller: controller)
             case .variables: VariablesPanel(model: controller.variables, maximaBusy: controller.sessionState != .idle)
             case .manual: HelpPanel(help: controller.help, maximaBusy: controller.sessionState != .idle)
+            case .symbols: SymbolsPanel(controller: controller)
             }
         }
         .inspectorColumnWidth(min: 280, ideal: 480, max: 900)
@@ -244,5 +246,64 @@ struct VariablesPanel: View {
             .help(value.map { $0.isCut ? $0.text + " … (cut at 4000 characters)" : $0.text } ?? "")
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// Greek letters and wxMaxima's symbols (`MathSymbols.panelGroups`); a click
+/// types one at the caret. The tooltips teach the keys: ⌃G and a letter, or
+/// a symbol's name and Esc.
+struct SymbolsPanel: View {
+    let controller: WorksheetController
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Click to type at the caret. ⌃G, then a letter, types a Greek letter; with Shift, a capital. A symbol's name, then Esc, also types it.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(MathSymbols.panelGroups) { group in
+                    Text(Self.title(of: group.kind)).font(.headline)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 34, maximum: 44), spacing: 4)], spacing: 4) {
+                        ForEach(group.symbols) { symbol in
+                            Button { controller.insertSymbol(symbol.glyph) } label: {
+                                Text(symbol.glyph)
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(.primary)
+                                    .frame(width: 34, height: 34)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .focusable(false)
+                            .help(Self.help(for: symbol))
+                            .accessibilityLabel(symbol.names.first ?? symbol.glyph)
+                            .accessibilityIdentifier("symbol-\(symbol.glyph)")
+                        }
+                    }
+                }
+            }
+            .padding(12)
+        }
+    }
+
+    static func title(of kind: MathSymbols.Group.Kind) -> String {
+        switch kind {
+        case .greekSmall: String(localized: "Greek Letters", comment: "Symbols panel section")
+        case .greekCapital: String(localized: "Capital Greek Letters", comment: "Symbols panel section")
+        case .symbols: String(localized: "Math Symbols", comment: "Symbols panel section: math symbols other than Greek letters")
+        }
+    }
+
+    /// "alpha: ⌃G, then A", "Omega, Ohm: ⌃G, then ⇧W", "inf: type inf, then Esc".
+    static func help(for symbol: MathSymbols.Symbol) -> String {
+        let names = symbol.names.joined(separator: ", ")
+        if let key = symbol.key {
+            let label = key.isUppercase ? "⇧" + String(key) : String(key).uppercased()
+            return String(localized: "\(names): ⌃G, then \(label)", comment: "Symbols panel tooltip: a Greek letter's names and the key that types it")
+        }
+        if let name = MathSymbols.completionNames.first(where: { $0.glyph == symbol.glyph })?.name {
+            return String(localized: "\(names): type \(name), then Esc", comment: "Symbols panel tooltip: a symbol's names and how completion types it")
+        }
+        return names
     }
 }

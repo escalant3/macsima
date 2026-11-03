@@ -126,6 +126,8 @@ struct WorksheetCommands: Commands {
                 .keyboardShortcut("2", modifiers: [.command, .option])
             Button("Manual") { controller?.toggleSidebar(.manual) }
                 .keyboardShortcut("3", modifiers: [.command, .option])
+            Button("Symbols") { controller?.toggleSidebar(.symbols) }
+                .keyboardShortcut("4", modifiers: [.command, .option])
         }
         // Text cells: bold, italic, ... (wxMaxima's formats, GH #492).
         CommandMenu("Format") {

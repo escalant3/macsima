@@ -24,6 +24,40 @@
         }
       }
     },
+    "%@: type %@, then Esc" : {
+      "comment" : "Symbols panel tooltip: a symbol's names and how completion types it",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: type %2$@, then Esc"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: escribe %2$@ y luego Esc"
+          }
+        }
+      }
+    },
+    "%@: ⌃G, then %@" : {
+      "comment" : "Symbols panel tooltip: a Greek letter's names and the key that types it",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: ⌃G, then %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: ⌃G y luego %2$@"
+          }
+        }
+      }
+    },
     "%@:%lld" : {
       "shouldTranslate" : false
     },
@@ -236,6 +270,17 @@
         }
       }
     },
+    "Capital Greek Letters" : {
+      "comment" : "Symbols panel section",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letras griegas mayúsculas"
+          }
+        }
+      }
+    },
     "Cell" : {
       "localizations" : {
         "es" : {
@@ -273,6 +318,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar…"
+          }
+        }
+      }
+    },
+    "Click to type at the caret. ⌃G, then a letter, types a Greek letter; with Shift, a capital. A symbol's name, then Esc, also types it." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic para escribir en el cursor. ⌃G y luego una letra escribe una letra griega; con Mayúsculas, una mayúscula. El nombre de un símbolo y luego Esc también lo escribe."
           }
         }
       }
@@ -827,6 +882,17 @@
         }
       }
     },
+    "Greek Letters" : {
+      "comment" : "Symbols panel section",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letras griegas"
+          }
+        }
+      }
+    },
     "HTML…" : {
       "comment" : "File › Export menu item",
       "localizations" : {
@@ -1254,6 +1320,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Distinguir mayúsculas y minúsculas"
+          }
+        }
+      }
+    },
+    "Math Symbols" : {
+      "comment" : "Symbols panel section: math symbols other than Greek letters",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Símbolos matemáticos"
           }
         }
       }
@@ -2081,6 +2158,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Superíndice"
+          }
+        }
+      }
+    },
+    "Symbols" : {
+      "comment" : "Sidebar panel: Greek letters and math symbols to type",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Símbolos"
           }
         }
       }

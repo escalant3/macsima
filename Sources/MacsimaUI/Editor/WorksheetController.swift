@@ -213,6 +213,14 @@ public final class WorksheetController {
         scrollRequest = (id, (scrollRequest?.serial ?? 0) + 1)
     }
 
+    /// The Symbols panel: types `glyph` at the focused cell's caret, as typing
+    /// does (one undo step with the typing around it). Beeps without a cell.
+    func insertSymbol(_ glyph: String) {
+        guard let id = focusedCell, let editor = editors[id], let window = editor.window else { return NSSound.beep() }
+        if window.firstResponder !== editor { window.makeFirstResponder(editor) }
+        editor.insertText(glyph, replacementRange: editor.selectedRange())
+    }
+
     /// The cell's editor if one was made (for the key-script dumps).
     func existingEditor(for id: UUID) -> CellTextView? { editors[id] }
 
