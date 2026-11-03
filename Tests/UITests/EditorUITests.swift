@@ -73,6 +73,61 @@ final class EditorUITests: XCTestCase {
         XCTAssertEqual(input.value as? String, "integrate_use_rootsof$ integrate(sin(t), t, <a>, <b>)")
     }
 
+    /// Ctrl+G, then a letter, types a Greek letter, Shift a capital, in code
+    /// and text cells; one Cmd+Z takes the typing back.
+    @MainActor
+    func testGreekLetterKey() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("x:")
+        for (key, flags) in [("a", XCUIElement.KeyModifierFlags()), ("w", .shift), ("q", [])] {
+            app.typeKey("g", modifierFlags: .control)
+            app.typeKey(key, modifierFlags: flags)
+        }
+        XCTAssertEqual(input.value as? String, "x:αΩθ")
+        // Another key is typed as usual; Esc cancels.
+        app.typeKey("g", modifierFlags: .control)
+        app.typeText("1")
+        app.typeKey("g", modifierFlags: .control)
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertEqual(input.value as? String, "x:αΩθ1")
+        XCTAssertFalse(app.descendants(matching: .any)["completion-list"].exists, "Esc after Ctrl+G completes nothing")
+        app.typeKey("z", modifierFlags: .command)
+        XCTAssertEqual(input.value as? String, "")
+        // A text cell.
+        app.typeKey("1", modifierFlags: .command)
+        let text = app.textViews["cell-input-1"]
+        XCTAssertTrue(text.waitForExistence(timeout: 5))
+        app.typeText("angle ")
+        app.typeKey("g", modifierFlags: .control)
+        app.typeKey("b", modifierFlags: [])
+        XCTAssertEqual(text.value as? String, "angle β")
+    }
+
+    /// View › Symbols (Cmd+Opt+4); a click on a letter types it at the
+    /// caret, and the cell keeps the focus.
+    @MainActor
+    func testSymbolsPanel() throws {
+        waitForReady()
+        let input = app.textViews["cell-input-0"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        input.click()
+        app.typeText("f(")
+        app.typeKey("4", modifierFlags: [.command, .option])
+        let alpha = app.buttons["symbol-α"]
+        XCTAssertTrue(alpha.waitForExistence(timeout: 5))
+        alpha.click()
+        app.buttons["symbol-∞"].click()
+        app.typeText(")")
+        XCTAssertEqual(input.value as? String, "f(α∞)")
+        let shot = XCTAttachment(screenshot: app.windows.firstMatch.screenshot())
+        shot.name = "symbols-panel"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     @MainActor
     func testF1OpensTheManual() throws {
         waitForReady()

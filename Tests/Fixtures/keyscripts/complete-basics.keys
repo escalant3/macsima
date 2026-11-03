@@ -57,4 +57,40 @@ type v
 key escape
 dump .build/keyscripts/complete-13.json
 shot .build/keyscripts/complete-13.png
+# Symbols (0.4): a name from wxMaxima's Esc-sequences offers its character,
+# after Maxima's names.
+key escape
+key return
+type inf
+key escape
+dump .build/keyscripts/complete-14.json
+shot .build/keyscripts/complete-14.png
+key escape
+# Maxima has a name Omega too: Down, Return picks the symbol.
+type , Ome
+key escape
+key down
+key return
+dump .build/keyscripts/complete-15.json
+# Ctrl+G, then a letter, types a Greek letter; with Shift, a capital.
+type , k:
+key g control
+type a
+key g control
+key w shift
+key g control
+type q
+dump .build/keyscripts/complete-16.json
+# Another key beeps and is typed; Esc cancels.
+key g control
+key 1
+key g control
+key escape
+type b
+dump .build/keyscripts/complete-17.json
+# The Symbols panel types at the caret.
+sidebar symbols
+symbol-click ∞
+dump .build/keyscripts/complete-18.json
+shot .build/keyscripts/complete-18.png
 quit

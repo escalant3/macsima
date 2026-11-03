@@ -162,10 +162,13 @@ enum KeyScriptDriver {
             // `help <topic>`: what clicking a link in the manual panel does.
             WorksheetController.keyController?.help.lookUp(rest)
         case "sidebar":
-            // `sidebar contents|variables|manual|hide`.
+            // `sidebar contents|variables|manual|symbols|hide`.
             if let c = WorksheetController.keyController {
                 if let tab = SidebarTab(rawValue: rest) { c.showSidebar(tab) } else { c.showsSidebar = false }
             }
+        case "symbol-click":
+            // `symbol-click <glyph>`: what clicking it in the Symbols panel does.
+            WorksheetController.keyController?.insertSymbol(rest)
         case "watch":
             // `watch <name> ...`: typed into the variables panel.
             WorksheetController.keyController?.variables.add(rest.split(separator: " ").map(String.init))
@@ -460,7 +463,8 @@ enum KeyScriptDriver {
         if let popup = CompletionPopup.current, popup.isShown {
             info["completion"] = ["items": popup.items.map(\.insertion),
                                   "selected": popup.selected?.insertion ?? NSNull(),
-                                  "worksheet": popup.items.filter { $0.source == .worksheet }.map(\.insertion)] as [String: Any]
+                                  "worksheet": popup.items.filter { $0.source == .worksheet }.map(\.insertion),
+                                  "symbols": popup.items.filter { $0.source == .symbol }.map(\.insertion)] as [String: Any]
         }
         if let editor = NSApp.keyWindow?.firstResponder as? CellTextView {
             info["editor"] = describe(editor)

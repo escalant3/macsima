@@ -302,6 +302,12 @@ elif script == "complete-basics":
     check(c(11) is None and line(11) == "diff", "Esc closes the list, the text unchanged")
     check(c(12) is None and line(12) == "plot(", f"( closes the list and is typed: {line(12)!r}")
     check(c(13) is not None and c(13)["worksheet"] == ["velocity"], f"velocity is the worksheet's: {c(13) and c(13)['worksheet']}")
+    check(c(14) is not None and c(14)["items"][0] == "inf" and c(14)["items"][1] == "∞" and "infinity" in c(14)["items"]
+          and c(14)["symbols"] == ["∞"], f"inf, Esc: Maxima's inf, then the symbol: {c(14) and c(14)['items'][:4]}")
+    check(c(15) is None and line(15).strip() == "inf, Ω", f"Ome, Esc lists Maxima's Omega and Ω; Down, Return types Ω: {line(15)!r}")
+    check(line(16).strip() == "inf, Ω, k:αΩθ" and c(16) is None, f"Ctrl+G a, Ctrl+G Shift+W, Ctrl+G q: {line(16)!r}")
+    check(line(17).strip() == "inf, Ω, k:αΩθ1b" and c(17) is None, f"Ctrl+G 1 types 1; Ctrl+G Esc cancels: {line(17)!r}")
+    check(line(18).strip() == "inf, Ω, k:αΩθ1b∞", f"the Symbols panel types at the caret: {line(18)!r}")
 elif script == "help-basics":
     h = lambda n: dump("help", n)["help"]
     check(h(1)["visible"] and h(1)["topic"] == "integrate" and h(1)["entries"] == ["integrate"],
