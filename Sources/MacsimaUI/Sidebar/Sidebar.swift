@@ -294,11 +294,11 @@ struct SymbolsPanel: View {
         }
     }
 
-    /// "alpha: ⌃G, then A", "Omega, Ohm: ⌃G, then ⇧W", "inf: type inf, then Esc".
+    /// "alpha: ⌃G, then a", "Omega, Ohm: ⌃G, then ⇧W", "inf: type inf, then Esc".
     static func help(for symbol: MathSymbols.Symbol) -> String {
         let names = symbol.names.joined(separator: ", ")
         if let key = symbol.key {
-            let label = key.isUppercase ? "⇧" + String(key) : String(key).uppercased()
+            let label = key.isUppercase ? "⇧" + String(key) : String(key)
             return String(localized: "\(names): ⌃G, then \(label)", comment: "Symbols panel tooltip: a Greek letter's names and the key that types it")
         }
         if let name = MathSymbols.completionNames.first(where: { $0.glyph == symbol.glyph })?.name {
