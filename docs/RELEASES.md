@@ -4,7 +4,7 @@ Since 0.3, work is planned as features that ship in a release, not as phases. Ea
 here while it is in progress; the release notes (`docs/RELEASING.md`) are written from this list. Gaps against
 wxMaxima stay in `docs/PARITY.md`.
 
-## 0.4 (in progress)
+## 0.4 (2026-11-03)
 
 - **Selecting inside math** (done 2026-11-01). Click a symbol in an output to select it, click again for
   the part around it, or drag across terms or matrix entries; ⌘C copies the part as Maxima input, and the
