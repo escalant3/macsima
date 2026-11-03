@@ -307,6 +307,7 @@ final class CellTextView: NSTextView {
         let ok = super.resignFirstResponder()
         if ok {
             closeCompletion()
+            greekPending = false
             revealCaretOnGrowth = false
         }
         return ok
@@ -319,7 +320,7 @@ final class CellTextView: NSTextView {
     }
 
     override func viewWillMove(toWindow newWindow: NSWindow?) {
-        if newWindow == nil { closeCompletion() }
+        if newWindow == nil { closeCompletion(); greekPending = false }
         if newWindow == nil, let window, window.firstResponder === self { hadFocusWhenRemoved = true }
         super.viewWillMove(toWindow: newWindow)
     }
@@ -481,6 +482,7 @@ final class CellTextView: NSTextView {
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if handleGreekKey(event) { return }
         if handleCompletionKey(event) { return }
         if event.keyCode == 53, flags.isEmpty, highlightsSyntax {   // Esc
             return showCompletions(templatesOnly: false)
@@ -491,6 +493,37 @@ final class CellTextView: NSTextView {
             return
         }
         super.keyDown(with: event)
+    }
+
+    // MARK: - Greek letters
+
+    /// ⌃G was pressed: the next letter types a Greek one.
+    private var greekPending = false
+
+    /// ⌃G, then a letter: α for a, Ω for Shift+W (`MathSymbols.greek(forKey:)`).
+    /// Esc after ⌃G cancels; any other key beeps and does what it does.
+    /// Every kind of cell, as wxMaxima's Esc-sequences.
+    private func handleGreekKey(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        if !greekPending {
+            guard event.keyCode == 5, flags == .control, !hasMarkedText() else { return false }   // G
+            greekPending = true
+            return true
+        }
+        greekPending = false
+        if event.keyCode == 53, flags.isEmpty { return true }   // Esc
+        if flags.subtracting(.shift).isEmpty, let typed = event.characters, typed.count == 1,
+           let glyph = MathSymbols.greek(forKey: typed.first!) {
+            insertText(glyph, replacementRange: selectedRange())
+            return true
+        }
+        NSSound.beep()
+        return false
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        greekPending = false
+        super.mouseDown(with: event)
     }
 
     // MARK: - Help (code cells)
