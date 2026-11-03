@@ -23,7 +23,8 @@ Tested on 2026-11-01 with a throwaway key, a separate bundle id and a feed on `1
 with the Apple Development certificate and the hardened runtime found 0.4, downloaded it, installed it on quit
 and launched as 0.4 with Maxima running. Release 0.3 (2026-11-01) checked the rest: the Developer ID
 signature, notarization and stapling, the feed served from GitHub, and the downloaded DMG matching the
-appcast's length and EdDSA signature. Still untested: a real update from GitHub, which needs a second release.
+appcast's length and EdDSA signature. Release 0.4 (2026-11-03) is the first one an installed copy can update
+to from GitHub; that update (step 6) is still to be checked.
 
 ## One-time setup
 
@@ -81,10 +82,18 @@ Set the version once, the same value as `MARKETING_VERSION`:
        $sparkle/generate_appcast --embed-release-notes --download-url-prefix \
            https://github.com/escalant3/macsima/releases/download/v$version/ .build/release/updates
 
-5. Tag and publish. Attach both files, and don't mark the release as a pre-release (the feed follows "latest"):
+   Then check `appcast.xml` (seen with 0.4):
+   - `--download-url-prefix` rewrites every entry's URL, older releases' too. Point each older DMG back at its
+     own tag (`.../download/v0.3/Macsima-0.3.dmg`). Editing the file is safe: the signatures are per file, and
+     the feed itself is not signed.
+   - With an older DMG in the folder, it also makes a delta update (`Macsima<build>-<old build>.delta`) listed
+     under the new tag. Attach it in step 5, or Sparkle's delta download fails and it falls back to the full DMG.
+
+5. Tag and publish. Attach the DMG, the delta and the appcast, and don't mark the release as a pre-release (the feed follows "latest"):
 
        git tag v$version && git push origin v$version
-       gh release create v$version .build/release/Macsima-$version.dmg .build/release/updates/appcast.xml \
+       gh release create v$version .build/release/Macsima-$version.dmg .build/release/updates/*.delta \
+           .build/release/updates/appcast.xml \
            --title "Macsima $version" --notes-file .build/release/updates/Macsima-$version.md
 
 6. Check: an installed older copy finds the update under Macsima › Check for Updates…
