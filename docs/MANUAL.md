@@ -323,7 +323,8 @@ Font changes show at once; the worksheet's zoom comes on top.
 | ⌘B ⌘I ⌘U | Bold, italic, underline (text cells) |
 | ⌃⌘= and ⌃⌘- | Superscript, subscript (text cells) |
 | ⌘+ ⌘- | Zoom in, zoom out |
-| ↑ and ↓ | At a cell's first or last line: to the cell above or below |
+| ↑ and ↓ | At a cell's first or last line: to the cell's results, then the next or previous cell |
+| ⌥⌘↓ and ⌥⌘↑ | Go to the next and previous input, skipping results |
 
 ## Things to know
 
@@ -331,7 +332,6 @@ Font changes show at once; the worksheet's zoom comes on top.
 - **Each window has its own Maxima.** Values defined in one window are not seen in another.
 - **wxMaxima behaviour that's still missing:**
   - Selecting across several results at once.
-  - Arrow keys that stop on results.
   - Completing file names in `load("...")`.
   - A breakpoint margin.
   - Colour settings.
