@@ -15,6 +15,10 @@ wxMaxima stay in `docs/PARITY.md`.
   step through a matrix and ⇧ grows a block. ⌘C copies what is selected, an error's message included.
   Settings › Worksheet › Arrow keys skip output restores the old behaviour. Cell › Go to Next Input (⌥⌘↓)
   and Go to Previous Input (⌥⌘↑) jump between inputs without stopping on outputs (not in wxMaxima).
+- **Greek letters and symbols** (done 2026-11-03). ⌃G, then a letter, types a Greek letter (a α, q θ, w ω;
+  Shift for capitals), in any cell. The names of wxMaxima's Esc-sequences complete with Esc: `inf` offers ∞.
+  View › Symbols (⌥⌘4) shows every letter and symbol with its key, and a click types it. Esc stays Complete
+  Word, so wxMaxima's Esc `alpha` Esc is not used. Details and gaps in `docs/PARITY.md`.
 
 ## 0.3 (2026-11-01)
 

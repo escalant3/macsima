@@ -15,7 +15,7 @@ What Macsima needs: macOS 26 on Apple silicon, Maxima from Homebrew (`/opt/homeb
 7. [Text, headings and structure](#text-headings-and-structure)
 8. [Selecting, copying and pasting](#selecting-copying-and-pasting)
 9. [Finding and replacing](#finding-and-replacing)
-10. [The sidebar: contents, variables, manual](#the-sidebar-contents-variables-manual)
+10. [The sidebar: contents, variables, manual, symbols](#the-sidebar-contents-variables-manual-symbols)
 11. [The status bar](#the-status-bar)
 12. [Files](#files)
 13. [Export](#export)
@@ -66,13 +66,27 @@ Press **Esc** in a code cell to complete the name you are typing. **⌃Space** (
 - The list holds:
   - every name Maxima knows;
   - the function templates wxMaxima ships (about 2,000), such as `integrate(expr, x)`;
-  - the names used in your code cells, and the functions you defined with `f(x) := ...` or `define(...)`, marked "worksheet". Your own definition of a function replaces Maxima's template.
+  - the names used in your code cells, and the functions you defined with `f(x) := ...` or `define(...)`, marked "worksheet". Your own definition of a function replaces Maxima's template;
+  - the names of Greek letters and math symbols, marked "symbol", after the other names: `inf` offers ∞, `alpha` α, `Omega` Ω, `leq` ≤, `sq` √. Accepting one types the character.
 
 **Templates.** Choosing a template inserts it with its arguments as placeholders, for example `integrate(<expr>, <x>, <a>, <b>)`. The first placeholder is selected, so you type over it. **Tab** goes to the next placeholder and **⇧Tab** to the one before. Placeholders have a light blue background.
 
 **Show Template** (⌃⇧Space) lists only the templates of the function name before the caret, for example the five forms of `diff`.
 
-**wxMaxima:** Esc starts a Greek-letter sequence there (Esc `alp` Esc gives α). In Macsima Esc completes; Greek letters this way are not available yet.
+### Greek letters and symbols
+
+Press **⌃G**, then a letter, to type a Greek letter, in any cell. Add Shift for a capital: ⌃G then a gives α, ⌃G then ⇧W gives Ω.
+
+| Letter | a | b | c | d | e | f | g | h | i | j | k | l | m | n | o | p | q | r | s | t | u | v | w | x | y | z |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Greek | α | β | χ | δ | ε | φ | γ | η | ι | ϕ | κ | λ | μ | ν | ο | π | θ | ρ | σ | τ | υ | ϖ | ω | ξ | ψ | ζ |
+| With ⇧ | Α | Β | Χ | Δ | Ε | Φ | Γ | Η | Ι | ϑ | Κ | Λ | Μ | Ν | Ο | Π | Θ | Ρ | Σ | Τ | Υ | ς | Ω | Ξ | Ψ | Ζ |
+
+This is the layout of the Symbol font, which many math programs use. After ⌃G, Esc cancels, and any other key beeps and is typed as usual. The Symbols panel in the sidebar shows every letter and symbol; hold the pointer over one to see its key or name, or click it to type it.
+
+`α` is a different Maxima name from `alpha`, although Maxima shows `alpha` as α too.
+
+**wxMaxima:** Esc starts a sequence there (Esc `alpha` Esc gives α, Esc `3b1` Esc too). In Macsima Esc completes, so the names complete instead, and ⌃G types Greek letters.
 
 ## Evaluating
 
@@ -198,9 +212,9 @@ Then:
 - **Match case** is an option in the bar.
 - **Close:** Esc closes the bar.
 
-## The sidebar: contents, variables, manual
+## The sidebar: contents, variables, manual, symbols
 
-The sidebar on the right has three panels. ⌘⌥0 shows or hides it. View › Contents (⌘⌥1), Variables (⌘⌥2) and Manual (⌘⌥3) open a panel, or hide the sidebar when that panel is already showing.
+The sidebar on the right has four panels. ⌘⌥0 shows or hides it. View › Contents (⌘⌥1), Variables (⌘⌥2), Manual (⌘⌥3) and Symbols (⌘⌥4) open a panel, or hide the sidebar when that panel is already showing.
 
 **Contents** lists the worksheet's headings, indented by level. The section the cursor is in is highlighted, and folded headings have a small arrow. Click a heading to go there; folded sections around it open.
 
@@ -216,6 +230,8 @@ The sidebar on the right has three panels. ⌘⌥0 shows or hides it. View › C
 - **Links:** names the manual mentions are links. Related topics are listed at the end.
 - **Moving around:** Back returns to the previous topic, and the search field looks up any topic.
 - **While Maxima works:** lookups wait until Maxima is idle.
+
+**Symbols** shows the Greek letters, small and capital, and the math symbols wxMaxima offers (∞, ≤, √, ∈, ∑ and more). Click one to type it at the caret. The tooltip says how to type it from the keyboard: ⌃G and a letter, or a name and Esc. See [Greek letters and symbols](#greek-letters-and-symbols).
 
 ## The status bar
 
@@ -292,6 +308,7 @@ Font changes show at once; the worksheet's zoom comes on top.
 | ⌘⇧⌫ | Delete the cell |
 | ⌘⇧A | Select all cells |
 | Esc or ⌃Space | Complete the name |
+| ⌃G, then a letter | Type a Greek letter (⇧ for a capital) |
 | ⌃⇧Space | Show the function's templates |
 | Tab, ⇧Tab | Next and previous template placeholder |
 | ⌘/ | Comment or uncomment lines |
@@ -301,7 +318,7 @@ Font changes show at once; the worksheet's zoom comes on top.
 | ⌘G, ⌘⇧G, ⌘E | Next, previous match; find the selection |
 | F1 | Look up the name at the caret in Maxima's manual |
 | ⌘⌥0 | Show or hide the sidebar |
-| ⌘⌥1, ⌘⌥2, ⌘⌥3 | Contents, Variables, Manual |
+| ⌘⌥1, ⌘⌥2, ⌘⌥3, ⌘⌥4 | Contents, Variables, Manual, Symbols |
 | F6, F7, ⌃⌘Y | Debugger: step over, step into, continue |
 | ⌘B ⌘I ⌘U | Bold, italic, underline (text cells) |
 | ⌃⌘= and ⌃⌘- | Superscript, subscript (text cells) |
@@ -313,7 +330,6 @@ Font changes show at once; the worksheet's zoom comes on top.
 - **Your `maxima-init.mac` is used.** Macsima's Maxima reads `~/.maxima/maxima-init.mac` like any Maxima.
 - **Each window has its own Maxima.** Values defined in one window are not seen in another.
 - **wxMaxima behaviour that's still missing:**
-  - Greek letters with Esc sequences.
   - Selecting across several results at once.
   - Arrow keys that stop on results.
   - Completing file names in `load("...")`.
