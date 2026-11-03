@@ -2,18 +2,23 @@
 
 import Foundation
 
-/// One entry of the completion list: a name, or a function template with
-/// `<argument>` placeholders (`integrate(<expr>, <x>)`).
+/// One entry of the completion list: a name, a function template with
+/// `<argument>` placeholders (`integrate(<expr>, <x>)`), or a symbol's name
+/// (`inf` for ∞).
 public struct CompletionItem: Hashable, Sendable {
     public enum Source: Hashable, Sendable {
         /// Maxima's own names and wxMaxima's template list.
         case maxima
         /// Defined or used in this worksheet's code cells.
         case worksheet
+        /// wxMaxima's Esc-sequences (`MathSymbols.completionNames`).
+        case symbol
     }
 
     public var name: String
     public var template: String?
+    /// The character a `.symbol` entry types.
+    public var symbol: String?
     public var source: Source
 
     public init(name: String, template: String? = nil, source: Source) {
@@ -22,8 +27,14 @@ public struct CompletionItem: Hashable, Sendable {
         self.source = source
     }
 
+    public init(name: String, symbol: String) {
+        self.name = name
+        self.symbol = symbol
+        self.source = .symbol
+    }
+
     /// What accepting the item inserts.
-    public var insertion: String { template ?? name }
+    public var insertion: String { symbol ?? template ?? name }
 }
 
 /// The names and templates completion draws from.
@@ -153,12 +164,14 @@ public enum MaximaCompletion {
     }
 
     /// The entries that complete `prefix`: names that start with it, and the
-    /// templates of those names. Exact matches come first, then the rest
-    /// alphabetically; names in the worksheet that Maxima doesn't know are
-    /// marked as the worksheet's. When nothing matches with the case as typed
-    /// (Maxima's names are case-sensitive), the case is ignored.
+    /// templates of those names, and the symbols whose names start with it.
+    /// Exact matches come first, then the rest alphabetically, symbols last;
+    /// names in the worksheet that Maxima doesn't know are marked as the
+    /// worksheet's. When nothing matches with the case as typed (Maxima's
+    /// names are case-sensitive), the case is ignored.
     public static func completions(of prefix: String, maxima: CompletionIndex, worksheet: CompletionIndex,
-                                   templatesOnly: Bool = false) -> [CompletionItem] {
+                                   templatesOnly: Bool = false,
+                                   symbols: [MathSymbols.Entry] = MathSymbols.completionNames) -> [CompletionItem] {
         guard !prefix.isEmpty else { return [] }
         for caseSensitive in [true, false] {
             let lowered = prefix.lowercased()
@@ -182,9 +195,14 @@ public enum MaximaCompletion {
             // Show Template: the templates of the name typed, as wxMaxima's
             // "perfect completions", else those of the names it starts.
             if templatesOnly, items.contains(where: { $0.name == prefix }) { items = items.filter { $0.name == prefix } }
+            if !templatesOnly {
+                items += symbols.filter { matches($0.name) }.map { CompletionItem(name: $0.name, symbol: $0.glyph) }
+            }
             items.sort { a, b in
                 let ea = a.name == prefix, eb = b.name == prefix
                 if ea != eb { return ea }
+                let sa = a.source == .symbol, sb = b.source == .symbol
+                if sa != sb { return sb }
                 if a.name != b.name { return a.name < b.name }
                 return (a.template ?? "").count < (b.template ?? "").count
             }

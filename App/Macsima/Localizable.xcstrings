@@ -2800,6 +2800,17 @@
         }
       }
     },
+    "symbol" : {
+      "comment" : "Completion list: a name that types a math symbol, like inf for ∞",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "símbolo"
+          }
+        }
+      }
+    },
     "text formatting (kept while the cell's text is unchanged)" : {
       "comment" : "Completes “Kept …”",
       "localizations" : {
@@ -2828,6 +2839,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "el atributo de celda \"%@\" (se vuelve a guardar, no se usa)"
+          }
+        }
+      }
+    },
+    "worksheet" : {
+      "comment" : "Completion list: a name defined in this worksheet",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hoja de trabajo"
           }
         }
       }

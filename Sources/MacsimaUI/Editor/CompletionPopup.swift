@@ -135,8 +135,9 @@ final class CompletionPopup: NSObject, NSTableViewDataSource, NSTableViewDelegat
         return cell
     }
 
-    /// `integrate(expr, x)` with the arguments in grey, and "worksheet" after
-    /// names that come from the worksheet.
+    /// `integrate(expr, x)` with the arguments in grey, "worksheet" after
+    /// names that come from the worksheet, and a symbol's character before
+    /// "symbol" (`inf  ∞   symbol`).
     private func text(of item: CompletionItem) -> NSAttributedString {
         let result = NSMutableAttributedString(string: item.name, attributes: [.font: font, .foregroundColor: NSColor.labelColor])
         if let template = item.template {
@@ -144,9 +145,17 @@ final class CompletionPopup: NSObject, NSTableViewDataSource, NSTableViewDelegat
                 .replacing(/<([^> \n]+)>/) { String($0.1) }
             result.append(NSAttributedString(string: args, attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
         }
-        if item.source == .worksheet {
+        if let symbol = item.symbol {
+            result.append(NSAttributedString(string: "  " + symbol, attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        }
+        let mark: String? = switch item.source {
+        case .worksheet: String(localized: "worksheet", comment: "Completion list: a name defined in this worksheet")
+        case .symbol: String(localized: "symbol", comment: "Completion list: a name that types a math symbol, like inf for ∞")
+        case .maxima: nil
+        }
+        if let mark {
             let small = NSFont.systemFont(ofSize: max(9, font.pointSize - 3))
-            result.append(NSAttributedString(string: "   worksheet", attributes: [.font: small, .foregroundColor: NSColor.tertiaryLabelColor]))
+            result.append(NSAttributedString(string: "   " + mark, attributes: [.font: small, .foregroundColor: NSColor.tertiaryLabelColor]))
         }
         return result
     }

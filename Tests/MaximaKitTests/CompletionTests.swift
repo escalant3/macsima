@@ -84,6 +84,27 @@ struct CompletionTests {
         #expect(MaximaCompletion.completions(of: "Integ", maxima: .builtin, worksheet: sheet).map(\.name) == ["Integral"])
     }
 
+    @Test func symbols() {
+        let inf = MaximaCompletion.completions(of: "inf", maxima: .builtin, worksheet: CompletionIndex())
+        #expect(inf.first == CompletionItem(name: "inf", source: .maxima), "Maxima's exact name before the symbol")
+        #expect(inf[1] == CompletionItem(name: "inf", symbol: "∞"))
+        #expect(inf.contains { $0.name == "infinity" })
+        #expect(inf[1].insertion == "∞")
+        // Symbols come after the names that aren't exact.
+        let integra = MaximaCompletion.completions(of: "integra", maxima: .builtin, worksheet: CompletionIndex())
+        #expect(integra.last == CompletionItem(name: "integral", symbol: "∫"))
+        // The case as typed first.
+        #expect(MaximaCompletion.completions(of: "Ome", maxima: .builtin, worksheet: CompletionIndex())
+            == [CompletionItem(name: "Omega", symbol: "Ω")])
+        #expect(MaximaCompletion.completions(of: "ome", maxima: .builtin, worksheet: CompletionIndex())
+            .contains(CompletionItem(name: "omega", symbol: "ω")))
+        let alpha = MaximaCompletion.completions(of: "alpha", maxima: .builtin, worksheet: CompletionIndex())
+        #expect(alpha.first?.insertion == "α", "an exact symbol name first")
+        // Show Template has none.
+        #expect(!MaximaCompletion.completions(of: "inf", maxima: .builtin, worksheet: CompletionIndex(), templatesOnly: true)
+            .contains { $0.source == .symbol })
+    }
+
     @Test func showTemplate() {
         let items = MaximaCompletion.completions(of: "integrate", maxima: .builtin, worksheet: CompletionIndex(),
                                                  templatesOnly: true)
