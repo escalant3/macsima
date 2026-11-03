@@ -23,8 +23,8 @@ Tested on 2026-11-01 with a throwaway key, a separate bundle id and a feed on `1
 with the Apple Development certificate and the hardened runtime found 0.4, downloaded it, installed it on quit
 and launched as 0.4 with Maxima running. Release 0.3 (2026-11-01) checked the rest: the Developer ID
 signature, notarization and stapling, the feed served from GitHub, and the downloaded DMG matching the
-appcast's length and EdDSA signature. Release 0.4 (2026-11-03) is the first one an installed copy can update
-to from GitHub; that update (step 6) is still to be checked.
+appcast's length and EdDSA signature. Release 0.4 (2026-11-03) checked the update from GitHub (step 6): an
+installed 0.3 offered 0.4 with its release notes from the live feed.
 
 ## One-time setup
 
