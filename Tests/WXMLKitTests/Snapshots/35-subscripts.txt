@@ -1,0 +1,55 @@
+### 1
+in:    <math><lbl altCopy="%o1">(%o1) </lbl><munder altCopy="h_asc"><mrow><mi>h</mi></mrow><mrow><mi>asc</mi></mrow></munder></math>
+label: %o1
+image: -
+text:  h_asc
+out:   <math display="block"><msub><mi>h</mi><mi>asc</mi></msub></math>
+
+### 2
+in:    <math><lbl altCopy="%o2">(%o2) </lbl><munder altCopy="v_0"><mrow><mi>v</mi></mrow><mrow><mi>0</mi></mrow></munder></math>
+label: %o2
+image: -
+text:  v_0
+out:   <math display="block"><msub><mi>v</mi><mi>0</mi></msub></math>
+
+### 3
+in:    <math><lbl altCopy="%o3">(%o3) </lbl><munder altCopy="x_1"><mrow><mi>x</mi></mrow><mrow><mi>1</mi></mrow></munder></math>
+label: %o3
+image: -
+text:  x_1
+out:   <math display="block"><msub><mi>x</mi><mi>1</mi></msub></math>
+
+### 4
+in:    <math><lbl altCopy="%o4">(%o4) </lbl><fn lisp="wxxml-function"><munder altCopy="f_x"><mrow><mi>f</mi></mrow><mrow><mi>x</mi></mrow></munder><mrow><p><mrow><mi lisp="*var-tag*">y</mi></mrow></p></mrow></fn></math>
+label: %o4
+image: -
+text:  f_x(y)
+out:   <math display="block"><mrow><msub><mi>f</mi><mi>x</mi></msub><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>y</mi><mo stretchy="false">)</mo></mrow></mrow></math>
+
+### 5
+in:    <math><lbl altCopy="%o5">(%o5) </lbl><munder altCopy="pochhammer(x,k)"><p><mi lisp="*var-tag*">x</mi></p><mrow><mi lisp="*var-tag*">k</mi></mrow></munder></math>
+label: %o5
+image: -
+text:  pochhammer(x,k)
+out:   <math display="block"><msub><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><mi>k</mi></msub></math>
+
+### 6
+in:    <math><lbl altCopy="%o6">(%o6) </lbl><fn altCopy="legendre_p(n,x)"><munder><fnm>P</fnm><mrow><mi lisp="*var-tag*">n</mi></mrow></munder><p><mi lisp="*var-tag*">x</mi></p></fn></math>
+label: %o6
+image: -
+text:  legendre_p(n,x)
+out:   <math display="block"><mrow><msub><mi>P</mi><mi>n</mi></msub><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow></math>
+
+### 7
+in:    <math><lbl altCopy="%o8">(%o8) </lbl><munder d="1" altCopy="diff(f(x),x,1)"><mrow><fn lisp="wxxml-function"><fnm lisp="wxxml-function">f</fnm><mrow><p><mrow><mi lisp="*var-tag*">x</mi></mrow></p></mrow></fn></mrow><mrow><mi lisp="*var-tag*">x</mi></mrow></munder></math>
+label: %o8
+image: -
+text:  diff(f(x),x,1)
+out:   <math display="block"><msub><mrow><mi>f</mi><mo>&#x2061;</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><mi>x</mi></msub></math>
+
+### 8
+in:    <math><lbl altCopy="%o9">(%o9) </lbl><munder lisp="wxxml-array-no-display-properties"><mrow><mi lisp="*var-tag*">x</mi></mrow><mrow><mn>1</mn></mrow></munder></math>
+label: %o9
+image: -
+text:  x[1]
+out:   <math display="block"><msub><mi>x</mi><mn>1</mn></msub></math>

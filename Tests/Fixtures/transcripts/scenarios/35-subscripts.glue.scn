@@ -1,0 +1,10 @@
+# Subscripted names: the glue prints them as munder, which wxMaxima draws as a subscript.
+h_asc;
+v_0;
+x_1;
+f_x(y);
+pochhammer(x,k);
+legendre_p(n,x);
+derivabbrev:true$
+'diff(f(x),x);
+x[1];

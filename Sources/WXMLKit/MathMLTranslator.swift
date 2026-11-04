@@ -210,10 +210,11 @@ private struct Context {
             return "<msub>\(emit(kids[0]))\(emit(kids[1]))</msub>"
         case "munder", "i":
             guard kids.count == 2 else { return unknownElement(node) }
-            // Array subscripts (x[1]) are printed as munder with an "array" lisp
-            // attribute; .wxmx files write subscripts as i.
-            let tag = name == "i" || (attrs["lisp"] ?? "").contains("array") ? "msub" : "munder"
-            return "<\(tag)>\(emit(kids[0]))\(emit(kids[1]))</\(tag)>"
+            // In wxMaxima's XML munder is always a subscript (its MathParser reads
+            // munder and i as a SubCell): the glue prints h_asc, x[1], f_x(y),
+            // pochhammer, P_n(x) and abbreviated derivatives this way, and .wxmx
+            // files write subscripts as i. Limits come as lm, sums as sm.
+            return "<msub>\(emit(kids[0]))\(emit(kids[1]))</msub>"
         case "ie" where kids.dropFirst().contains { $0.attribute("pos") != nil }:
             // Pre- and post-scripts as .wxmx files write them: children marked
             // pos="presub|presup|postsub|postsup" after the base.

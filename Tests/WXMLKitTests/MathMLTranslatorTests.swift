@@ -113,6 +113,9 @@ struct MathMLTranslatorTests {
         #expect(ml("<math><q><mi>x</mi></q></math>").contains("<mi>x</mi></msqrt>"))
         #expect(ml(#"<math><munder lisp="wxxml-array-no-display-properties"><mrow><mi>x</mi></mrow><mrow><mn>1</mn></mrow></munder></math>"#)
                 .contains("<msub><mi>x</mi><mn>1</mn></msub>"))
+        // Subscripted names (h_asc) are munder too, and are subscripts, not under-scripts.
+        #expect(ml(#"<math><munder altCopy="h_asc"><mrow><mi>h</mi></mrow><mrow><mi>asc</mi></mrow></munder></math>"#)
+                == #"<math display="block"><msub><mi>h</mi><mi>asc</mi></msub></math>"#)
         #expect(ml(#"<math><sm type="prod"><mrow><mi>k</mi></mrow><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></sm></math>"#)
                 .contains("<munderover><mo>&#x220F;</mo>"))
         #expect(ml(#"<math><p print="no"><mfrac line="no"><mrow><mi>n</mi></mrow><mrow><mi>k</mi></mrow></mfrac></p></math>"#)
