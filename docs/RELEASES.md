@@ -4,6 +4,11 @@ Since 0.3, work is planned as features that ship in a release, not as phases. Ea
 here while it is in progress; the release notes (`docs/RELEASING.md`) are written from this list. Gaps against
 wxMaxima stay in `docs/PARITY.md`.
 
+## 0.4.1 (2026-11-12)
+
+- **Subscripts** (done 2026-11-04). Names the glue prints as subscripts (`h_asc`, `v_0`, `f_x(y)`, `P_n(x)`,
+  `pochhammer`, abbreviated derivatives) are drawn as subscripts, as wxMaxima draws them, not as under-scripts.
+
 ## 0.4 (2026-11-03)
 
 - **Selecting inside math** (done 2026-11-01). Click a symbol in an output to select it, click again for
