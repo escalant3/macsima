@@ -1,5 +1,7 @@
 # Maxima transcripts
 
+`protocol/` holds the independent client behind `docs/MAXIMA_PROTOCOL.md` (`probe.py`) and what it recorded (`session.json`).
+
 Phase 0 recorded 01 to 25; Phase 1 added the scenarios numbered 26 and up, glue mode only,
 by running `maxima-spike record` for just those scenarios so the older files stay unchanged.
 

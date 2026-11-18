@@ -1,0 +1,271 @@
+{
+ "results": {
+  "connect_seconds": 0.1,
+  "first_line": "pid=N",
+  "bare_first_prompt_unwrapped": true,
+  "glue_line_bytes": 87652,
+  "macsima_line_bytes": 3592,
+  "setup_output_bytes": 74657,
+  "key_nested_in_suppressOutput": true,
+  "tags_during_setup": [
+   "name",
+   "suppressOutput",
+   "value",
+   "variables",
+   "wxxml-key",
+   "wxxml-symbols"
+  ],
+  "prompt_after_glue": false,
+  "interrupt_channel_first_line_is_token": true,
+  "setup_lines_output": "<suppressOutput>\n</suppressOutput>\n",
+  "lisp_quiet_no_prompt": true,
+  "statement_math_then_prompt": true,
+  "dollar_no_math": true,
+  "print_string_is_math": true,
+  "maxima_error_text": true,
+  "syntax_error_text": true,
+  "syntax_error_prompt": true,
+  "lisp_line_prompt_repr": [
+   "(%i5) "
+  ],
+  "break_after_quiet_prompts": 0,
+  "break_after_quiet_received": "",
+  "recover_prompts": 1,
+  "break_after_statement_prompts": 1,
+  "break_after_statement_received": "\n<PROMPT>(%i6) </PROMPT>",
+  "wrapped_break_prompts": 1,
+  "wrapped_break_after_statement_prompts": 1,
+  "question_prompt": [
+   "<math><st>Is </st><mi lisp=\"*var-tag*\">y</mi><st> positive, negative or zero?</st></math>"
+  ],
+  "quiet_during_question_received": "incorrect syntax: : is not a prefix operator\n:l\n ^\n<PROMPT>(%i8) </PROMPT>",
+  "after_answer_received": "<math><lbl altCopy=\"%o8\">(%o8) </lbl><mi lisp=\"*var-tag*\">pos</mi></math>\n<PROMPT>(%i9) </PROMPT>",
+  "to_lisp_prompt": [
+   "\nMAXIMA> "
+  ],
+  "to_maxima_prompt": [
+   "(%i11) "
+  ],
+  "debugger_prompt": [
+   "\n(dbm:1) "
+  ],
+  "after_top_prompt": [
+   "(%i14) "
+  ],
+  "channel_interrupt_text": true,
+  "channel_interrupt_prompt": true,
+  "sigint_text": true,
+  "sigint_prompt": true,
+  "plot_img_tag": [
+   "<img lisp=\"wxxml-tag\">TMP/img>"
+  ],
+  "group_gone_after_term": true
+ },
+ "exchanges": [
+  {
+   "step": "lisp-quiet gets no prompt",
+   "sent": [
+    ":lisp-quiet (setq $linel 80)"
+   ],
+   "received": ""
+  },
+  {
+   "step": "plain statement",
+   "sent": [
+    "integrate(sin(x), x);"
+   ],
+   "received": "<math><lbl altCopy=\"%o1\">(%o1) </lbl><mo>-</mo><fn lisp=\"wxxml-function\"><fnm lisp=\"wxxml-function\">cos</fnm><mrow><p><mrow><mi lisp=\"*var-tag*\">x</mi></mrow></p></mrow></fn></math>\n<PROMPT>(%i2) </PROMPT>"
+  },
+  {
+   "step": "dollar statement prints only a prompt",
+   "sent": [
+    "a:3$"
+   ],
+   "received": "\n<PROMPT>(%i3) </PROMPT>"
+  },
+  {
+   "step": "print is plain text",
+   "sent": [
+    "print(\"hello\")$"
+   ],
+   "received": "<math><st>hello</st><st> </st></math>\n<PROMPT>(%i4) </PROMPT>"
+  },
+  {
+   "step": "math error",
+   "sent": [
+    "1/0;"
+   ],
+   "received": "\nexpt: undefined: 0 to a negative exponent.\n -- an error. To debug this try: debugmode(true);\n<PROMPT>(%i5) </PROMPT>"
+  },
+  {
+   "step": "syntax error",
+   "sent": [
+    "x+;"
+   ],
+   "received": "\nincorrect syntax: Premature termination of input at ;.\nx+;\n ^\n<PROMPT>(%i5) </PROMPT>"
+  },
+  {
+   "step": "lisp line prompt",
+   "sent": [
+    ":lisp (+ 1 2)"
+   ],
+   "received": "\n3\n<PROMPT>(%i5) </PROMPT>"
+  },
+  {
+   "step": "break command right after :lisp-quiet",
+   "sent": [
+    ":lisp-quiet (setq $linel 80)",
+    ":info :bkpt"
+   ],
+   "received": ""
+  },
+  {
+   "step": "recover with :lisp (values)",
+   "sent": [
+    ":lisp (values)"
+   ],
+   "received": "\n<PROMPT>(%i5) </PROMPT>"
+  },
+  {
+   "step": "statement to reset state",
+   "sent": [
+    "1+1;"
+   ],
+   "received": "<math><lbl altCopy=\"%o5\">(%o5) </lbl><mn>2</mn></math>\n<PROMPT>(%i6) </PROMPT>"
+  },
+  {
+   "step": "break command right after a prompt",
+   "sent": [
+    ":info :bkpt"
+   ],
+   "received": "\n<PROMPT>(%i6) </PROMPT>"
+  },
+  {
+   "step": "settle",
+   "sent": [
+    ":lisp (values)"
+   ],
+   "received": "\n<PROMPT>(%i6) </PROMPT>"
+  },
+  {
+   "step": "wrapped break command after :lisp-quiet",
+   "sent": [
+    ":lisp-quiet (setq $linel 80)",
+    ":lisp-quiet nil",
+    ":info :bkpt",
+    ":lisp (values)"
+   ],
+   "received": "\n<PROMPT>(%i6) </PROMPT>"
+  },
+  {
+   "step": "statement",
+   "sent": [
+    "2+2;"
+   ],
+   "received": "<math><lbl altCopy=\"%o6\">(%o6) </lbl><mn>4</mn></math>\n<PROMPT>(%i7) </PROMPT>"
+  },
+  {
+   "step": "wrapped break command after a statement",
+   "sent": [
+    ":lisp-quiet nil",
+    ":info :bkpt",
+    ":lisp (values)"
+   ],
+   "received": "\n<PROMPT>(%i7) </PROMPT>"
+  },
+  {
+   "step": "question",
+   "sent": [
+    "asksign(y);"
+   ],
+   "received": "<PROMPT><math><st>Is </st><mi lisp=\"*var-tag*\">y</mi><st> positive, negative or zero?</st></math></PROMPT>\n"
+  },
+  {
+   "step": "lisp-quiet while a question waits",
+   "sent": [
+    ":lisp-quiet (setq $linel 80)"
+   ],
+   "received": "incorrect syntax: : is not a prefix operator\n:l\n ^\n<PROMPT>(%i8) </PROMPT>"
+  },
+  {
+   "step": "answer",
+   "sent": [
+    "pos;"
+   ],
+   "received": "<math><lbl altCopy=\"%o8\">(%o8) </lbl><mi lisp=\"*var-tag*\">pos</mi></math>\n<PROMPT>(%i9) </PROMPT>"
+  },
+  {
+   "step": "settle",
+   "sent": [
+    "2+2;"
+   ],
+   "received": "<math><lbl altCopy=\"%o9\">(%o9) </lbl><mn>4</mn></math>\n<PROMPT>(%i10) </PROMPT>"
+  },
+  {
+   "step": "to_lisp",
+   "sent": [
+    "to_lisp();"
+   ],
+   "received": "\nType (to-maxima) to restart, ($quit) to quit Maxima.\n<PROMPT>\nMAXIMA> </PROMPT>"
+  },
+  {
+   "step": "to-maxima",
+   "sent": [
+    "(to-maxima)"
+   ],
+   "received": "Returning to Maxima\n<math><lbl altCopy=\"%o10\">(%o10) </lbl><t lisp=\"true\">true</t></math>\n<PROMPT>(%i11) </PROMPT>"
+  },
+  {
+   "step": "debug setup",
+   "sent": [
+    "debugmode(true)$",
+    "h(x):=1/x$"
+   ],
+   "received": "\n<PROMPT>(%i12) </PROMPT>\n<PROMPT>(%i13) </PROMPT>"
+  },
+  {
+   "step": "enter debugger",
+   "sent": [
+    "h(0);"
+   ],
+   "received": "\nexpt: undefined: 0 to a negative exponent.\n -- an error.  Entering the Maxima debugger.\nEnter ':h' for help.\nh(x=0)\n<PROMPT>\n(dbm:1) </PROMPT>"
+  },
+  {
+   "step": "leave debugger",
+   "sent": [
+    ":top"
+   ],
+   "received": "\n<PROMPT>(%i14) </PROMPT>"
+  },
+  {
+   "step": "debug off",
+   "sent": [
+    "debugmode(false)$"
+   ],
+   "received": "\n<PROMPT>(%i15) </PROMPT>"
+  },
+  {
+   "step": "interrupt via channel",
+   "sent": [
+    "block([s:0], for i:1 thru 2000000000 do s:s+i, s);",
+    "<channel> interrupt"
+   ],
+   "received": "\nMaxima encountered a Lisp error:\n\n User interrupt\n\nAutomatically continuing.\nTo enable the Lisp debugger set *debugger-hook* to nil.\n<PROMPT>(%i16) </PROMPT>"
+  },
+  {
+   "step": "interrupt via SIGINT",
+   "sent": [
+    "block([s:0], for i:1 thru 2000000000 do s:s+i, s);",
+    "<SIGINT to group>"
+   ],
+   "received": "\nMaxima encountered a Lisp error:\n\n Interactive interrupt at #xADDRESS.\n\nAutomatically continuing.\nTo enable the Lisp debugger set *debugger-hook* to nil.\n<PROMPT>(%i17) </PROMPT>"
+  },
+  {
+   "step": "plot",
+   "sent": [
+    "wxplot2d(x^2,[x,0,1]);"
+   ],
+   "received": "<math><lbl altCopy=\"%t17\">(%t17) </lbl><img lisp=\"wxxml-tag\">TMP/maxout_52822_1_113500.png</img></math>\n<math><lbl altCopy=\"%o17\">(%o17) </lbl><st></st></math>\n<PROMPT>(%i18) </PROMPT>"
+  }
+ ]
+}

@@ -35,7 +35,7 @@ The control socket (2) is the only channel that carries commands and results; th
 
 ## Wire protocol reference
 
-Everything below comes from wxMaxima's own sources (`MaximaProcessManager.cpp`, `MaximaEvaluator.cpp`, `Maxima.cpp`, `MaximaProtocol.h`, `wxMathML.lisp`), read at the current main branch.
+Everything below comes from wxMaxima's own sources (`MaximaProcessManager.cpp`, `MaximaEvaluator.cpp`, `Maxima.cpp`, `MaximaProtocol.h`, `wxMathML.lisp`), read at the current main branch. [MAXIMA_PROTOCOL.md](MAXIMA_PROTOCOL.md) explains the protocol from the ground up, with its traps.
 
 ### Launch recipe
 
@@ -69,7 +69,7 @@ The glue Lisp's first line prints `<wxxml-key>TOKEN</wxxml-key>` with the value 
 
 ### Tags Maxima sends
 
-The stream is plain text with known tags mixed in. The scanner looks for a bare `<tag>` at the start of its buffer, takes everything through `</tag>`, and treats text in between as miscellaneous output (errors, `print()` output, the startup banner). Top-level tags carry no attributes, so the scanner stays trivial; the tags inside math do carry attributes (see Math XML). Phase 0 on Maxima 5.50.0 showed that errors, print() output, tex() output and everything under display2d:false arrive as plain text between tags, so the miscellaneous-output path is a main path, not an edge case.
+The stream is plain text with known tags mixed in. The scanner looks for a bare `<tag>` at the start of its buffer, takes everything through `</tag>`, and treats text in between as miscellaneous output (errors, `print()` output, the startup banner). Top-level tags carry no attributes, so the scanner stays trivial; the tags inside math do carry attributes (see Math XML). Phase 0 on Maxima 5.50.0 showed that errors, tex() output and everything under display2d:false arrive as plain text between tags, so the miscellaneous-output path is a main path, not an edge case. With the glue loaded, `print("hello")` arrives as math (`<math><st>hello</st>...`; fixture `glue/15-print`).
 
 | Tag | Carries | The app's job |
 | --- | --- | --- |
